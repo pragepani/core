@@ -15,7 +15,7 @@ endif
 
 .PHONY: setup setup-clean install install-force install-ansible install-lint install-lint-force install-venv install-python install-python-dev install-system-python install-skills update-skills agent-install
 .PHONY: test lint lint-action lint-ansible lint-python lint-shellcheck lint-markdown lint-makefile lint-javascript autoformat test-lint test-unit test-integration test-external test-signed
-.PHONY: clean clean-sudo down cache-clean
+.PHONY: clean clean-pycache-only-dirs clean-sudo down cache-clean
 .PHONY: system-purge system-disk-usage
 .PHONY: list tree mig dockerignore chmod-scripts help
 .PHONY: print-python
@@ -127,6 +127,10 @@ clean:
 		echo "WARNING: not inside a git repository -> skipping 'git clean -fdX'"; \
 		echo "WARNING: (cleanup continues)"; \
 	fi
+
+# Remove tracked directories whose only child is a __pycache__ folder (orphans left after moving / deleting source files).
+clean-pycache-only-dirs:
+	@"$${PYTHON}" -m utils.cleanup.pycache_only_dirs
 
 # Remove ignored files from the working tree with sudo.
 clean-sudo:
