@@ -54,7 +54,6 @@ def build_dev_inventory(compose: Compose, spec: DevInventorySpec) -> None:
         inv_root,
         "--host",
         "localhost",
-        "--ssl-disabled",
         "--vars-file",
         DEV_INVENTORY_VARS_FILE,
         "--vars",

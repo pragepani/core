@@ -33,7 +33,7 @@ This is the mechanism that lets variants control whether a shared service is pul
 | Artifact | Contents |
 |---|---|
 | `inventory.yml` (or equivalent) | Group-per-application map plus host membership. Source of truth for `group_names` at play time. |
-| `host_vars/<host>.yml` | Connection vars, `DOMAIN_PRIMARY`, `TLS_ENABLED`, `networks.internet.{ip4,ip6}`, the variant-baked `applications.<app>` block, vault-encrypted `ansible_become_password`, plus any `--vars` / `--vars-file` overlays. |
+| `host_vars/<host>.yml` | Connection vars, the variant-baked `applications.<app>` block, vault-encrypted `ansible_become_password`, plus any `--vars` / `--vars-file` overlays (which is where deployment-wide flags like `DOMAIN_PRIMARY`, `TLS_ENABLED`, and `networks.internet.{ip4,ip6}` enter when set; otherwise group_vars provides the env-driven defaults). |
 
 `host_vars/<host>.yml` is where variant data ends up after the deep-merge. The strings inside are still raw, including any Jinja templates from `meta/services.yml` that no variant override replaced.
 
@@ -85,6 +85,6 @@ The fallback Jinja string in the base `meta/services.yml` is the safety net for 
 | [inventory/](../../../cli/administration/deploy/development/inventory/__init__.py) | Package root re-exporting the public API. Per-submodule split: [`payload.py`](../../../cli/administration/deploy/development/inventory/payload.py) (`_resolve_variant_payloads`, `_bake_overrides`) and [`builder.py`](../../../cli/administration/deploy/development/inventory/builder.py) (`build_dev_inventory`). Stage 1 variant resolution and stage 3 host-vars baking. |
 | [cli.administration.inventory.devices](../../../cli/administration/inventory/devices/command.py) | Stage 2 group materialisation: emits one group per invokable `application_id` for the given host. |
 | [filters.py](../../../cli/administration/inventory/provision/filters.py) | `filter_dynamic_inventory`. Restricts the materialised groups to the `--include` set. |
-| [host_vars.py](../../../cli/administration/inventory/provision/host_vars.py) | Connection vars, `DOMAIN_PRIMARY`, become-password handling. |
+| [host_vars.py](../../../cli/administration/inventory/provision/host_vars.py) | Connection vars, vars-file/JSON overlays, become-password handling. |
 | [config.py (lookup)](../../../plugins/lookup/config.py) | `lookup('config', application_id, 'services.<x>.<y>')`. Resolves nested config paths and renders Jinja via `_render_with_templar`. |
 | [applications.py (lookup)](../../../plugins/lookup/applications.py) | `lookup('applications'[, application_id])`. Returns the rendered application payload. |

@@ -222,7 +222,6 @@ def run_in_container(
             inv_root,
             "--host",
             "localhost",
-            "--ssl-disabled",
         ]
         inventory_cmd.extend(inventory_args)
 

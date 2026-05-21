@@ -104,10 +104,6 @@ def apply_vars_overrides(host_vars_file: Path, json_str: str) -> None:
 def ensure_host_vars_file(
     host_vars_file: Path,
     host: str,
-    primary_domain: str | None,
-    ssl_disabled: bool,
-    ip4: str,
-    ip6: str,
 ) -> None:
     yaml_rt = YAML(typ="rt")
     yaml_rt.preserve_quotes = True
@@ -129,27 +125,6 @@ def ensure_host_vars_file(
     local_hosts = {"localhost", "127.0.0.1", "::1"}
     if host in local_hosts and "ansible_connection" not in data:
         data["ansible_connection"] = "local"
-
-    if primary_domain is not None and "DOMAIN_PRIMARY" not in data:
-        data["DOMAIN_PRIMARY"] = primary_domain
-
-    if "TLS_ENABLED" not in data:
-        data["TLS_ENABLED"] = not ssl_disabled
-
-    networks = data.get("networks")
-    if not isinstance(networks, CommentedMap):
-        networks = CommentedMap()
-        data["networks"] = networks
-
-    internet = networks.get("internet")
-    if not isinstance(internet, CommentedMap):
-        internet = CommentedMap()
-        networks["internet"] = internet
-
-    if "ip4" not in internet:
-        internet["ip4"] = ip4
-    if "ip6" not in internet:
-        internet["ip6"] = ip6
 
     host_vars_file.parent.mkdir(parents=True, exist_ok=True)
     with host_vars_file.open("w", encoding="utf-8") as f:

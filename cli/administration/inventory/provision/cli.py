@@ -83,16 +83,6 @@ def main(argv: list[str] | None = None) -> int:
         help="Hostname to use in the inventory (default: localhost).",
     )
     parser.add_argument(
-        "--primary-domain",
-        default=None,
-        help="Primary domain for this host (optional).",
-    )
-    parser.add_argument(
-        "--ssl-disabled",
-        action="store_true",
-        help="Disable SSL for this host (sets TLS_ENABLED: false).",
-    )
-    parser.add_argument(
         "--become-password", default=None, help="Optional become password (vaulted)."
     )
     parser.add_argument(
@@ -102,12 +92,6 @@ def main(argv: list[str] | None = None) -> int:
             "Optional JSON object string with additional values for host_vars/<host>.yml. "
             "Merged and overwrites existing values."
         ),
-    )
-    parser.add_argument(
-        "--ip4", default="127.0.0.1", help="IPv4 address for networks.internet.ip4."
-    )
-    parser.add_argument(
-        "--ip6", default="::1", help="IPv6 address for networks.internet.ip6."
     )
     parser.add_argument(
         "--inventory-file",
@@ -263,10 +247,6 @@ def main(argv: list[str] | None = None) -> int:
     ensure_host_vars_file(
         host_vars_file=host_vars_file,
         host=args.host,
-        primary_domain=args.primary_domain,
-        ssl_disabled=args.ssl_disabled,
-        ip4=args.ip4,
-        ip6=args.ip6,
     )
 
     print(f"[INFO] Ensuring ansible_become_password for host '{args.host}'")

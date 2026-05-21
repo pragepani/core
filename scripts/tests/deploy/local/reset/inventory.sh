@@ -98,7 +98,6 @@ echo ">>> Initializing inventory inside container"
       --inventory-file \"\${INFINITO_INVENTORY_FILE}\" \
       --vars '${RUNTIME_VARS_JSON}' \
       --host 'localhost' \
-      --ssl-disabled \
       --vars-file '${INFINITO_INVENTORY_VARS_FILE}' \
       --include '${apps_csv}'
 

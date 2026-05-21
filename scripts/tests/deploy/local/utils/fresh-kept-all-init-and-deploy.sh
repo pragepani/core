@@ -48,7 +48,6 @@ echo ">>> Include apps (${APPS_COUNT}): ${APPS_CSV}"
 infinito administration inventory provision "${inv_dir}" \
 	--inventory-file "${INFINITO_INVENTORY_FILE}" \
 	--host "${INFINITO_LIMIT_HOST}" \
-	--ssl-disabled \
 	--vars "${RUNTIME_VARS_JSON}" \
 	--vars-file "${INFINITO_INVENTORY_VARS_FILE}" \
 	--include "${APPS_CSV}"

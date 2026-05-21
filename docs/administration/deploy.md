@@ -12,7 +12,6 @@ Create or refresh the inventory first, then deploy against the generated invento
 infinito administration inventory provision /etc/infinito.nexus/inventories/prod \
   --inventory-file /etc/infinito.nexus/inventories/prod/devices.yml \
   --host localhost \
-  --ssl-disabled \
   --vars-file inventories/<env>/default.yml \
   --include 'web-app-nextcloud,web-app-keycloak'
 ```

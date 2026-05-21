@@ -16,7 +16,7 @@ from utils.cache.yaml import dump_yaml_str, load_yaml_any
 
 
 class TestHostVars(unittest.TestCase):
-    def test_ensure_host_vars_file_preserves_vault_and_adds_defaults(self):
+    def test_ensure_host_vars_file_preserves_vault_and_existing_keys(self):
         yaml_rt = YAML(typ="rt")
         yaml_rt.preserve_quotes = True
 
@@ -35,10 +35,6 @@ existing_key: foo
             ensure_host_vars_file(
                 host_vars_file=host_vars_file,
                 host=host,
-                primary_domain="example.org",
-                ssl_disabled=False,
-                ip4="127.0.0.1",
-                ip6="::1",
             )
 
             with host_vars_file.open("r", encoding="utf-8") as f:
@@ -48,28 +44,13 @@ existing_key: foo
             self.assertEqual(data["existing_key"], "foo")
             self.assertEqual(getattr(data["secret"], "tag", None), "!vault")
 
-            self.assertEqual(data["DOMAIN_PRIMARY"], "example.org")
-            self.assertTrue(data["TLS_ENABLED"])
-            self.assertEqual(data["networks"]["internet"]["ip4"], "127.0.0.1")
-            self.assertEqual(data["networks"]["internet"]["ip6"], "::1")
-
-            # Second call must not overwrite defaults
-            ensure_host_vars_file(
-                host_vars_file=host_vars_file,
-                host="other-host",
-                primary_domain="other.example",
-                ssl_disabled=True,
-                ip4="10.0.0.1",
-                ip6="::2",
-            )
-
-            with host_vars_file.open("r", encoding="utf-8") as f:
-                data2 = yaml_rt.load(f)
-
-            self.assertEqual(data2["DOMAIN_PRIMARY"], "example.org")
-            self.assertTrue(data2["TLS_ENABLED"])
-            self.assertEqual(data2["networks"]["internet"]["ip4"], "127.0.0.1")
-            self.assertEqual(data2["networks"]["internet"]["ip6"], "::1")
+            # ensure_host_vars_file MUST NOT bake networks/TLS/DOMAIN defaults
+            # into host_vars; those live in group_vars / the inventory vars-file
+            # so that env-driven values (INFINITO_IP4, INFINITO_DOMAIN, ...)
+            # propagate without being silently overridden.
+            self.assertNotIn("DOMAIN_PRIMARY", data)
+            self.assertNotIn("TLS_ENABLED", data)
+            self.assertNotIn("networks", data)
 
     def test_ensure_host_vars_file_sets_local_connection_for_localhost(self):
         yaml_rt = YAML(typ="rt")
@@ -83,10 +64,6 @@ existing_key: foo
             ensure_host_vars_file(
                 host_vars_file=host_vars_file,
                 host=host,
-                primary_domain=None,
-                ssl_disabled=False,
-                ip4="127.0.0.1",
-                ip6="::1",
             )
 
             with host_vars_file.open("r", encoding="utf-8") as f:
