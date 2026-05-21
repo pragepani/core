@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Print every Make target with its description.
+# Print Make targets with their descriptions.
 #
-# Descriptions are taken from the comment line(s) directly above each
-# target in the Makefile. Consecutive comment lines are joined with a
-# space. Blank lines, recipe bodies, variable assignments, .PHONY
-# blocks and other directives are ignored.
+# Without arguments: short list — one description line per target. The
+# description is the topmost comment line in each target's comment block.
+#
+# With a single argument: print the full comment block for that target —
+# the description line plus its schema lines (Usage:, Example:, Note:,
+# Param <name>:). See tests/lint/filesystem/makefile/test_single_line_comments.py
+# for the canonical schema.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,33 +33,73 @@ else
 	C_RESET=""
 fi
 
+# Detail mode: `make help target=<name>` (or positional arg).
+if [[ $# -ge 1 && -n "$1" ]]; then
+	target="$1"
+	awk -v want="${target}" -v g="${C_GREEN}" -v b="${C_BOLD}" -v d="${C_DIM}" -v r="${C_RESET}" '
+		/^[[:space:]]*#[[:space:]]*nocheck[[:space:]]*:/ { next }
+		/^#/ {
+			line = $0
+			sub(/^#[[:space:]]?/, "", line)
+			block[++n] = line
+			next
+		}
+		/^\.[A-Za-z]/ { next }
+		/^[[:space:]]*$/ { n = 0; next }
+		/^[A-Za-z][A-Za-z0-9_.-]*:/ && !/:=/ && !/[?+]=/ {
+			t = $0
+			sub(/:.*$/, "", t)
+			if (t == want) {
+				printf "%s%s%s\n", b g, t, r
+				if (n >= 1) {
+					printf "  %s\n", block[1]
+					for (i = 2; i <= n; i++) {
+						printf "    %s%s%s\n", d, block[i], r
+					}
+				}
+				found = 1
+				exit 0
+			}
+			n = 0
+			next
+		}
+		/^[[:space:]]/ { next }
+		{ n = 0 }
+		END {
+			if (!found) {
+				printf "make help: target %s%s%s not found in Makefile\n", b, want, r > "/dev/stderr"
+				exit 1
+			}
+		}
+	' "${MAKEFILE}"
+	exit $?
+fi
+
 printf '\n%sInfinito.Nexus Make targets%s\n' "${C_BOLD}${C_CYAN}" "${C_RESET}"
-printf '%sUsage: make <target>%s\n\n' "${C_DIM}" "${C_RESET}"
+printf '%sUsage: make <target> (or `make help target=<target>` for details)%s\n\n' "${C_DIM}" "${C_RESET}"
 
 awk '
+	/^[[:space:]]*#[[:space:]]*nocheck[[:space:]]*:/ { next }
 	/^#/ {
 		line = $0
 		sub(/^#[[:space:]]?/, "", line)
-		if (comment == "") {
-			comment = line
-		} else {
-			comment = comment " " line
-		}
+		block[++n] = line
 		next
 	}
-	/^\.[A-Za-z]/ { comment = ""; next }
-	/^[[:space:]]*$/ { comment = ""; next }
+	/^\.[A-Za-z]/ { next }
+	/^[[:space:]]*$/ { n = 0; next }
 	/^[A-Za-z][A-Za-z0-9_.-]*:/ && !/:=/ && !/[?+]=/ {
 		target = $0
 		sub(/:.*$/, "", target)
 		if (!seen[target]++) {
-			printf "%s\t%s\n", target, (comment == "" ? "-" : comment)
+			# The description is the FIRST line of the comment block (top, closest to .PHONY:).
+			printf "%s\t%s\n", target, (n >= 1 ? block[1] : "-")
 		}
-		comment = ""
+		n = 0
 		next
 	}
 	/^[[:space:]]/ { next }
-	{ comment = "" }
+	{ n = 0 }
 ' "${MAKEFILE}" |
 	sort |
 	awk -F'\t' -v g="${C_GREEN}" -v d="${C_DIM}" -v r="${C_RESET}" '

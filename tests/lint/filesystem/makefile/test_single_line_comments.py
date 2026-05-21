@@ -1,4 +1,23 @@
-"""Makefile target definitions: at most one `# ...` comment line directly above each target."""
+"""Makefile target documentation schema.
+
+A target's comment block (the consecutive `# ...` lines directly above it,
+no blank line in between) MUST consist of:
+
+  1. Exactly one **description** line at the top of the block (closest to
+     the preceding `.PHONY:` line). This is free-text prose explaining
+     WHAT the target does. It MUST NOT itself match one of the schema
+     markers listed below.
+  2. Zero or more **schema** lines below the description, each matching
+     exactly one of these markers (case-sensitive):
+
+        # Usage: <invocation>
+        # Example: <example>
+        # Note: <note>
+        # Param <name>: <explanation>
+
+`# nocheck:` suppression markers are ignored — they are not WHY-comments
+and do not participate in the schema.
+"""
 
 from __future__ import annotations
 
@@ -16,31 +35,35 @@ if TYPE_CHECKING:
 
 _TARGET_RE = re.compile(r"^(?P<name>[A-Za-z][A-Za-z0-9_-]*)\s*:")
 _COMMENT_RE = re.compile(r"^\s*#")
-# nocheck:foo markers are suppression directives, not WHY comments.
 _NOCHECK_RE = re.compile(r"^\s*#\s*nocheck\s*:")
+_SCHEMA_RE = re.compile(
+    r"^\s*#\s*(?:Usage|Example|Note|Param\s+[A-Za-z_][A-Za-z0-9_-]*)\s*:\s+\S"
+)
 
 
 @dataclass(frozen=True)
 class _Violation:
     line_no: int
     target: str
-    comment_lines: int
+    reason: str
 
 
-def _comments_directly_above(lines: list[str], target_idx: int) -> int:
-    """Count consecutive `#`-prefixed lines directly above index *target_idx*
-    (no blank line between). `# nocheck:` suppression markers do not count."""
-    count = 0
+def _comment_block_above(lines: list[str], target_idx: int) -> list[tuple[int, str]]:
+    """Return the consecutive non-nocheck `#`-lines directly above
+    *target_idx*, ordered top-down (description first, schema lines after).
+    """
+    block: list[tuple[int, str]] = []
     cursor = target_idx - 1
     while cursor >= 0:
         line = lines[cursor]
         if _COMMENT_RE.match(line):
             if not _NOCHECK_RE.match(line):
-                count += 1
+                block.append((cursor + 1, line))
             cursor -= 1
             continue
         break
-    return count
+    block.reverse()
+    return block
 
 
 def _scan_file(path: Path) -> list[_Violation]:
@@ -50,14 +73,38 @@ def _scan_file(path: Path) -> list[_Violation]:
         match = _TARGET_RE.match(line)
         if match is None:
             continue
-        n = _comments_directly_above(lines, index)
-        if n > 1:
-            out.append(_Violation(index + 1, match.group("name"), n))
+        block = _comment_block_above(lines, index)
+        if not block:
+            continue
+
+        description_line_no, description_text = block[0]
+        if _SCHEMA_RE.match(description_text):
+            out.append(
+                _Violation(
+                    description_line_no,
+                    match.group("name"),
+                    "missing description line above the schema block "
+                    f"(first comment line matches a schema marker: {description_text.strip()!r})",
+                )
+            )
+            continue
+
+        for schema_line_no, schema_text in block[1:]:
+            if not _SCHEMA_RE.match(schema_text):
+                out.append(
+                    _Violation(
+                        schema_line_no,
+                        match.group("name"),
+                        "schema marker required (one of "
+                        "`Usage:`, `Example:`, `Note:`, `Param <name>:`), "
+                        f"got: {schema_text.strip()!r}",
+                    )
+                )
     return out
 
 
-class TestMakefileSingleLineComments(unittest.TestCase):
-    def test_makefile_targets_have_at_most_one_comment_line_above(self) -> None:
+class TestMakefileCommentSchema(unittest.TestCase):
+    def test_makefile_target_comment_blocks_follow_schema(self) -> None:
         path = PROJECT_ROOT / "Makefile"
         self.assertTrue(path.is_file(), "Makefile not found at project root")
 
@@ -66,18 +113,17 @@ class TestMakefileSingleLineComments(unittest.TestCase):
             return
 
         lines = [
-            f"Makefile targets with multi-line comment block "
-            f"({len(violations)} violations):",
+            f"Makefile targets with comment-block schema violations "
+            f"({len(violations)} offences):",
             "",
-            "Makefile targets must be preceded by AT MOST one `# ...` comment line "
-            "on the immediately preceding line. Collapse multi-line blocks to a "
-            "single one-line WHY comment.",
+            "Each target's comment block MUST be: one description line "
+            "(free text, no marker) followed by zero or more schema lines "
+            "marked `Usage:`, `Example:`, `Note:`, or `Param <name>:`.",
             "",
             "Offenders:",
         ]
         lines.extend(
-            f"  Makefile:{v.line_no} ({v.target}): {v.comment_lines} comment lines above"
-            for v in violations
+            f"  Makefile:{v.line_no} ({v.target}): {v.reason}" for v in violations
         )
         self.fail("\n".join(lines))
 

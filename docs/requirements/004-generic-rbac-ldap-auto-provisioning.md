@@ -162,7 +162,7 @@ stay in lockstep without a per-role manual provisioning step.
   INFINITO_SERVICES_DISABLED=matomo,email` to establish a baseline. Subsequent
   role-code changes use `make deploy-reuse-kept-apps INFINITO_APPS=web-app-wordpress`.
   Subsequent spec-only changes use
-  [scripts/tests/e2e/rerun-spec.sh](../../scripts/tests/e2e/rerun-spec.sh).
+  `make compose-playwright role=web-app-wordpress`.
 - [x] Final confirmation uses
   `make deploy-fresh-purged-apps INFINITO_APPS=web-app-wordpress INFINITO_FULL_CYCLE=true
   INFINITO_SERVICES_DISABLED=matomo,email` with the extended Playwright spec

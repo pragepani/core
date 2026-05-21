@@ -146,6 +146,15 @@ compose-inner-run:
 compose-inventory-refresh:
 	@bash scripts/tests/deploy/local/reset/inventory.sh
 
+.PHONY: compose-playwright
+# Rerun a role-local Playwright spec against the live running stack (no redeploy).
+# Usage: make compose-playwright role=<role> [pw="--grep <pattern>"] [keep=true]
+# Example: make compose-playwright role=web-app-dashboard pw="--grep icons" keep=true
+compose-playwright:
+	@: $${role:?role=<role> required, e.g. role=web-app-dashboard}
+	@INFINITO_CMD='$(if $(keep),INFINITO_PLAYWRIGHT_KEEP=$(keep) )bash scripts/tests/e2e/rerun-spec.sh $(role) $(pw)' \
+	 bash scripts/tests/deploy/local/exec/container.sh
+
 .PHONY: compose-restart
 # Restart the development stack.
 compose-restart:
@@ -215,8 +224,10 @@ fix-dockerignore:
 
 .PHONY: help
 # Print every Make target with the description from its preceding comment line.
+# Usage: make help [target=<name>]
+# Example: make help target=compose-playwright
 help:
-	@bash scripts/make/help.sh
+	@bash scripts/make/help.sh $(target)
 
 .PHONY: install
 # Install all runtime dependencies, incremental via a stamp file (see scripts/install/all.sh).

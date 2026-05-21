@@ -166,7 +166,7 @@ re-provisioning, or the category-mapping defaults can ship silently.
   works as declared in practice.
 - [x] The scenario MUST pass the same idempotency check as the rest
   of the suite: running the Playwright spec twice in a row (via
-  [rerun-spec.sh](../../scripts/tests/e2e/rerun-spec.sh)) MUST both
+  `make compose-playwright role=web-app-wordpress`) MUST both
   times return green and MUST leave zero persisted test posts in
   WordPress and zero persisted test topics in Discourse.
 

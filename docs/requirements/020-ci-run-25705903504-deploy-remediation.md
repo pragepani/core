@@ -73,7 +73,7 @@ Per role, inner-loop work via [Playwright Spec Loop](../agents/action/iteration/
 
 1. Establish a baseline deploy.
 2. Update the role's `files/playwright/playwright.spec.js` selectors to match the live UI.
-3. Re-run `scripts/tests/e2e/rerun-spec.sh <role>` until green.
+3. Re-run `make compose-playwright role=<role>` until green.
 
 Roles: `web-app-mailu`, `web-app-opencloud`, `web-app-friendica`, `web-app-mattermost`, `web-app-taiga`, `web-app-fediwall`, `web-app-postmarks`.
 

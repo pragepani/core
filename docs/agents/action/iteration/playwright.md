@@ -4,10 +4,10 @@ This page defines the inner loop for iterating on a role-local `files/playwright
 
 ## Definitions
 
-- **Inner loop**: the edit-rerun cycle on `roles/<role>/files/playwright/playwright.spec.js` driven by `scripts/tests/e2e/rerun-spec.sh`, without a redeploy.
+- **Inner loop**: the edit-rerun cycle on `roles/<role>/files/playwright/playwright.spec.js` driven by `make compose-playwright role=<role>`, without a redeploy.
 - **Staging dir**: `TEST_E2E_PLAYWRIGHT_STAGE_BASE_DIR/<role>` (default `/tmp/test-e2e-playwright/<role>`). Contains the rendered `.env` and the Playwright project from the last deploy.
 - **Baseline deploy**: a successful `make compose-deploy mode=reinstall apps=<role> full_cycle=true` run as defined in [Role Loop](role.md).
-- **Pass**: `scripts/tests/e2e/rerun-spec.sh <role>` exits `0` AND every MUST in [Contributing `playwright.spec.js`](../../../contributing/artefact/files/role/playwright.specs.js.md) holds for the resulting run.
+- **Pass**: `make compose-playwright role=<role>` exits `0` AND every MUST in [Contributing `playwright.spec.js`](../../../contributing/artefact/files/role/playwright.specs.js.md) holds for the resulting run.
 
 ## Preconditions
 
@@ -34,7 +34,7 @@ You MUST load the following pages before editing any file, in this order:
 
 1. Verify every item in [Preconditions](#preconditions). If any fails, exit this page and follow [Role Loop](role.md).
 2. Edit `roles/<role>/files/playwright/playwright.spec.js`. You MUST NOT hand-edit the staged copy under `TEST_E2E_PLAYWRIGHT_STAGE_BASE_DIR/<role>/tests/`; the rerunner overwrites it from the repo on each run.
-3. Run `INFINITO_PLAYWRIGHT_KEEP=true scripts/tests/e2e/rerun-spec.sh <role>`. You MAY append `--grep <pattern>` or any other `npx playwright test` argument. Set `INFINITO_PLAYWRIGHT_KEEP=true` on every inner-loop run regardless of the previous result; omit only when the user has explicitly opted out. For the full propagation chain see [Playwright Tests](../../../contributing/actions/testing/playwright.md#artefact-retention-).
+3. Run `make compose-playwright role=<role> keep=true`. You MAY pass `pw="--grep <pattern>"` (or any other `npx playwright test` argument). Set `keep=true` on every inner-loop run regardless of the previous result; omit only when the user has explicitly opted out. For the full propagation chain see [Playwright Tests](../../../contributing/actions/testing/playwright.md#artefact-retention-).
 4. Inspect the run output before deciding pass / fail; a green Playwright exit only proves no `expect(...)` threw, not that the contract is satisfied:
    - You MUST read the per-test logs for every run: the `list` reporter output, `playwright-report/index.html`, and `test-results/<test>/error-context.md` for any failed test.
    - You MUST verify schema conformance per [Contributing `playwright.spec.js`](../../../contributing/artefact/files/role/playwright.specs.js.md): persona names match `<persona>: <flow>`, every skip routes through `PERSONA_<X>_BLOCKED=true` or `<NAME>_SERVICE_ENABLED=false` (never runtime detection), and every persona reaches an authenticated surface and drives a role-specific interaction.
@@ -52,7 +52,7 @@ To validate a hypothesis without redeploying — e.g. rerun the Playwright image
 
 You MUST NOT report the task complete until all of the following hold:
 
-1. `scripts/tests/e2e/rerun-spec.sh <role>` has exited `0` on the current spec.
+1. `make compose-playwright role=<role>` has exited `0` on the current spec.
 2. Every MUST in [Contributing `playwright.spec.js`](../../../contributing/artefact/files/role/playwright.specs.js.md) holds, including the live-application assertion and the logged-out final state.
 3. A final `make compose-deploy mode=reinstall apps=<role> full_cycle=true` run has completed with the spec passing against the freshly provisioned stack. Inner-loop passes alone do NOT satisfy this gate.
 

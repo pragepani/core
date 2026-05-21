@@ -120,7 +120,7 @@ and retroactively migrates the existing specs onto it.
 
 - [x] When a `<SERVICE>_SERVICE_ENABLED` variable is absent from the
   env (for example during local iteration via
-  [rerun-spec.sh](../../scripts/tests/e2e/rerun-spec.sh) against an
+  `make compose-playwright role=<role>` against an
   older staged `.env` that predates this requirement), the helper
   MUST treat that service as __enabled__. This preserves the current
   behaviour for iterative spec development against a fully-featured
