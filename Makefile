@@ -13,6 +13,8 @@ else
 $(error Missing env file: $(ENV_SH))
 endif
 
+.DEFAULT_GOAL := help
+
 .PHONY: act-all
 # Run all act-based deploy checks.
 act-all:
