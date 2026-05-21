@@ -114,6 +114,11 @@ clean-sudo:
 compose-down:
 	@"$${PYTHON}" -m cli.administration.deploy.development down
 
+.PHONY: compose-entity-purge
+# Purge one or more app entities from the container.
+compose-entity-purge:
+	@bash scripts/tests/deploy/local/purge/entity.sh
+
 .PHONY: compose-exec
 # Run a shell (`make compose-exec`) or command (`make compose-exec INFINITO_CMD="..."`) in the running container.
 compose-exec:
@@ -123,6 +128,11 @@ compose-exec:
 # Run a one-off `docker run` inside the running container.
 compose-inner-run:
 	@bash scripts/tests/deploy/local/exec/run.sh
+
+.PHONY: compose-inventory-refresh
+# Refresh the container inventory without deploying apps.
+compose-inventory-refresh:
+	@bash scripts/tests/deploy/local/reset/inventory.sh
 
 .PHONY: compose-restart
 # Restart the development stack.
@@ -134,6 +144,13 @@ compose-restart:
 compose-stop:
 	@"$${PYTHON}" -m cli.administration.deploy.development stop
 
+.PHONY: compose-system-purge
+# Purge the broader container-level deploy artifacts.
+compose-system-purge: compose-entity-purge
+	@bash scripts/tests/deploy/local/purge/inventory.sh
+	@bash scripts/tests/deploy/local/purge/web.sh
+	@bash scripts/tests/deploy/local/purge/lib.sh
+
 .PHONY: compose-up
 # Start the development stack.
 compose-up: install
@@ -143,23 +160,6 @@ compose-up: install
 # Interactive REPL for the infinito.nexus CLI, running on the host. Each line is forwarded to `python -m cli`; Ctrl+C only cancels the current input — exit with `exit`, `quit`, or Ctrl+D.
 console:
 	@"$${PYTHON}" -m cli.console
-
-.PHONY: container-purge-entity
-# Purge one or more app entities from the container.
-container-purge-entity:
-	@bash scripts/tests/deploy/local/purge/entity.sh
-
-.PHONY: container-purge-system
-# Purge the broader container-level deploy artifacts.
-container-purge-system: container-purge-entity
-	@bash scripts/tests/deploy/local/purge/inventory.sh
-	@bash scripts/tests/deploy/local/purge/web.sh
-	@bash scripts/tests/deploy/local/purge/lib.sh
-
-.PHONY: container-refresh-inventory
-# Refresh the container inventory without deploying apps.
-container-refresh-inventory:
-	@bash scripts/tests/deploy/local/reset/inventory.sh
 
 .PHONY: deploy
 # Run the local deploy router. Args: mode=initialize|reinstall|update (default initialize), apps=<csv>, purge=true|false (default false), type=server|workstation|universal (default from default.env), bundles=<csv>, disabled=<csv>, full_cycle=true|false. Example: `make deploy mode=reinstall apps=web-app-matomo full_cycle=true`. See scripts/tests/deploy/local/deploy/main.sh for the full table.

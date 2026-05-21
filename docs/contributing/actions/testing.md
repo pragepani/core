@@ -45,8 +45,8 @@ Use the following table when you need realistic local deployment validation or a
 | Full local validation | `make deploy` | Builds the broader local deployment flow across apps. | Broad coverage when you explicitly need it. |
 | Bundle deploy | `make deploy bundles="<bundle>[,<bundle>]"` | Aggregates the role groups from one or more [inventories/bundles/](../../../inventories/bundles/) entries into `INFINITO_APPS` and runs the reinstall flow. Set `full_cycle=true` for the async update pass. | One-shot validation of a curated app shape (e.g. `education-suite`). |
 | Bundle redeploy | `make deploy mode=update bundles="<bundle>[,<bundle>]"` | Same bundle resolution as the bundle deploy, but routes through the reuse path (no down/up, no entity purge). | Fast iteration loop after a prior bundle deploy. |
-| Local reset | `make container-refresh-inventory` | Recreates the local inventory without deploying apps. | Use this when your local inventory is broken or you want a clean reset. |
-| Local cleanup | `make container-purge-system` | Deletes local deploy artifacts and cleanup data. | Use this only when you really want to remove local state. |
+| Local reset | `make compose-inventory-refresh` | Recreates the local inventory without deploying apps. | Use this when your local inventory is broken or you want a clean reset. |
+| Local cleanup | `make compose-system-purge` | Deletes local deploy artifacts and cleanup data. | Use this only when you really want to remove local state. |
 
 Important:
 
