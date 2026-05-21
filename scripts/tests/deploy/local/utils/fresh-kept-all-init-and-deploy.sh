@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# In-container helper for `make deploy` (initialize all discovered apps).
+# In-container helper for `make compose-deploy` (initialize all discovered apps).
 #
 # Called from the host wrapper at
 # scripts/tests/deploy/local/deploy/apps/initialize/all.sh via

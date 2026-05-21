@@ -11,7 +11,7 @@ The Hugo site is built into the custom Docker image at `compose build` time. The
   make compose-exec INFINITO_CMD="docker compose -f /opt/docker/web-app-hugo/docker-compose.yml build --no-cache"
   ```
 
-  The next `make deploy mode=update apps=web-app-hugo` will pull the image, restart nginx, and serve the freshly rendered output.
+  The next `make compose-deploy mode=update apps=web-app-hugo` will pull the image, restart nginx, and serve the freshly rendered output.
 
 ## Bumping the source version
 
@@ -26,7 +26,7 @@ The Hugo site is built into the custom Docker image at `compose build` time. The
 3. Re-deploy:
 
    ```bash
-   make deploy mode=update apps=web-app-hugo
+   make compose-deploy mode=update apps=web-app-hugo
    ```
 
 4. Verify in the browser that the content reflects the new version.

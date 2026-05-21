@@ -3,8 +3,8 @@ set -euo pipefail
 
 # Single entry point for every local deploy flow.
 #
-# Routing environment variables (set them via `make deploy <short>=<value>`;
-# `make deploy` maps the short Make variables to the INFINITO_* env vars):
+# Routing environment variables (set them via `make compose-deploy<short>=<value>`;
+# `make compose-deploy` maps the short Make variables to the INFINITO_* env vars):
 #   INFINITO_DEPLOY_MODE        initialize (default) | reinstall | update
 #                               Short Make alias: mode
 #   INFINITO_BUNDLES            optional. Comma-separated bundle names. When

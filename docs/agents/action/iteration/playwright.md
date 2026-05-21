@@ -6,7 +6,7 @@ This page defines the inner loop for iterating on a role-local `files/playwright
 
 - **Inner loop**: the edit-rerun cycle on `roles/<role>/files/playwright/playwright.spec.js` driven by `scripts/tests/e2e/rerun-spec.sh`, without a redeploy.
 - **Staging dir**: `TEST_E2E_PLAYWRIGHT_STAGE_BASE_DIR/<role>` (default `/tmp/test-e2e-playwright/<role>`). Contains the rendered `.env` and the Playwright project from the last deploy.
-- **Baseline deploy**: a successful `make deploy mode=reinstall apps=<role> full_cycle=true` run as defined in [Role Loop](role.md).
+- **Baseline deploy**: a successful `make compose-deploy mode=reinstall apps=<role> full_cycle=true` run as defined in [Role Loop](role.md).
 - **Pass**: `scripts/tests/e2e/rerun-spec.sh <role>` exits `0` AND every MUST in [Contributing `playwright.spec.js`](../../../contributing/artefact/files/role/playwright.specs.js.md) holds for the resulting run.
 
 ## Preconditions
@@ -54,13 +54,13 @@ You MUST NOT report the task complete until all of the following hold:
 
 1. `scripts/tests/e2e/rerun-spec.sh <role>` has exited `0` on the current spec.
 2. Every MUST in [Contributing `playwright.spec.js`](../../../contributing/artefact/files/role/playwright.specs.js.md) holds, including the live-application assertion and the logged-out final state.
-3. A final `make deploy mode=reinstall apps=<role> full_cycle=true` run has completed with the spec passing against the freshly provisioned stack. Inner-loop passes alone do NOT satisfy this gate.
+3. A final `make compose-deploy mode=reinstall apps=<role> full_cycle=true` run has completed with the spec passing against the freshly provisioned stack. Inner-loop passes alone do NOT satisfy this gate.
 
 ## Escape
 
 When the failure requires a change outside `files/playwright/playwright.spec.js`:
 
 1. You MUST stop the inner loop. Inner-loop runs do NOT pick up role changes.
-2. You SHOULD run `make deploy mode=update apps=<role>` for the redeploy.
-3. You MUST NOT fall back to `make deploy mode=reinstall apps=<role> full_cycle=true` unless the reuse path has concrete evidence of a broken inventory or host stack, per [Role Loop](role.md).
+2. You SHOULD run `make compose-deploy mode=update apps=<role>` for the redeploy.
+3. You MUST NOT fall back to `make compose-deploy mode=reinstall apps=<role> full_cycle=true` unless the reuse path has concrete evidence of a broken inventory or host stack, per [Role Loop](role.md).
 4. After the redeploy succeeds, return to [Procedure](#procedure) step 1.

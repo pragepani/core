@@ -11,7 +11,7 @@ For what the `files/playwright/playwright.spec.js` of a role MUST contain, see
 
 - [Playwright](https://playwright.dev/) runs inside Docker via the shared `test-e2e-playwright` role.
 - There is no standalone `make` target for Playwright. Tests run as part of local deploy flows
-  (e.g. `make deploy mode=reinstall apps=web-app-matomo full_cycle=true`). For spec-only
+  (e.g. `make compose-deploy mode=reinstall apps=web-app-matomo full_cycle=true`). For spec-only
   iteration after the first successful deploy, see [Playwright Spec Loop](../../../agents/action/iteration/playwright.md).
 
 ## When to Write ✍️
@@ -64,7 +64,7 @@ The propagation chain has four hops:
 
 Set the variable for the contexts you need:
 
-- **Local deploy**: prefix every `make deploy-*` invocation with `INFINITO_PLAYWRIGHT_KEEP=true`.
+- **Local deploy**: prefix every `make compose-deploy` invocation with `INFINITO_PLAYWRIGHT_KEEP=true`.
 - **Local `act` runs**: append `--env INFINITO_PLAYWRIGHT_KEEP=true` to the `act` command.
 - **CI**: set the `INFINITO_PLAYWRIGHT_KEEP` repository variable. For the GitHub click path see [CI Configuration](../../tools/github/actions/configuration.md#infinito_playwright_keep-).
 - **Inventory pin**: set `TEST_E2E_PLAYWRIGHT_KEEP: "true"` in `group_vars` or `host_vars` of the target environment.

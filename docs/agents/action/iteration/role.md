@@ -17,17 +17,17 @@ For workflow-level iteration with Act, see [Workflow Loop](workflow.md).
   - SIDE EFFECT (yes): inventory initializer auto-removes the provider roles `web-app-matomo`, `web-app-dashboard`, `web-app-prometheus`, `web-app-mailu`, and `web-svc-css`. Do NOT list them in `INFINITO_APPS`.
   - PERSIST: record answer at top of iteration. Reuse for all subsequent deploys without re-asking.
 - You MUST run `make test` before every deploy. Only proceed with the deploy if all tests pass.
-- You MUST prepend `INFINITO_PLAYWRIGHT_KEEP=true` to every `make deploy` command in the iteration (any mode), so trace, screenshot, and video of passing Playwright tests stay inspectable. Omit only when the user has explicitly opted out of per-test artefacts. For the full propagation chain see [Playwright Tests](../../../contributing/actions/testing/playwright.md#artefact-retention-).
-- Unless the user explicitly says to reuse the existing setup, you MUST start once with `make deploy mode=reinstall apps=<roles> full_cycle=true` to establish the baseline inventory and clean app state. `full_cycle=true` adds the async update pass (pass 2) and MUST stay on unless the user explicitly asks to skip it.
+- You MUST prepend `INFINITO_PLAYWRIGHT_KEEP=true` to every `make compose-deploy` command in the iteration (any mode), so trace, screenshot, and video of passing Playwright tests stay inspectable. Omit only when the user has explicitly opted out of per-test artefacts. For the full propagation chain see [Playwright Tests](../../../contributing/actions/testing/playwright.md#artefact-retention-).
+- Unless the user explicitly says to reuse the existing setup, you MUST start once with `make compose-deploy mode=reinstall apps=<roles> full_cycle=true` to establish the baseline inventory and clean app state. `full_cycle=true` adds the async update pass (pass 2) and MUST stay on unless the user explicitly asks to skip it.
 - You MUST NOT run more than one deploy command at the same time. Deployments MUST be executed serially, never in parallel.
-- To speed up debugging, you MAY pass multiple apps at once, e.g. `make deploy mode=reinstall apps="<roles> <roles>" full_cycle=true`.
-- After that, you MUST use `make deploy mode=update apps=<roles>` for the default edit-fix-redeploy loop.
-- Do NOT rerun `make deploy mode=reinstall apps=<roles> full_cycle=true` just because a deploy failed or you changed code. That restarts the stack unnecessarily and burns time.
-- If the same failure still reproduces on the reuse path and you want to test whether app entity state is involved, use `make deploy mode=update apps=<roles> purge=true` once.
-- After that targeted purge check, you MUST return to `make deploy mode=update apps=<roles>`.
-- Only go back to `make deploy mode=reinstall apps=<roles> full_cycle=true` if you have concrete evidence that the inventory or host stack is broken, or you intentionally need a fresh single-app baseline again.
-- Network or DNS failures during a local deploy count as concrete evidence that the host stack is broken. In that case, the next retry MUST be `make deploy mode=reinstall apps=<roles> full_cycle=true`.
-- If you need to validate the single-app init/deploy path separately, use `make deploy apps=<roles>`.
+- To speed up debugging, you MAY pass multiple apps at once, e.g. `make compose-deploy mode=reinstall apps="<roles> <roles>" full_cycle=true`.
+- After that, you MUST use `make compose-deploy mode=update apps=<roles>` for the default edit-fix-redeploy loop.
+- Do NOT rerun `make compose-deploy mode=reinstall apps=<roles> full_cycle=true` just because a deploy failed or you changed code. That restarts the stack unnecessarily and burns time.
+- If the same failure still reproduces on the reuse path and you want to test whether app entity state is involved, use `make compose-deploy mode=update apps=<roles> purge=true` once.
+- After that targeted purge check, you MUST return to `make compose-deploy mode=update apps=<roles>`.
+- Only go back to `make compose-deploy mode=reinstall apps=<roles> full_cycle=true` if you have concrete evidence that the inventory or host stack is broken, or you intentionally need a fresh single-app baseline again.
+- Network or DNS failures during a local deploy count as concrete evidence that the host stack is broken. In that case, the next retry MUST be `make compose-deploy mode=reinstall apps=<roles> full_cycle=true`.
+- If you need to validate the single-app init/deploy path separately, use `make compose-deploy apps=<roles>`.
 
 ## Matrix variants
 
@@ -35,8 +35,8 @@ For the matrix-variant mechanism (folder layout, round semantics, `--variant` / 
 
 - Before you start a Role Loop on a matrix-variant role, you MUST decide if the iteration targets the FULL matrix (validates every variant) or ONE specific variant (focused debug). State the choice explicitly before the first deploy.
 - For focused debug on variant `<idx>`, you MUST pin `INFINITO_VARIANT=<idx>` on every command in the iteration. Mixing pinned and unpinned commands silently retargets a different folder.
-- Default focused-debug recipe: `INFINITO_VARIANT=<idx> make deploy mode=reinstall apps=<role> full_cycle=true` once for the variant baseline, then `INFINITO_VARIANT=<idx> make deploy mode=update apps=<role>` for the edit-fix-redeploy loop.
-- First contact with a previously-untouched `INFINITO_VARIANT=<idx>` MUST be `make deploy mode=reinstall apps=<roles> INFINITO_VARIANT=<idx>`, never a reuse target. Reuse re-pins the live stack onto stale volumes, DB rows and network aliases from the previously-pinned variant, producing split-brain app state.
+- Default focused-debug recipe: `INFINITO_VARIANT=<idx> make compose-deploy mode=reinstall apps=<role> full_cycle=true` once for the variant baseline, then `INFINITO_VARIANT=<idx> make compose-deploy mode=update apps=<role>` for the edit-fix-redeploy loop.
+- First contact with a previously-untouched `INFINITO_VARIANT=<idx>` MUST be `make compose-deploy mode=reinstall apps=<roles> INFINITO_VARIANT=<idx>`, never a reuse target. Reuse re-pins the live stack onto stale volumes, DB rows and network aliases from the previously-pinned variant, producing split-brain app state.
 - If a reuse target aborts with "inventory not found", you MUST add `INFINITO_VARIANT=<idx>` and re-run; do NOT work around the error by re-creating the unsuffixed folder by hand.
 - For FULL-matrix iteration, omit `INFINITO_VARIANT=`. If any round fails, capture WHICH round was the last successful one so the next redeploy can pin `INFINITO_VARIANT=<that-idx>` to it.
 - When debugging cross-variant interaction (for example "the multisite variant breaks because single-site state was not purged"), reproduce with the FULL matrix once, then pin `INFINITO_VARIANT=<failing-idx>` and iterate the fix. Re-run the FULL matrix only when you believe the fix is complete.

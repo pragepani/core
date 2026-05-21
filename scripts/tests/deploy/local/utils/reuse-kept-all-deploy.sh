@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# In-container helper for `make deploy mode=update`.
+# In-container helper for `make compose-deploy mode=update`.
 #
 # Called from the host wrapper at
 # scripts/tests/deploy/local/deploy/apps/update/all.sh via

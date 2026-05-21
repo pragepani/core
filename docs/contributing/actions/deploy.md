@@ -8,7 +8,7 @@ Two layers exist for invoking a local deploy:
 
 | Layer | When to use |
 |---|---|
-| `make deploy` in the [Makefile](../../../Makefile) | Default. Single entry point with short Make variables (`apps`, `mode`, `purge`, `type`) routed by [main.sh](../../../scripts/tests/deploy/local/deploy/main.sh). |
+| `make compose-deploy` in the [Makefile](../../../Makefile) | Default. Single entry point with short Make variables (`apps`, `mode`, `purge`, `type`) routed by [main.sh](../../../scripts/tests/deploy/local/deploy/main.sh). |
 | `infinito administration deploy development <subcommand>` (Python CLI) | Direct invocation when you need a flag the make target does not expose, or when you script multi-step flows yourself. |
 
 The make target ultimately calls the same CLI, so any behaviour described here applies to both.
@@ -18,7 +18,7 @@ The make target ultimately calls the same CLI, so any behaviour described here a
 Use `mode=reinstall` to bring up a clean slate (cycles the dev stack and purges shared entities first):
 
 ```bash
-make deploy mode=reinstall apps="<role> <role>" full_cycle=true
+make compose-deploy mode=reinstall apps="<role> <role>" full_cycle=true
 ```
 
 - `full_cycle=true` adds the async update pass (pass 2) and SHOULD stay on for the baseline. The behaviour, per-variant interleaving, and `--full-cycle` flag mechanics are documented in [variants.md](../design/variants.md).
@@ -30,7 +30,7 @@ make deploy mode=reinstall apps="<role> <role>" full_cycle=true
 Default redeploy after a local code change:
 
 ```bash
-make deploy mode=update apps="<role>"
+make compose-deploy mode=update apps="<role>"
 ```
 
 - Reuses the existing inventory, keeps app state, runs the deploy only.
@@ -39,7 +39,7 @@ make deploy mode=update apps="<role>"
 If the reuse path keeps reproducing the same failure and you want to test whether app entity state is involved:
 
 ```bash
-make deploy mode=update apps="<role>" purge=true
+make compose-deploy mode=update apps="<role>" purge=true
 ```
 
 This purges the app's containers + volumes + Ansible-managed state on the host, then re-deploys. Use it once, then return to `mode=update` without `purge=true`. Do NOT loop with `purge=true`; if the failure survives a single purge it is not a state issue.
@@ -48,14 +48,14 @@ Only return to `mode=reinstall` when you have concrete evidence that the invento
 
 ## Pinning A Single Variant 🎯
 
-For multi-variant roles you MAY restrict any of the `make deploy` invocations above (and the dev CLI subcommands) to a single matrix round by setting `INFINITO_VARIANT=<idx>`:
+For multi-variant roles you MAY restrict any of the `make compose-deploy` invocations above (and the dev CLI subcommands) to a single matrix round by setting `INFINITO_VARIANT=<idx>`:
 
 ```bash
 # Variant 1 baseline only (no full matrix):
-INFINITO_VARIANT=1 make deploy mode=reinstall apps="<role>" full_cycle=true
+INFINITO_VARIANT=1 make compose-deploy mode=reinstall apps="<role>" full_cycle=true
 
 # Edit-fix-redeploy loop pinned to that variant:
-INFINITO_VARIANT=1 make deploy mode=update apps="<role>"
+INFINITO_VARIANT=1 make compose-deploy mode=update apps="<role>"
 ```
 
 Pinning is sticky: when iterating with `INFINITO_VARIANT=<idx>`, you MUST set it on every command in the iteration. Mixing pinned and unpinned commands silently retargets a different folder. The full semantics (single-folder mode, no inter-round cleanup, out-of-range error) live in [variants.md](../design/variants.md).

@@ -109,6 +109,18 @@ clean-sudo:
 	@echo "Removing ignored git files with sudo"
 	sudo git clean -fdX;
 
+.PHONY: compose-deploy
+# Run the local deploy router. Args: mode=initialize|reinstall|update (default initialize), apps=<csv>, purge=true|false (default false), type=server|workstation|universal (default from default.env), bundles=<csv>, disabled=<csv>, full_cycle=true|false. Example: `make compose-deploy mode=reinstall apps=web-app-matomo full_cycle=true`. See scripts/tests/deploy/local/deploy/main.sh for the full table.
+compose-deploy:
+	@$(if $(apps),INFINITO_APPS="$(apps)") \
+	 $(if $(mode),INFINITO_DEPLOY_MODE="$(mode)") \
+	 $(if $(purge),INFINITO_PURGE_ENTITIES="$(purge)") \
+	 $(if $(type),INFINITO_DEPLOY_TYPE="$(type)") \
+	 $(if $(bundles),INFINITO_BUNDLES="$(bundles)") \
+	 $(if $(disabled),INFINITO_SERVICES_DISABLED="$(disabled)") \
+	 $(if $(full_cycle),INFINITO_FULL_CYCLE="$(full_cycle)") \
+	 bash scripts/tests/deploy/local/deploy/main.sh
+
 .PHONY: compose-down
 # Stop the development stack.
 compose-down:
@@ -160,18 +172,6 @@ compose-up: install
 # Interactive REPL for the infinito.nexus CLI, running on the host. Each line is forwarded to `python -m cli`; Ctrl+C only cancels the current input — exit with `exit`, `quit`, or Ctrl+D.
 console:
 	@"$${PYTHON}" -m cli.console
-
-.PHONY: deploy
-# Run the local deploy router. Args: mode=initialize|reinstall|update (default initialize), apps=<csv>, purge=true|false (default false), type=server|workstation|universal (default from default.env), bundles=<csv>, disabled=<csv>, full_cycle=true|false. Example: `make deploy mode=reinstall apps=web-app-matomo full_cycle=true`. See scripts/tests/deploy/local/deploy/main.sh for the full table.
-deploy:
-	@$(if $(apps),INFINITO_APPS="$(apps)") \
-	 $(if $(mode),INFINITO_DEPLOY_MODE="$(mode)") \
-	 $(if $(purge),INFINITO_PURGE_ENTITIES="$(purge)") \
-	 $(if $(type),INFINITO_DEPLOY_TYPE="$(type)") \
-	 $(if $(bundles),INFINITO_BUNDLES="$(bundles)") \
-	 $(if $(disabled),INFINITO_SERVICES_DISABLED="$(disabled)") \
-	 $(if $(full_cycle),INFINITO_FULL_CYCLE="$(full_cycle)") \
-	 bash scripts/tests/deploy/local/deploy/main.sh
 
 .PHONY: diagnose-disk-usage
 # Show disk and Docker resource usage to identify what to clean up.

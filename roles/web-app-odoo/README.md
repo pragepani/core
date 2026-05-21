@@ -65,13 +65,13 @@ Additional modules can be enabled via the `modules.optional` configuration in th
 Deploy Odoo using the standard Infinito.Nexus deployment command:
 
 ```bash
-make deploy mode=reinstall apps=web-app-odoo
+make compose-deploy mode=reinstall apps=web-app-odoo
 ```
 
 For subsequent updates:
 
 ```bash
-make deploy mode=update apps=web-app-odoo
+make compose-deploy mode=update apps=web-app-odoo
 ```
 
 ## Access

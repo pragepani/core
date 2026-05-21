@@ -4,7 +4,7 @@ set -euo pipefail
 # One-off deploy of all apps cumulated from one or more inventory bundles.
 #
 # Usage:
-#   INFINITO_BUNDLES="education-suite,startup-essentials" make deploy
+#   INFINITO_BUNDLES="education-suite,startup-essentials" make compose-deploy
 #
 # Behavior:
 #   - Aggregates and deduplicates all role groups declared in each bundle's

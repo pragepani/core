@@ -40,7 +40,7 @@ For a broad stack like the Community Hub, you SHOULD start only the services you
 You MAY set the `INFINITO_SERVICES_DISABLED` environment variable before creating the inventory to disable services automatically across all applications without editing any file:
 
 ```bash
-make deploy mode=reinstall apps=web-app-discourse disabled=matomo
+make compose-deploy mode=reinstall apps=web-app-discourse disabled=matomo
 ```
 
 This sets `enabled: false` and `shared: false` for every listed service in the generated inventory. See [variables.md](variables.md) for details.
@@ -73,16 +73,16 @@ On small machines, you SHOULD limit validation to the role you are touching.
 For Discourse, start with:
 
 ```bash
-make deploy mode=reinstall apps=web-app-discourse disabled=matomo
+make compose-deploy mode=reinstall apps=web-app-discourse disabled=matomo
 ```
 
 If the local inventory and stack already exist, you SHOULD reuse them:
 
 ```bash
-make deploy mode=update apps=web-app-discourse disabled=matomo
+make compose-deploy mode=update apps=web-app-discourse disabled=matomo
 ```
 
-You SHOULD use `make deploy` (full discovery) only when you need broad coverage and have enough time and resources.
+You SHOULD use `make compose-deploy` (full discovery) only when you need broad coverage and have enough time and resources.
 
 ## Measure Before You Delete
 
