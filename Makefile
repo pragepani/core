@@ -28,31 +28,6 @@ act-app:
 act-workflow:
 	@bash scripts/tests/deploy/act/workflow.sh
 
-.PHONY: install-agent
-# Install OS-level sandbox dependencies (bubblewrap, socat) required by the Claude Code sandbox.
-install-agent:
-	@bash scripts/install/sandbox.sh
-
-.PHONY: security-apparmor-restore
-# Restore AppArmor profiles.
-security-apparmor-restore:
-	@echo "==> AppArmor: restore profiles"
-	@if grep -q '^[Yy1]' /sys/module/apparmor/parameters/enabled 2>/dev/null; then \
-		sudo bash scripts/system/apparmor/restore.sh; \
-	else \
-		echo "[apparmor] AppArmor module is not loaded — skipping restore"; \
-	fi
-
-.PHONY: security-apparmor-teardown
-# Tear down AppArmor for local development.
-security-apparmor-teardown:
-	@echo "==> AppArmor: full teardown (local dev)"
-	@if grep -q '^[Yy1]' /sys/module/apparmor/parameters/enabled 2>/dev/null; then \
-		sudo bash scripts/system/apparmor/teardown.sh; \
-	else \
-		echo "[apparmor] AppArmor module is not loaded — skipping teardown"; \
-	fi
-
 .PHONY: autoformat
 # Auto-format all source files (skips tools that are not installed).
 autoformat: install-lint
@@ -99,16 +74,6 @@ build-no-cache-all:
 		INFINITO_DISTRO="$$d" "$(MAKE)" build-no-cache; \
 	done
 
-.PHONY: clean-cache
-# Wipe on-disk caches under /var/cache/infinito/core/cache/ (stops cache containers first; re-run `make compose-up` to recreate).
-clean-cache:
-	@bash scripts/system/cache/clean.sh
-
-.PHONY: fix-chmod
-# Mark all shell scripts under scripts/ as executable.
-fix-chmod:
-	@find scripts/ -name "*.sh" -exec chmod +x {} \;
-
 .PHONY: clean
 # Remove ignored files from the working tree; falls back to sudo for container-owned __pycache__/*.pyc, warns and continues if both fail.
 clean:
@@ -126,6 +91,11 @@ clean:
 		echo "WARNING: (cleanup continues)"; \
 	fi
 
+.PHONY: clean-cache
+# Wipe on-disk caches under /var/cache/infinito/core/cache/ (stops cache containers first; re-run `make compose-up` to recreate).
+clean-cache:
+	@bash scripts/system/cache/clean.sh
+
 .PHONY: clean-pycache-dirs
 # Remove tracked directories whose only child is a __pycache__ folder (orphans left after moving / deleting source files).
 clean-pycache-dirs:
@@ -136,6 +106,36 @@ clean-pycache-dirs:
 clean-sudo:
 	@echo "Removing ignored git files with sudo"
 	sudo git clean -fdX;
+
+.PHONY: compose-down
+# Stop the development stack.
+compose-down:
+	@"$${PYTHON}" -m cli.administration.deploy.development down
+
+.PHONY: compose-exec
+# Run a shell (`make compose-exec`) or command (`make compose-exec INFINITO_CMD="..."`) in the running container.
+compose-exec:
+	@bash scripts/tests/deploy/local/exec/container.sh
+
+.PHONY: compose-inner-run
+# Run a one-off `docker run` inside the running container.
+compose-inner-run:
+	@bash scripts/tests/deploy/local/exec/run.sh
+
+.PHONY: compose-restart
+# Restart the development stack.
+compose-restart:
+	@"$${PYTHON}" -m cli.administration.deploy.development restart
+
+.PHONY: compose-stop
+# Stop the development stack without removing volumes.
+compose-stop:
+	@"$${PYTHON}" -m cli.administration.deploy.development stop
+
+.PHONY: compose-up
+# Start the development stack.
+compose-up: install
+	@"$${PYTHON}" -m cli.administration.deploy.development up
 
 .PHONY: console
 # Interactive REPL for the infinito.nexus CLI, running on the host. Each line is forwarded to `python -m cli`; Ctrl+C only cancels the current input — exit with `exit`, `quit`, or Ctrl+D.
@@ -171,32 +171,15 @@ deploy:
 	 $(if $(full_cycle),INFINITO_FULL_CYCLE="$(full_cycle)") \
 	 bash scripts/tests/deploy/local/deploy/main.sh
 
+.PHONY: diagnose-disk-usage
+# Show disk and Docker resource usage to identify what to clean up.
+diagnose-disk-usage:
+	@bash scripts/system/meta/disk-usage.sh
+
 .PHONY: diagnose-network
 # Run the network-diagnose script inside the infinito container (DNS/TCP/TLS/PMTU v4+v6).
 diagnose-network:
 	@$(MAKE) compose-exec INFINITO_CMD="python3 -m cli.contributing.network.diagnose"
-
-.PHONY: network-ipv6-disable
-# Disable IPv6 for local development.
-network-ipv6-disable:
-	@sudo bash scripts/system/network/ipv6/disable.sh
-	@"$(MAKE)" network-refresh
-
-.PHONY: network-dns-remove
-# Remove the DNS configuration.
-network-dns-remove:
-	@bash scripts/system/network/dns/remove.sh
-
-.PHONY: network-dns-setup
-# Configure DNS on Linux.
-network-dns-setup: wsl2-dns-setup
-	@bash scripts/system/network/dns/setup/linux.sh
-
-.PHONY: fix-dockerignore
-# Regenerate .dockerignore from .gitignore (which carries the .git entry Docker needs). Race-safe under parallel make setup invocations.
-fix-dockerignore:
-	@echo "Create .dockerignore"
-	cat .gitignore > .dockerignore
 
 .PHONY: dotenv
 # Regenerate .env (SPOT) from default.env + runtime context (distro, cache sizes, secrets, ...).
@@ -209,11 +192,6 @@ dotenv-force:
 	@rm -f .env
 	@env -i HOME="$${HOME}" PATH="$${PATH}" python3 -m cli.meta.env
 
-.PHONY: compose-down
-# Stop the development stack.
-compose-down:
-	@"$${PYTHON}" -m cli.administration.deploy.development down
-
 .PHONY: environment-bootstrap
 # Bootstrap the local development environment.
 environment-bootstrap: wsl2-systemd-check install-python-dev install-lint security-apparmor-teardown network-dns-setup network-ipv6-disable
@@ -222,10 +200,16 @@ environment-bootstrap: wsl2-systemd-check install-python-dev install-lint securi
 # Tear down the local development environment.
 environment-teardown: security-apparmor-restore network-dns-remove network-ipv6-restore
 
-.PHONY: compose-exec
-# Run a shell (`make compose-exec`) or command (`make compose-exec INFINITO_CMD="..."`) in the running container.
-compose-exec:
-	@bash scripts/tests/deploy/local/exec/container.sh
+.PHONY: fix-chmod
+# Mark all shell scripts under scripts/ as executable.
+fix-chmod:
+	@find scripts/ -name "*.sh" -exec chmod +x {} \;
+
+.PHONY: fix-dockerignore
+# Regenerate .dockerignore from .gitignore (which carries the .git entry Docker needs). Race-safe under parallel make setup invocations.
+fix-dockerignore:
+	@echo "Create .dockerignore"
+	cat .gitignore > .dockerignore
 
 .PHONY: help
 # Print every Make target with the description from its preceding comment line.
@@ -236,6 +220,11 @@ help:
 # Install all runtime dependencies, incremental via a stamp file (see scripts/install/all.sh).
 install:
 	@bash scripts/install/all.sh
+
+.PHONY: install-agent
+# Install OS-level sandbox dependencies (bubblewrap, socat) required by the Claude Code sandbox.
+install-agent:
+	@bash scripts/install/sandbox.sh
 
 .PHONY: install-ansible
 # Install Ansible dependencies.
@@ -341,15 +330,27 @@ meta-list:
 meta-mig: meta-list meta-tree
 	@echo "Creating meta data for meta infinity graph"
 
-.PHONY: network-refresh
-# Refresh the running development stack only when it already exists.
-network-refresh:
-	@bash scripts/system/network/docker/stack_refresh.sh
+.PHONY: meta-tree
+# Print the repository tree.
+meta-tree:
+	@echo "Generating Tree"
+	@"$${PYTHON}" -m cli.build.tree -D 2
 
-.PHONY: compose-restart
-# Restart the development stack.
-compose-restart:
-	@"$${PYTHON}" -m cli.administration.deploy.development restart
+.PHONY: network-dns-remove
+# Remove the DNS configuration.
+network-dns-remove:
+	@bash scripts/system/network/dns/remove.sh
+
+.PHONY: network-dns-setup
+# Configure DNS on Linux.
+network-dns-setup: wsl2-dns-setup
+	@bash scripts/system/network/dns/setup/linux.sh
+
+.PHONY: network-ipv6-disable
+# Disable IPv6 for local development.
+network-ipv6-disable:
+	@sudo bash scripts/system/network/ipv6/disable.sh
+	@"$(MAKE)" network-refresh
 
 .PHONY: network-ipv6-restore
 # Restore IPv6 settings.
@@ -357,10 +358,36 @@ network-ipv6-restore:
 	@sudo bash scripts/system/network/ipv6/restore.sh
 	@"$(MAKE)" network-refresh
 
-.PHONY: compose-inner-run
-# Run a one-off `docker run` inside the running container.
-compose-inner-run:
-	@bash scripts/tests/deploy/local/exec/run.sh
+.PHONY: network-refresh
+# Refresh the running development stack only when it already exists.
+network-refresh:
+	@bash scripts/system/network/docker/stack_refresh.sh
+
+.PHONY: network-trust-ca
+# Trust the local CA on Linux and WSL2.
+network-trust-ca:
+	@bash scripts/system/tls/trust/linux.sh
+	@bash scripts/system/tls/trust/wsl2.sh
+
+.PHONY: security-apparmor-restore
+# Restore AppArmor profiles.
+security-apparmor-restore:
+	@echo "==> AppArmor: restore profiles"
+	@if grep -q '^[Yy1]' /sys/module/apparmor/parameters/enabled 2>/dev/null; then \
+		sudo bash scripts/system/apparmor/restore.sh; \
+	else \
+		echo "[apparmor] AppArmor module is not loaded — skipping restore"; \
+	fi
+
+.PHONY: security-apparmor-teardown
+# Tear down AppArmor for local development.
+security-apparmor-teardown:
+	@echo "==> AppArmor: full teardown (local dev)"
+	@if grep -q '^[Yy1]' /sys/module/apparmor/parameters/enabled 2>/dev/null; then \
+		sudo bash scripts/system/apparmor/teardown.sh; \
+	else \
+		echo "[apparmor] AppArmor module is not loaded — skipping teardown"; \
+	fi
 
 .PHONY: setup
 # Run the setup step after generating .dockerignore.
@@ -371,16 +398,6 @@ setup: fix-dockerignore dotenv
 # Run setup after cleaning ignored files.
 setup-clean: clean setup
 	@echo "Full build with cleanup before was executed."
-
-.PHONY: compose-stop
-# Stop the development stack without removing volumes.
-compose-stop:
-	@"$${PYTHON}" -m cli.administration.deploy.development stop
-
-.PHONY: diagnose-disk-usage
-# Show disk and Docker resource usage to identify what to clean up.
-diagnose-disk-usage:
-	@bash scripts/system/meta/disk-usage.sh
 
 .PHONY: system-purge
 # Run the broad low-hardware cleanup routine.
@@ -434,23 +451,6 @@ test-unit: install
 	@INFINITO_TEST_TYPE="unit" \
 	INFINITO_COMPILE=0 \
 	bash scripts/tests/code/wrapper.sh
-
-.PHONY: meta-tree
-# Print the repository tree.
-meta-tree:
-	@echo "Generating Tree"
-	@"$${PYTHON}" -m cli.build.tree -D 2
-
-.PHONY: network-trust-ca
-# Trust the local CA on Linux and WSL2.
-network-trust-ca:
-	@bash scripts/system/tls/trust/linux.sh
-	@bash scripts/system/tls/trust/wsl2.sh
-
-.PHONY: compose-up
-# Start the development stack.
-compose-up: install
-	@"$${PYTHON}" -m cli.administration.deploy.development up
 
 .PHONY: update-skills
 # Update all agent skills to latest versions and refresh skills-lock.json.

@@ -39,8 +39,9 @@ def _parse_makefile(path: Path) -> tuple[list[_Target], list[_PhonyDecl], list[s
     for idx, line in enumerate(lines, start=1):
         phony_match = _PHONY_RE.match(line)
         if phony_match is not None:
-            for name in phony_match.group("names").split():
-                phonys.append(_PhonyDecl(idx, name))
+            phonys.extend(
+                _PhonyDecl(idx, name) for name in phony_match.group("names").split()
+            )
             continue
         target_match = _TARGET_RE.match(line)
         if target_match is None:
@@ -49,11 +50,15 @@ def _parse_makefile(path: Path) -> tuple[list[_Target], list[_PhonyDecl], list[s
     return targets, phonys, lines
 
 
-def _phony_line_above(target: _Target, phonys: list[_PhonyDecl], lines: list[str]) -> int | None:
+def _phony_line_above(
+    target: _Target, phonys: list[_PhonyDecl], lines: list[str]
+) -> int | None:
     """Return the `.PHONY: <target>` line number that immediately precedes the
     target (across an optional comment block). `None` when missing or when
     something other than a comment lies between the PHONY line and the target."""
-    candidates = [p for p in phonys if p.name == target.name and p.line_no < target.line_no]
+    candidates = [
+        p for p in phonys if p.name == target.name and p.line_no < target.line_no
+    ]
     if not candidates:
         return None
     phony = max(candidates, key=lambda p: p.line_no)
@@ -70,13 +75,12 @@ class TestMakefilePhonyDeclarations(unittest.TestCase):
         self.targets, self.phonys, self.lines = _parse_makefile(self.path)
 
     def test_every_target_has_phony_above_comment(self) -> None:
-        violations: list[str] = []
-        for target in self.targets:
-            if _phony_line_above(target, self.phonys, self.lines) is None:
-                violations.append(
-                    f"  Makefile:{target.line_no}: '{target.name}' has no `.PHONY: {target.name}` "
-                    "line directly above its comment block"
-                )
+        violations: list[str] = [
+            f"  Makefile:{target.line_no}: '{target.name}' has no `.PHONY: {target.name}` "
+            "line directly above its comment block"
+            for target in self.targets
+            if _phony_line_above(target, self.phonys, self.lines) is None
+        ]
         if violations:
             self.fail(
                 f"{len(violations)} target(s) missing a `.PHONY` declaration "
