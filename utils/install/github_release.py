@@ -7,10 +7,10 @@ from urllib.request import urlopen
 from utils.install.primitives import download_file
 
 
-def resolve_latest_tag(latest_url: str) -> str:
+def resolve_latest_tag(latest_url: str, *, timeout: float = 30.0) -> str:
     # GitHub redirects /releases/latest -> /releases/tag/v<version>;
     # final-URL last segment minus a leading 'v' is the version.
-    with urlopen(latest_url) as response:  # noqa: S310 - trusted github URL
+    with urlopen(latest_url, timeout=timeout) as response:  # noqa: S310 - trusted github URL
         final_url = response.geturl()
 
     final_url = final_url.rstrip("/")

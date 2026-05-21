@@ -43,8 +43,8 @@ def ensure_dir_on_path(directory: str) -> None:
     os.environ["PATH"] = directory + (os.pathsep + current if current else "")
 
 
-def download_file(url: str, output: str) -> None:
-    with urlopen(url) as response:  # noqa: S310 - trusted release URLs only
+def download_file(url: str, output: str, *, timeout: float = 60.0) -> None:
+    with urlopen(url, timeout=timeout) as response:  # noqa: S310 - trusted release URLs only
         data = response.read()
     Path(output).write_bytes(data)
 
