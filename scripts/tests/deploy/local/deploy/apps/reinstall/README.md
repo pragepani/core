@@ -14,6 +14,6 @@ Use this flow when stale container state or cross-application entities (for exam
 - Runs `development down` followed by `development up --when-down` to remove and re-create containers.
 - Purges shared entities relevant to the deploy (for example `matomo`).
 - Bakes a fresh inventory with `ASYNC_ENABLED=false` and `RUNTIME=dev`.
-- Set `INFINITO_FULL_CYCLE=true` to run a second async pass after the initial sync pass.
+- Set `full_cycle=true` (or `INFINITO_FULL_CYCLE=true` in the environment) to run a second async pass after the initial sync pass.
 
 For the non-destructive equivalent, see [initialize/](../initialize/README.md).

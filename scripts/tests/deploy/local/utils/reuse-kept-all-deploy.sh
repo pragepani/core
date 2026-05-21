@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# In-container helper for `make deploy-reuse-kept-all`.
+# In-container helper for `make deploy mode=update`.
 #
 # Called from the host wrapper at
-# scripts/tests/deploy/local/deploy/reuse-kept-all.sh via
+# scripts/tests/deploy/local/deploy/apps/update/all.sh via
 # `cli.administration.deploy.development exec --env KEY=VAL`, which injects the env-vars
 # asserted below. The repo is mounted at ${INFINITO_SRC_DIR} by the dev
 # compose stack.

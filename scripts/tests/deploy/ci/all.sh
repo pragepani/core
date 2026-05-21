@@ -10,7 +10,7 @@ set -euo pipefail
 #
 # Required env:
 #   INFINITO_APPS="web-app-keycloak"
-#   INFINITO_TEST_DEPLOY_TYPE="server|workstation|universal"
+#   INFINITO_DEPLOY_TYPE="server|workstation|universal"
 #   INFINITO_DISTROS="arch debian ubuntu fedora centos"
 #   INFINITO_INVENTORY_DIR="/path/to/inventory"
 #
@@ -35,14 +35,14 @@ else
 fi
 
 : "${INFINITO_APPS:?INFINITO_APPS is required (e.g. INFINITO_APPS=web-app-keycloak)}"
-: "${INFINITO_TEST_DEPLOY_TYPE:?INFINITO_TEST_DEPLOY_TYPE is required (server|workstation|universal)}"
+: "${INFINITO_DEPLOY_TYPE:?INFINITO_DEPLOY_TYPE is required (server|workstation|universal)}"
 : "${INFINITO_DISTROS:?INFINITO_DISTROS is required (e.g. 'arch debian ubuntu fedora centos')}"
 : "${INFINITO_INVENTORY_DIR:?INFINITO_INVENTORY_DIR is required}"
 
-case "${INFINITO_TEST_DEPLOY_TYPE}" in
+case "${INFINITO_DEPLOY_TYPE}" in
 server | workstation | universal) ;;
 *)
-	echo "[ERROR] Invalid INFINITO_TEST_DEPLOY_TYPE: ${INFINITO_TEST_DEPLOY_TYPE}" >&2
+	echo "[ERROR] Invalid INFINITO_DEPLOY_TYPE: ${INFINITO_DEPLOY_TYPE}" >&2
 	exit 2
 	;;
 esac
@@ -128,7 +128,7 @@ for distro in "${distro_arr[@]}"; do
 		fi
 	fi
 
-	echo "=== Running dedicated distro deploy: distro=${distro} app=${INFINITO_APPS} type=${INFINITO_TEST_DEPLOY_TYPE} ==="
+	echo "=== Running dedicated distro deploy: distro=${distro} app=${INFINITO_APPS} type=${INFINITO_DEPLOY_TYPE} ==="
 	if [[ -n "${remaining}" ]]; then
 		echo ">>> Time budget: remaining=${remaining}s max_seen=${max_seen}s"
 	fi
@@ -172,7 +172,7 @@ total="$((global_end - global_start))"
 
 echo
 echo "=== Summary ==="
-echo "app=${INFINITO_APPS} type=${INFINITO_TEST_DEPLOY_TYPE}"
+echo "app=${INFINITO_APPS} type=${INFINITO_DEPLOY_TYPE}"
 echo "ran=${ran} skipped=${skipped} failed=${failed}"
 echo "total_runtime=${total}s max_seen_duration=${max_seen}s"
 if [[ -n "${deadline}" ]]; then

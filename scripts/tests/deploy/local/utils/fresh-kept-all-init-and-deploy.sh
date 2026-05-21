@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# In-container helper for `make deploy-fresh-kept-all`.
+# In-container helper for `make deploy` (initialize all discovered apps).
 #
 # Called from the host wrapper at
-# scripts/tests/deploy/local/deploy/fresh-kept-all.sh via
+# scripts/tests/deploy/local/deploy/apps/initialize/all.sh via
 # `cli.administration.deploy.development exec --env KEY=VAL`, which injects the env-vars
 # asserted below. Performs entry bootstrap, creates the inventory and
 # runs the dedicated deploy in one in-container session. The repo is

@@ -27,7 +27,7 @@ permissions:
 # - For local `act`, prefer overriding via `--env`.
 # - For GitHub UI dispatch, inputs are used as fallback.
 env:
-  INFINITO_TEST_DEPLOY_TYPE: "server"
+  INFINITO_DEPLOY_TYPE: "server"
   INFINITO_DISTROS: "debian"
   NIX_CONFIG: ""
   INFINITO_IMAGE_TAG: "latest"
@@ -123,7 +123,7 @@ jobs:
       - name: Deploy app (same as CI logic)
         shell: bash
         env:
-          INFINITO_TEST_DEPLOY_TYPE: ${{ needs.discover.outputs.test_deploy_type }}
+          INFINITO_DEPLOY_TYPE: ${{ needs.discover.outputs.test_deploy_type }}
           INFINITO_DISTROS: ${{ needs.discover.outputs.distros }}
           INFINITO_APPS: ${{ matrix.apps }}
           ANSIBLE_LOG_PATH: /tmp/ansible-${{ matrix.apps }}.log

@@ -27,8 +27,8 @@ The `bundles/` subtree mirrors the same axes for inventory bundles (`fresh.sh` â
 
 | Entry point | What it does | Key inputs | Notes |
 |---|---|---|---|
-| `apps/initialize/all.sh` | Discovers apps, creates `devices.yml`, and deploys all discovered apps. | `INFINITO_DISTRO`, `INFINITO_TEST_DEPLOY_TYPE`, `INFINITO_INVENTORY_DIR` | Fresh all-app inventory path. |
+| `apps/initialize/all.sh` | Discovers apps, creates `devices.yml`, and deploys all discovered apps. | `INFINITO_DISTRO`, `INFINITO_DEPLOY_TYPE`, `INFINITO_INVENTORY_DIR` | Fresh all-app inventory path. |
 | `apps/initialize/selection.sh <app-id>` | Creates `devices.yml` for one or more apps and deploys them. | `INFINITO_APPS=<app-id>` | Init and deploy path for a specific app set. |
-| `apps/reinstall/selection.sh` | Recreates `devices.yml` and deploys one or more apps twice with `ASYNC_ENABLED=false` and `ASYNC_ENABLED=true`. | `INFINITO_DISTRO`, `INFINITO_INVENTORY_DIR`, `INFINITO_TEST_DEPLOY_TYPE`, `INFINITO_APPS` | Baseline and recovery path; purges entities first. |
-| `apps/update/all.sh` | Deploys every app from an existing inventory. | `INFINITO_DISTRO`, `INFINITO_TEST_DEPLOY_TYPE`, `INFINITO_INVENTORY_DIR` | Requires `${INFINITO_INVENTORY_DIR}/devices.yml` and `.password`. |
-| `apps/update/selection.sh` | Runs a targeted `infinito administration deploy dedicated` for one or more apps. | `INFINITO_APPS`, `INFINITO_TEST_DEPLOY_TYPE`, `INFINITO_CONTAINER`, `INFINITO_DEBUG`, `INFINITO_INVENTORY_DIR` | Reuses `devices.yml`. |
+| `apps/reinstall/selection.sh` | Recreates `devices.yml` and deploys one or more apps twice with `ASYNC_ENABLED=false` and `ASYNC_ENABLED=true`. | `INFINITO_DISTRO`, `INFINITO_INVENTORY_DIR`, `INFINITO_DEPLOY_TYPE`, `INFINITO_APPS` | Baseline and recovery path; purges entities first. |
+| `apps/update/all.sh` | Deploys every app from an existing inventory. | `INFINITO_DISTRO`, `INFINITO_DEPLOY_TYPE`, `INFINITO_INVENTORY_DIR` | Requires `${INFINITO_INVENTORY_DIR}/devices.yml` and `.password`. |
+| `apps/update/selection.sh` | Runs a targeted `infinito administration deploy dedicated` for one or more apps. | `INFINITO_APPS`, `INFINITO_DEPLOY_TYPE`, `INFINITO_CONTAINER`, `INFINITO_DEBUG`, `INFINITO_INVENTORY_DIR` | Reuses `devices.yml`. |

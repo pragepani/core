@@ -7,7 +7,7 @@ Existing container state and shared entities are kept untouched.
 
 | Entry point | Scope |
 |---|---|
-| `all.sh` | every discovered application (filtered by `INFINITO_TEST_DEPLOY_TYPE` and optional `INFINITO_WHITELIST`) |
+| `all.sh` | every discovered application (filtered by `INFINITO_DEPLOY_TYPE` and optional `INFINITO_WHITELIST`) |
 | `selection.sh <app-id>` | one or more apps passed via `INFINITO_APPS` or as a positional argument |
 
 ## When to use 🎯

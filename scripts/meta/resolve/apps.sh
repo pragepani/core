@@ -5,13 +5,13 @@ set -euo pipefail
 # optionally filtered by lifecycle and CI storage constraints.
 #
 # Inputs via env:
-#   INFINITO_TEST_DEPLOY_TYPE   = server|workstation|universal (required)
+#   INFINITO_DEPLOY_TYPE   = server|workstation|universal (required)
 #   INFINITO_WHITELIST = optional space-separated list of app ids to keep
 #
 # Output:
 #   JSON array to stdout (single line, always valid)
 
-: "${INFINITO_TEST_DEPLOY_TYPE:?INFINITO_TEST_DEPLOY_TYPE is required (server|workstation|universal)}"
+: "${INFINITO_DEPLOY_TYPE:?INFINITO_DEPLOY_TYPE is required (server|workstation|universal)}"
 
 PYTHON="${PYTHON:-python3}"
 
@@ -92,7 +92,7 @@ apps_json="$(
 	run_meta_cli \
 		-m cli.meta.roles.applications.type \
 		--format json \
-		--type "${INFINITO_TEST_DEPLOY_TYPE}" \
+		--type "${INFINITO_DEPLOY_TYPE}" \
 		"${lifecycles_args[@]}" |
 		json_compact_array
 )"

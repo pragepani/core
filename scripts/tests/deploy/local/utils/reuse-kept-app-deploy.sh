@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# In-container helper for `make deploy-reuse-kept-apps`.
+# In-container helper for `make deploy mode=update apps=…`.
 #
 # Called from the host wrapper at
-# scripts/tests/deploy/local/deploy/reuse-kept-app.sh via `docker exec`,
+# scripts/tests/deploy/local/deploy/apps/update/selection.sh via `docker exec`,
 # which is responsible for injecting the env-vars asserted below. The
 # repo is mounted at ${INFINITO_SRC_DIR} by the dev compose stack.
 #

@@ -2,7 +2,7 @@
 #
 # Resolve the app list and write it to GITHUB_OUTPUT.
 # Inputs via env (forwarded to scripts/meta/resolve/apps.sh):
-#   INFINITO_TEST_DEPLOY_TYPE  — required (server|workstation|universal)
+#   INFINITO_DEPLOY_TYPE  — required (server|workstation|universal)
 #   INFINITO_WHITELIST — optional space-separated allowlist
 set -euo pipefail
 

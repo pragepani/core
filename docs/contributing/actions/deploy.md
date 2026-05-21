@@ -8,21 +8,21 @@ Two layers exist for invoking a local deploy:
 
 | Layer | When to use |
 |---|---|
-| `make deploy-*` targets in the [Makefile](../../../Makefile) | Default. Stable, opinionated wrappers tuned for the local-dev / CI-on-laptop flow. |
-| `infinito administration deploy development <subcommand>` (Python CLI) | Direct invocation when you need a flag the make targets do not expose, or when you script multi-step flows yourself. |
+| `make deploy` in the [Makefile](../../../Makefile) | Default. Single entry point with short Make variables (`apps`, `mode`, `purge`, `type`) routed by [main.sh](../../../scripts/tests/deploy/local/deploy/main.sh). |
+| `infinito administration deploy development <subcommand>` (Python CLI) | Direct invocation when you need a flag the make target does not expose, or when you script multi-step flows yourself. |
 
-The make targets ultimately call the same CLI, so any behaviour described here applies to both.
+The make target ultimately calls the same CLI, so any behaviour described here applies to both.
 
 ## First-Run Baseline 📦
 
-Use `deploy-fresh-purged-apps` to bring up a clean slate:
+Use `mode=reinstall` to bring up a clean slate (cycles the dev stack and purges shared entities first):
 
 ```bash
-make deploy-fresh-purged-apps INFINITO_APPS="<role> <role>" INFINITO_FULL_CYCLE=true
+make deploy mode=reinstall apps="<role> <role>" full_cycle=true
 ```
 
-- `INFINITO_FULL_CYCLE=true` adds the async update pass (pass 2) and SHOULD stay on for the baseline. The behaviour, per-variant interleaving, and `--full-cycle` flag mechanics are documented in [variants.md](../design/variants.md).
-- The wrapper runs init, then deploy. Init materialises the inventory under `${INFINITO_INVENTORY_DIR}` (resolved by `make dotenv` via [resolve.sh](../../../scripts/inventory/resolve.sh); see [variables.md](../environment/variables.md)).
+- `full_cycle=true` adds the async update pass (pass 2) and SHOULD stay on for the baseline. The behaviour, per-variant interleaving, and `--full-cycle` flag mechanics are documented in [variants.md](../design/variants.md).
+- The router runs init, then deploy. Init materialises the inventory under `${INFINITO_INVENTORY_DIR}` (resolved by `make dotenv` via [resolve.sh](../../../scripts/inventory/resolve.sh); see [variables.md](../environment/variables.md)).
 - For roles with a `roles/<role>/meta/variants.yml` the init step produces one inventory folder per variant; the deploy step iterates them. Folder layout, round semantics, cleanup rules, and the link to the file-format reference live in [variants.md](../design/variants.md).
 
 ## Edit / Fix / Redeploy Loop 🔁
@@ -30,7 +30,7 @@ make deploy-fresh-purged-apps INFINITO_APPS="<role> <role>" INFINITO_FULL_CYCLE=
 Default redeploy after a local code change:
 
 ```bash
-make deploy-reuse-kept-apps INFINITO_APPS="<role>"
+make deploy mode=update apps="<role>"
 ```
 
 - Reuses the existing inventory, keeps app state, runs the deploy only.
@@ -39,23 +39,23 @@ make deploy-reuse-kept-apps INFINITO_APPS="<role>"
 If the reuse path keeps reproducing the same failure and you want to test whether app entity state is involved:
 
 ```bash
-make deploy-reuse-purged-apps INFINITO_APPS="<role>"
+make deploy mode=update apps="<role>" purge=true
 ```
 
-This purges the app's containers + volumes + Ansible-managed state on the host, then re-deploys. Use it once, then return to `deploy-reuse-kept-apps`. Do NOT loop on `deploy-reuse-purged-apps`; if the failure survives a single purge it is not a state issue.
+This purges the app's containers + volumes + Ansible-managed state on the host, then re-deploys. Use it once, then return to `mode=update` without `purge=true`. Do NOT loop with `purge=true`; if the failure survives a single purge it is not a state issue.
 
-Only return to `deploy-fresh-purged-apps` when you have concrete evidence that the inventory or the host stack itself is broken (for example DNS or network failures during the deploy).
+Only return to `mode=reinstall` when you have concrete evidence that the inventory or the host stack itself is broken (for example DNS or network failures during the deploy).
 
 ## Pinning A Single Variant 🎯
 
-For multi-variant roles you MAY restrict any of the make targets above (and the dev CLI subcommands) to a single matrix round by setting `INFINITO_VARIANT=<idx>`:
+For multi-variant roles you MAY restrict any of the `make deploy` invocations above (and the dev CLI subcommands) to a single matrix round by setting `INFINITO_VARIANT=<idx>`:
 
 ```bash
 # Variant 1 baseline only (no full matrix):
-INFINITO_VARIANT=1 make deploy-fresh-purged-apps INFINITO_APPS="<role>" INFINITO_FULL_CYCLE=true
+INFINITO_VARIANT=1 make deploy mode=reinstall apps="<role>" full_cycle=true
 
 # Edit-fix-redeploy loop pinned to that variant:
-INFINITO_VARIANT=1 make deploy-reuse-kept-apps INFINITO_APPS="<role>"
+INFINITO_VARIANT=1 make deploy mode=update apps="<role>"
 ```
 
 Pinning is sticky: when iterating with `INFINITO_VARIANT=<idx>`, you MUST set it on every command in the iteration. Mixing pinned and unpinned commands silently retargets a different folder. The full semantics (single-folder mode, no inter-round cleanup, out-of-range error) live in [variants.md](../design/variants.md).
@@ -83,7 +83,7 @@ For TLS-enabled local sites, run [`make trust-ca`](../../../Makefile) once after
 
 | File | Purpose |
 |---|---|
-| [Makefile](../../../Makefile) | All `deploy-*` and `make exec` / `make trust-ca` targets. |
+| [Makefile](../../../Makefile) | The `deploy` router target and `make exec` / `make trust-ca` helpers. |
 | [dev CLI tree](../../../cli/administration/deploy/development/) | Python CLI for init, deploy, up, down, exec, etc. |
 | [`make dotenv`](../../../Makefile) | Resolves `INFINITO_INVENTORY_DIR`, `INFINITO_INVENTORY_FILE`, and `INFINITO_INVENTORY_VARS_FILE` into `.env` for the dev CLI (see [variables.md](../environment/variables.md)). |
 | [local deploy scripts](../../../scripts/tests/deploy/local/) | Bash glue behind the make targets (fresh / reuse / purge variants). |

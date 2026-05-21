@@ -8,7 +8,7 @@ set -euo pipefail
 # Required env:
 #   INFINITO_DISTRO     arch|debian|ubuntu|fedora|centos
 #   INFINITO_INVENTORY_DIR       /etc/inventories/local-full-server
-#   INFINITO_TEST_DEPLOY_TYPE    server|workstation|universal
+#   INFINITO_DEPLOY_TYPE    server|workstation|universal
 #   INFINITO_APPS       web-app-*
 #
 # Optional:
@@ -20,13 +20,13 @@ PYTHON="${PYTHON:-python3}"
 
 : "${INFINITO_DISTRO:?INFINITO_DISTRO must be set (e.g. arch)}"
 : "${INFINITO_INVENTORY_DIR:?INFINITO_INVENTORY_DIR must be set}"
-: "${INFINITO_TEST_DEPLOY_TYPE:?INFINITO_TEST_DEPLOY_TYPE must be set (server|workstation|universal)}"
+: "${INFINITO_DEPLOY_TYPE:?INFINITO_DEPLOY_TYPE must be set (server|workstation|universal)}"
 : "${INFINITO_APPS:?INFINITO_APPS must be set (e.g. web-app-keycloak)}"
 
-case "${INFINITO_TEST_DEPLOY_TYPE}" in
+case "${INFINITO_DEPLOY_TYPE}" in
 server | workstation | universal) ;;
 *)
-	echo "[ERROR] Invalid INFINITO_TEST_DEPLOY_TYPE: ${INFINITO_TEST_DEPLOY_TYPE}" >&2
+	echo "[ERROR] Invalid INFINITO_DEPLOY_TYPE: ${INFINITO_DEPLOY_TYPE}" >&2
 	exit 2
 	;;
 esac
@@ -41,7 +41,7 @@ source "scripts/meta/env/load.sh"
 # shellcheck source=scripts/tests/deploy/local/utils/cache-retry.sh
 source "${SCRIPT_DIR}/../../../utils/cache-retry.sh"
 
-echo "=== LOCAL: distro=${INFINITO_DISTRO} type=${INFINITO_TEST_DEPLOY_TYPE} app=${INFINITO_APPS} full_cycle=${INFINITO_FULL_CYCLE} ==="
+echo "=== LOCAL: distro=${INFINITO_DISTRO} type=${INFINITO_DEPLOY_TYPE} app=${INFINITO_APPS} full_cycle=${INFINITO_FULL_CYCLE} ==="
 echo "limit_host=${INFINITO_LIMIT_HOST}"
 echo "inventory_dir=${INFINITO_INVENTORY_DIR}"
 echo

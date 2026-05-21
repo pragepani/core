@@ -14,7 +14,7 @@ source "${SCRIPT_DIR}/../../../utils/cache-retry.sh"
 # Required environment
 # ---------------------------------------------------------------------------
 : "${INFINITO_DISTRO:?INFINITO_DISTRO must be set (arch|debian|ubuntu|fedora|centos)}"
-: "${INFINITO_TEST_DEPLOY_TYPE:?INFINITO_TEST_DEPLOY_TYPE must be set (server|workstation|universal)}"
+: "${INFINITO_DEPLOY_TYPE:?INFINITO_DEPLOY_TYPE must be set (server|workstation|universal)}"
 : "${INFINITO_INVENTORY_DIR:?INFINITO_INVENTORY_DIR must be set (e.g. /etc/inventories/local-full-server)}"
 : "${INFINITO_INVENTORY_FILE:?INFINITO_INVENTORY_FILE is not set — source scripts/meta/env/load.sh first}"
 : "${INFINITO_INVENTORY_VARS_FILE:?INFINITO_INVENTORY_VARS_FILE is not set — source scripts/meta/env/load.sh first}"
@@ -27,7 +27,7 @@ RUNTIME_VARS_JSON='{"RUNTIME":"dev"}'
 
 echo "=== local full deploy (development compose stack) ==="
 echo "distro        = ${INFINITO_DISTRO}"
-echo "type          = ${INFINITO_TEST_DEPLOY_TYPE}"
+echo "type          = ${INFINITO_DEPLOY_TYPE}"
 echo "limit         = ${INFINITO_LIMIT_HOST}"
 echo "inventory_dir = ${INFINITO_INVENTORY_DIR}"
 echo "whitelist     = ${INFINITO_WHITELIST}"
@@ -43,7 +43,7 @@ echo ">>> Starting development compose stack (no build)"
 # ---------------------------------------------------------------------------
 # 2) Discover apps on HOST (needs docker compose)
 # ---------------------------------------------------------------------------
-echo ">>> Discovering apps on host via scripts/meta/resolve/apps.sh (INFINITO_TEST_DEPLOY_TYPE=${INFINITO_TEST_DEPLOY_TYPE})"
+echo ">>> Discovering apps on host via scripts/meta/resolve/apps.sh (INFINITO_DEPLOY_TYPE=${INFINITO_DEPLOY_TYPE})"
 
 # IMPORTANT:
 # - compose can emit warnings on STDOUT (depending on version/config)
@@ -51,7 +51,7 @@ echo ">>> Discovering apps on host via scripts/meta/resolve/apps.sh (INFINITO_TE
 # - PYTHON from host venv must NOT be used inside container exec calls
 discover_out="$(
 	set +e
-	INFINITO_TEST_DEPLOY_TYPE="${INFINITO_TEST_DEPLOY_TYPE}" \
+	INFINITO_DEPLOY_TYPE="${INFINITO_DEPLOY_TYPE}" \
 		INFINITO_WHITELIST="${INFINITO_WHITELIST}" \
 		PYTHON=python3 \
 		scripts/meta/resolve/apps.sh 2> >(cat >&2) |
@@ -63,7 +63,7 @@ discover_out="$(
 if [[ -z "${discover_out}" ]]; then
 	echo "ERROR: apps discovery produced empty output" >&2
 	echo "DEBUG: raw apps.sh output (first 50 lines):" >&2
-	INFINITO_TEST_DEPLOY_TYPE="${INFINITO_TEST_DEPLOY_TYPE}" INFINITO_WHITELIST="${INFINITO_WHITELIST}" PYTHON=python3 \
+	INFINITO_DEPLOY_TYPE="${INFINITO_DEPLOY_TYPE}" INFINITO_WHITELIST="${INFINITO_WHITELIST}" PYTHON=python3 \
 		scripts/meta/resolve/apps.sh 2>&1 | sed -n '1,50p' >&2
 	exit 2
 fi

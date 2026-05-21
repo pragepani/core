@@ -169,17 +169,17 @@ The inventory itself is the bundle.
 
 ## Deploying a Bundle
 
-Two `make` targets resolve one or more bundles into the role groups declared under `all.children` and feed them into the standard local deploy flow. The resolver is [`utils.inventory.bundle_apps`](../../utils/inventory/bundle_apps.py); it deduplicates across bundles and preserves declaration order.
+The single `make deploy` target resolves one or more bundles into the role groups declared under `all.children` and feeds them into the standard local deploy flow when `bundles=<csv>` (or `INFINITO_BUNDLES=<csv>` in the environment) is set. The resolver is [`utils.inventory.bundle_apps`](../../utils/inventory/bundle_apps.py); it deduplicates across bundles and preserves declaration order.
 
 | Command | Path | Behavior |
 |---|---|---|
-| `INFINITO_BUNDLES="<a>[,<b>]" make deploy-bundles` | fresh-purged | Brings the stack down/up, purges entities, then deploys every role group from the listed bundles. Set `INFINITO_FULL_CYCLE=true` to also run the async update pass. |
-| `INFINITO_BUNDLES="<a>[,<b>]" make redeploy-bundles` | reuse-kept | No down/up, no entity purge. Requires a prior `deploy-bundles` run that initialized the inventory. |
+| `make deploy bundles="<a>[,<b>]"` | reinstall | Brings the stack down/up, purges entities, then deploys every role group from the listed bundles. Set `full_cycle=true` to also run the async update pass. |
+| `make deploy mode=update bundles="<a>[,<b>]"` | update | No down/up, no entity purge. Requires a prior initialize/reinstall run that materialized the inventory. |
 
 Example:
 
 ```bash
-INFINITO_BUNDLES="education-suite,startup-essentials" make deploy-bundles INFINITO_FULL_CYCLE=true
+make deploy bundles="education-suite,startup-essentials" full_cycle=true
 ```
 
 See [docs/contributing/tools/make.md](../../docs/contributing/tools/make.md) and [docs/contributing/actions/testing.md](../../docs/contributing/actions/testing.md) for the full deploy-target reference.

@@ -5,7 +5,7 @@ set -euo pipefail
 #
 # Required:
 #   INFINITO_DISTRO   (arch|debian|ubuntu|fedora|centos)
-#   INFINITO_TEST_DEPLOY_TYPE  (server|workstation|universal)
+#   INFINITO_DEPLOY_TYPE  (server|workstation|universal)
 #   INFINITO_INVENTORY_DIR     (e.g. /etc/inventories/local-full-server)
 #
 # Optional:
@@ -13,7 +13,7 @@ set -euo pipefail
 #   INFINITO_DEBUG       (default: false)
 #
 # Notes:
-# - This does NOT create the inventory. Run make deploy-fresh-kept-apps INFINITO_APPS=<role> first.
+# - This does NOT create the inventory. Run make deploy apps=<role> first.
 # - We recompute the app list to keep behavior deterministic with filters.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,7 +27,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../../../.." && pwd)"
 cd "${REPO_ROOT}"
 
 : "${INFINITO_DISTRO:?INFINITO_DISTRO must be set (arch|debian|ubuntu|fedora|centos)}"
-: "${INFINITO_TEST_DEPLOY_TYPE:?INFINITO_TEST_DEPLOY_TYPE must be set (server|workstation|universal)}"
+: "${INFINITO_DEPLOY_TYPE:?INFINITO_DEPLOY_TYPE must be set (server|workstation|universal)}"
 : "${INFINITO_INVENTORY_DIR:?INFINITO_INVENTORY_DIR must be set (e.g. /etc/inventories/local-full-server)}"
 
 INFINITO_DEBUG="$(normalize_bool_or_default "${INFINITO_DEBUG:-}" false INFINITO_DEBUG)"
@@ -45,7 +45,7 @@ pw_file="${inv_dir}/.password"
 
 if [[ ! -f "${inv_file}" ]]; then
 	echo "ERROR: inventory not found: ${inv_file}" >&2
-	echo "Run: make deploy-fresh-kept-apps INFINITO_APPS=<role>" >&2
+	echo "Run: make deploy apps=<role>" >&2
 	exit 2
 fi
 
@@ -56,7 +56,7 @@ fi
 
 echo "=== local run (ALL apps) ==="
 echo "distro        = ${INFINITO_DISTRO}"
-echo "type          = ${INFINITO_TEST_DEPLOY_TYPE}"
+echo "type          = ${INFINITO_DEPLOY_TYPE}"
 echo "limit         = ${INFINITO_LIMIT_HOST}"
 echo "debug         = ${INFINITO_DEBUG}"
 echo "inventory_dir = ${inv_dir}"
@@ -70,7 +70,7 @@ echo
 
 # Recompute apps list (optional, but keeps filters consistent)
 apps_json="$(
-	INFINITO_TEST_DEPLOY_TYPE="${INFINITO_TEST_DEPLOY_TYPE}" \
+	INFINITO_DEPLOY_TYPE="${INFINITO_DEPLOY_TYPE}" \
 		INFINITO_WHITELIST="${INFINITO_WHITELIST:-}" \
 		scripts/meta/resolve/apps.sh
 )"

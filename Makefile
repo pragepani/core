@@ -28,8 +28,7 @@ endif
 .PHONY: restart refresh exec run up down stop console
 .PHONY: build build-missing build-no-cache build-no-cache-all build-cleanup build-dependency
 .PHONY: act-all act-app act-workflow
-.PHONY: deploy-fresh-kept-apps container-refresh-inventory deploy-reuse-kept-all container-purge-entity container-purge-system
-.PHONY: deploy-fresh-purged-apps deploy-reuse-kept-apps deploy-reuse-purged-apps deploy-fresh-kept-all deploy-bundles redeploy-bundles
+.PHONY: deploy container-refresh-inventory container-purge-entity container-purge-system
 .PHONY: bootstrap
 .PHONY: debug-network
 
@@ -160,35 +159,16 @@ container-refresh-inventory:
 debug-network:
 	@$(MAKE) exec INFINITO_CMD="python3 -m cli.contributing.network.diagnose"
 
-# One-off deploy of all apps cumulated from one or more inventory bundles. Set INFINITO_FULL_CYCLE=true to also run the update pass (default: false).
-deploy-bundles:
-	@bash scripts/tests/deploy/local/deploy/bundles/fresh.sh
-
-# Create a fresh inventory and deploy all apps.
-deploy-fresh-kept-all:
-	@echo "=== local full deploy (type=$${INFINITO_TEST_DEPLOY_TYPE}, distro=$${INFINITO_DISTRO}) ==="
-	@bash scripts/tests/deploy/local/deploy/apps/initialize/all.sh
-
-# Create a fresh inventory and deploy one or more apps.
-deploy-fresh-kept-apps:
-	@: "$${INFINITO_APPS:?INFINITO_APPS must be set (e.g. INFINITO_APPS=web-app-nextcloud)}"
-	@bash scripts/tests/deploy/local/deploy/apps/initialize/selection.sh "$${INFINITO_APPS}"
-
-# Deploy one or more apps with purged entities. Set INFINITO_FULL_CYCLE=true to also run the update pass.
-deploy-fresh-purged-apps:
-	@bash scripts/tests/deploy/local/deploy/apps/reinstall/selection.sh
-
-# Redeploy all apps on an existing inventory.
-deploy-reuse-kept-all:
-	@bash scripts/tests/deploy/local/deploy/apps/update/all.sh
-
-# Redeploy one or more apps on an existing inventory.
-deploy-reuse-kept-apps:
-	@INFINITO_DEBUG=true bash scripts/tests/deploy/local/deploy/apps/update/selection.sh
-
-# Purge one or more app entities, then redeploy them on existing inventory.
-deploy-reuse-purged-apps: container-purge-entity
-	@$(MAKE) deploy-reuse-kept-apps
+# Run the local deploy router. Args: mode=initialize|reinstall|update (default initialize), apps=<csv>, purge=true|false (default false), type=server|workstation|universal (default from default.env), bundles=<csv>, disabled=<csv>, full_cycle=true|false. Example: `make deploy mode=reinstall apps=web-app-matomo full_cycle=true`. See scripts/tests/deploy/local/deploy/main.sh for the full table.
+deploy:
+	@$(if $(apps),INFINITO_APPS="$(apps)") \
+	 $(if $(mode),INFINITO_DEPLOY_MODE="$(mode)") \
+	 $(if $(purge),INFINITO_PURGE_ENTITIES="$(purge)") \
+	 $(if $(type),INFINITO_DEPLOY_TYPE="$(type)") \
+	 $(if $(bundles),INFINITO_BUNDLES="$(bundles)") \
+	 $(if $(disabled),INFINITO_SERVICES_DISABLED="$(disabled)") \
+	 $(if $(full_cycle),INFINITO_FULL_CYCLE="$(full_cycle)") \
+	 bash scripts/tests/deploy/local/deploy/main.sh
 
 # Disable IPv6 for local development.
 disable-ipv6:
@@ -324,9 +304,6 @@ list:
 mig: list tree
 	@echo "Creating meta data for meta infinity graph"
 
-# Redeploy all apps cumulated from inventory bundles on an existing inventory (no down/up, no entity purge; requires a prior deploy-bundles run).
-redeploy-bundles:
-	@bash scripts/tests/deploy/local/deploy/bundles/update.sh
 # Refresh the running development stack only when it already exists.
 refresh:
 	@bash scripts/system/network/docker/stack_refresh.sh

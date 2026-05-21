@@ -4,7 +4,7 @@ set -euo pipefail
 # One-off deploy of all apps cumulated from one or more inventory bundles.
 #
 # Usage:
-#   INFINITO_BUNDLES="education-suite,startup-essentials" make deploy-bundles
+#   INFINITO_BUNDLES="education-suite,startup-essentials" make deploy
 #
 # Behavior:
 #   - Aggregates and deduplicates all role groups declared in each bundle's
@@ -19,7 +19,7 @@ set -euo pipefail
 #   INFINITO_FULL_CYCLE         false (default) | true
 #   INFINITO_DISTRO             arch|debian|ubuntu|fedora|centos
 #   INFINITO_INVENTORY_DIR      /etc/inventories/local-full-server (typical)
-#   INFINITO_TEST_DEPLOY_TYPE   server|workstation|universal
+#   INFINITO_DEPLOY_TYPE   server|workstation|universal
 
 : "${INFINITO_BUNDLES:?INFINITO_BUNDLES must be set (e.g. INFINITO_BUNDLES=education-suite,startup-essentials)}"
 

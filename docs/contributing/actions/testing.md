@@ -38,13 +38,13 @@ Use the following table when you need realistic local deployment validation or a
 
 | Category | Command | What it does | When to use it |
 |---|---|---|---|
-| Local deploy | `make deploy-fresh-kept-apps INFINITO_APPS=web-app-nextcloud` | Creates the needed inventory and deploys one or more apps. | Fresh deploy for a specific app set. |
-| Local deploy | `make deploy-reuse-kept-apps INFINITO_APPS=web-app-nextcloud` | Reuses an existing `devices.yml` inventory and redeploys one or more apps quickly. | Fast reuse path. |
-| Local deploy | `make deploy-reuse-purged-apps INFINITO_APPS=web-app-nextcloud` | Reuses an existing `devices.yml` inventory, purges the entity first, and redeploys one or more apps quickly. | Fast reuse path after a state reset. |
-| Local deploy and E2E | `make deploy-fresh-purged-apps INFINITO_APPS=web-app-matomo` | Runs a dedicated local validation flow for one or more apps against the dev stack, creating and re-initializing the inventory first. | Baseline and recovery path. |
-| Full local validation | `make deploy-fresh-kept-all` | Builds the broader local deployment flow across apps. | Broad coverage when you explicitly need it. |
-| Bundle deploy | `INFINITO_BUNDLES="<bundle>[,<bundle>]" make deploy-bundles` | Aggregates the role groups from one or more [inventories/bundles/](../../../inventories/bundles/) entries into `INFINITO_APPS` and runs the fresh-purged deploy. Set `INFINITO_FULL_CYCLE=true` for the async update pass. | One-shot validation of a curated app shape (e.g. `education-suite`). |
-| Bundle redeploy | `INFINITO_BUNDLES="<bundle>[,<bundle>]" make redeploy-bundles` | Same bundle resolution as `deploy-bundles`, but routes through the reuse-kept path (no down/up, no entity purge). | Fast iteration loop after a prior `deploy-bundles` run. |
+| Local deploy | `make deploy apps=web-app-nextcloud` | Creates the needed inventory and deploys one or more apps. | Fresh deploy for a specific app set. |
+| Local deploy | `make deploy mode=update apps=web-app-nextcloud` | Reuses an existing `devices.yml` inventory and redeploys one or more apps quickly. | Fast reuse path. |
+| Local deploy | `make deploy mode=update apps=web-app-nextcloud purge=true` | Reuses an existing `devices.yml` inventory, purges the entity first, and redeploys one or more apps quickly. | Fast reuse path after a state reset. |
+| Local deploy and E2E | `make deploy mode=reinstall apps=web-app-matomo` | Runs a dedicated local validation flow for one or more apps against the dev stack, cycling the stack and re-initializing the inventory first. | Baseline and recovery path. |
+| Full local validation | `make deploy` | Builds the broader local deployment flow across apps. | Broad coverage when you explicitly need it. |
+| Bundle deploy | `make deploy bundles="<bundle>[,<bundle>]"` | Aggregates the role groups from one or more [inventories/bundles/](../../../inventories/bundles/) entries into `INFINITO_APPS` and runs the reinstall flow. Set `full_cycle=true` for the async update pass. | One-shot validation of a curated app shape (e.g. `education-suite`). |
+| Bundle redeploy | `make deploy mode=update bundles="<bundle>[,<bundle>]"` | Same bundle resolution as the bundle deploy, but routes through the reuse path (no down/up, no entity purge). | Fast iteration loop after a prior bundle deploy. |
 | Local reset | `make container-refresh-inventory` | Recreates the local inventory without deploying apps. | Use this when your local inventory is broken or you want a clean reset. |
 | Local cleanup | `make container-purge-system` | Deletes local deploy artifacts and cleanup data. | Use this only when you really want to remove local state. |
 

@@ -5,11 +5,11 @@ set -euo pipefail
 #
 # Required:
 #   INFINITO_DISTRO   (arch|debian|ubuntu|fedora|centos)
-#   INFINITO_TEST_DEPLOY_TYPE  (server|workstation|universal)
+#   INFINITO_DEPLOY_TYPE  (server|workstation|universal)
 #   INFINITO_INVENTORY_DIR     (e.g. /etc/inventories/local-full-server)
 
 : "${INFINITO_DISTRO:?INFINITO_DISTRO must be set (arch|debian|ubuntu|fedora|centos)}"
-: "${INFINITO_TEST_DEPLOY_TYPE:?INFINITO_TEST_DEPLOY_TYPE must be set (server|workstation|universal)}"
+: "${INFINITO_DEPLOY_TYPE:?INFINITO_DEPLOY_TYPE must be set (server|workstation|universal)}"
 : "${INFINITO_INVENTORY_DIR:?INFINITO_INVENTORY_DIR must be set (e.g. /etc/inventories/local-full-server)}"
 : "${INFINITO_INVENTORY_FILE:?INFINITO_INVENTORY_FILE is not set — source scripts/meta/env/load.sh first}"
 : "${INFINITO_INVENTORY_VARS_FILE:?INFINITO_INVENTORY_VARS_FILE is not set — source scripts/meta/env/load.sh first}"
@@ -19,7 +19,7 @@ RUNTIME_VARS_JSON='{"RUNTIME":"dev","SYS_SERVICE_RUNNER_RETRIES":1}'
 
 echo "=== local inventory init (ALL apps) ==="
 echo "distro        = ${INFINITO_DISTRO}"
-echo "type          = ${INFINITO_TEST_DEPLOY_TYPE}"
+echo "type          = ${INFINITO_DEPLOY_TYPE}"
 echo "inventory_dir = ${INFINITO_INVENTORY_DIR}"
 echo
 
@@ -30,7 +30,7 @@ echo ">>> Starting development compose stack (no build)"
 
 # 2) Discover apps on HOST (same as local/deploy/fresh-kept-all.sh)
 apps_json="$(
-	INFINITO_TEST_DEPLOY_TYPE="${INFINITO_TEST_DEPLOY_TYPE}" \
+	INFINITO_DEPLOY_TYPE="${INFINITO_DEPLOY_TYPE}" \
 		INFINITO_WHITELIST="${INFINITO_WHITELIST:-}" \
 		PYTHON=python3 \
 		scripts/meta/resolve/apps.sh
