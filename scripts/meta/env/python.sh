@@ -6,6 +6,16 @@
 
 VENV_NAME=infinito
 
+if [[ -z "${VENV:-}" ]]; then
+	for _venv_candidate in "/opt/venvs/${VENV_NAME}" "${HOME}/.venvs/${VENV_NAME}"; do
+		if [[ -x "${_venv_candidate}/bin/python" ]]; then
+			VENV="${_venv_candidate}"
+			break
+		fi
+	done
+	unset _venv_candidate
+fi
+
 if [[ -n "${VIRTUAL_ENV:-}" ]]; then
 	VENV_BASE="$(dirname "${VIRTUAL_ENV}")"
 elif [[ -d /opt && -w /opt ]]; then

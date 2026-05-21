@@ -10,8 +10,8 @@ _infinito_env_repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 _infinito_env_dotenv="${_infinito_env_repo_root}/.env"
 
 # Re-resolve PYTHON + PATH on every source so a venv created mid-chain takes over.
-# shellcheck source=scripts/meta/python/detect.sh
-source "${_infinito_env_repo_root}/scripts/meta/python/detect.sh"
+# shellcheck source=scripts/meta/env/python.sh
+source "${_infinito_env_repo_root}/scripts/meta/env/python.sh"
 
 if [[ -n "${VENV:-}" && -d "${VENV%/}/bin" ]]; then
 	case ":${PATH:-}:" in

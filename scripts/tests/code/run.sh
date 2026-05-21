@@ -5,6 +5,11 @@
 # -- the body is identical for both runners.
 set -euo pipefail
 
+_run_sh_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/meta/env/load.sh
+source "${_run_sh_dir}/../../meta/env/load.sh"
+unset _run_sh_dir
+
 : "${INFINITO_TEST_PATTERN:?INFINITO_TEST_PATTERN must be set}"
 : "${INFINITO_TEST_TYPE:?INFINITO_TEST_TYPE must be set}" # nocheck: makefile-supplied
 
