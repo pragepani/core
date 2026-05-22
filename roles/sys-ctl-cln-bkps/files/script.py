@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 
 def print_used_disc_space(backup_dir):
-    print(f"{psutil.disk_usage(backup_dir).percent:d} % of disk {backup_dir} are used")
+    print(f"{psutil.disk_usage(backup_dir).percent:.0f} % of disk {backup_dir} are used")
 
 
 def is_directory_used_by_another_process(directory_path):
