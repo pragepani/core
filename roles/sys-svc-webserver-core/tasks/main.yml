@@ -1,3 +1,11 @@
 ---
 - include_tasks: 01_core.yml
   when: run_once_sys_svc_webserver_core is not defined
+
+- name: Include health dependencies
+  include_role:
+    name: "{{ item }}"
+  loop:
+    - sys-ctl-hlth-webserver
+    - sys-ctl-hlth-csp
+  when: not (_service_loader_preloading | default(false) | bool)
