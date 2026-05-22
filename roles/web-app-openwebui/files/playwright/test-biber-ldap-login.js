@@ -4,24 +4,24 @@ const { expectNoCspViolations } = require("./personas");
 const { skipUnlessServiceEnabled } = require("./service-gating");
 
 exports.register = function (shared) {
-  test("administrator: openwebui OIDC login and logout", async ({ page }) => {
-    skipUnlessServiceEnabled("oidc");
+  test("biber: openwebui LDAP login and logout", async ({ page }) => {
+    skipUnlessServiceEnabled("ldap");
     const diagnostics = shared.attachDiagnostics(page);
 
-    await shared.signInViaDashboardOidc(
+    await shared.signInViaLdap(
       page,
-      shared.env.adminUsername,
-      shared.env.adminPassword,
-      "administrator"
+      shared.env.biberUsername,
+      shared.env.biberPassword,
+      "biber"
     );
 
     await expect(
       page.getByRole("img", { name: /open\s+user\s+profile\s+menu/i }).first(),
-      "administrator: post-login User profile menu must be visible (proves authenticated chrome rendered, not just the auth page)"
+      "biber: post-login User profile menu must be visible (proves authenticated chrome rendered, not just the auth page)"
     ).toBeVisible({ timeout: 60_000 });
 
     await shared.expectSignInRequiredAfterLogout(page);
 
-    await expectNoCspViolations(page, diagnostics, "openwebui administrator OIDC");
+    await expectNoCspViolations(page, diagnostics, "openwebui biber LDAP");
   });
 };

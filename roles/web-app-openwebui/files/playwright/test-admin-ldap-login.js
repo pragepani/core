@@ -4,11 +4,11 @@ const { expectNoCspViolations } = require("./personas");
 const { skipUnlessServiceEnabled } = require("./service-gating");
 
 exports.register = function (shared) {
-  test("administrator: openwebui OIDC login and logout", async ({ page }) => {
-    skipUnlessServiceEnabled("oidc");
+  test("administrator: openwebui LDAP login and logout", async ({ page }) => {
+    skipUnlessServiceEnabled("ldap");
     const diagnostics = shared.attachDiagnostics(page);
 
-    await shared.signInViaDashboardOidc(
+    await shared.signInViaLdap(
       page,
       shared.env.adminUsername,
       shared.env.adminPassword,
@@ -22,6 +22,6 @@ exports.register = function (shared) {
 
     await shared.expectSignInRequiredAfterLogout(page);
 
-    await expectNoCspViolations(page, diagnostics, "openwebui administrator OIDC");
+    await expectNoCspViolations(page, diagnostics, "openwebui administrator LDAP");
   });
 };

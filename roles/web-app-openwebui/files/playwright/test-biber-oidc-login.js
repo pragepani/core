@@ -15,10 +15,10 @@ exports.register = function (shared) {
       "biber"
     );
 
-    await expect(page.locator("body")).toContainText(
-      /new chat|chat|welcome|sign|prompt/i,
-      { timeout: 60_000 }
-    );
+    await expect(
+      page.getByRole("img", { name: /open\s+user\s+profile\s+menu/i }).first(),
+      "biber: post-login User profile menu must be visible (proves authenticated chrome rendered, not just the auth page)"
+    ).toBeVisible({ timeout: 60_000 });
 
     await shared.expectSignInRequiredAfterLogout(page);
 
