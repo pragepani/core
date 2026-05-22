@@ -26,7 +26,7 @@ oauth2:
   allowed_groups:
     - "{{ lookup('rbac_group_path', application_id='web-app-fusiondirectory', role='administrator') }}"
 fusiondirectory:
-  image: tiredofit/fusiondirectory
+  image: nfrastack/fusiondirectory
   version: latest
   name: fusiondirectory
   ports:
