@@ -23,50 +23,39 @@ The file root IS the services map keyed by `<service-name>` (no `compose:` and n
 - `version` MUST be the tag.
 - Images without an explicit registry prefix are treated as Docker Hub images.
 - Compose-managed services and ad-hoc task images both live under the same key on the role's primary or auxiliary service entries.
-- Role-local image defaults MUST stay in `meta/services.yml`. Inventory-side overrides MUST NOT be written there.
+- Role-local image defaults MUST stay in `meta/services.yml`.
+- Inventory-side overrides MUST NOT be written there.
 
 ## Read 📖
 
-Roles MUST use `lookup('image', ...)` instead of reading the `meta/services.yml` keys directly.
-The owning `role_id` MUST be passed explicitly as the first positional argument.
-Calls without an explicit `role_id` MUST raise an error so a lazily re-evaluated expression rendered in another role's template context cannot silently resolve the wrong role.
+Roles MUST use `lookup('config', '<role_id>', 'services.<service_name>.<field>')` to read image declarations.
+That path goes through the merged `applications` map, so it transparently picks up the mirror overrides written by the inventory creator (see [mirror.md](mirror.md)).
 
-Supported form:
+Pattern:
 
 ```yaml
-{{ lookup('image', '<role_id>', '<service_name>'[, '<want>']) }}
+{{ lookup('config', '<role_id>', 'services.<service_name>.image') }}:{{ lookup('config', '<role_id>', 'services.<service_name>.version') }}
 ```
 
 Examples:
 
 ```yaml
-{{ lookup('image', 'test-e2e-playwright', 'playwright', 'image') }}
-{{ lookup('image', 'sys-ctl-hlth-csp', 'csp-checker', 'ref') }}
+{{ lookup('config', 'test-e2e-playwright', 'services.playwright.image') }}
+{{ lookup('config', 'sys-ctl-hlth-csp', 'services.csp-checker.image') }}:{{ lookup('config', 'sys-ctl-hlth-csp', 'services.csp-checker.version') }}
 ```
-
-Supported `want` values:
-
-| Value | Returns |
-|---|---|
-| `all` (default) | the merged mapping |
-| `image` | the repository/image name |
-| `version` | the tag |
-| `ref` | `image:version` |
 
 ## Override ✏️
 
-Inventory-side mirror and manual overrides MUST be written to `images_overrides.<role>.<service>.{image,version}`.
-`lookup('image', ...)` MUST prefer `images_overrides` and fall back field-wise to the role's `meta/services.yml` entry.
-Inventory generation MUST keep `images_overrides` separate from `meta/services.yml` so role defaults remain readable and stable.
-
-Example host-vars override:
+The override path is host-vars `applications.<role>.services.<service>.{image,version}`.
+The inventory mirror step (see [mirror.md](mirror.md)) writes there automatically; manual overrides go to the same key.
 
 ```yaml
-images_overrides:
+applications:
   test-e2e-playwright:
-    playwright:
-      image: ghcr.io/example/mirror/mcr.microsoft.com/playwright
-      version: v1.58.2-noble
+    services:
+      playwright:
+        image: ghcr.io/example/mirror/mcr.microsoft.com/playwright
+        version: v1.58.2-noble
 ```
 
 ## Supported Registries 🌐

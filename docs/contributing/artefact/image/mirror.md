@@ -73,9 +73,11 @@ The mirror workflow runs as stage 8 of the CI pipeline. See [ci.md](../git/pipel
 4. Inventory generation writes the resulting mirror refs from `mirrors.yml` back into host vars.
 5. Deploy and test jobs resolve images from `ghcr.io/{namespace}/{repository}/mirror/...` instead of pulling directly from Docker Hub, MCR, or other upstream registries.
 
-The mirrors file is generated into the inventory directory. The inventory creator applies mirror image overrides to host variables via `cli/administration/inventory/provision/mirror_overrides.py`, which reads `mirrors.yml.applications` and writes `applications.{role}.services.{service}.image` (and `.version`) into host vars subject to the per-service `mirror_policy`.
+The mirrors file is generated into the inventory directory.
+The inventory creator applies mirror image overrides to host variables via `cli/administration/inventory/provision/mirror_overrides.py`, which reads `mirrors.yml.applications` and writes `applications.{role}.services.{service}.image` (and `.version`) into host vars subject to the per-service `mirror_policy`.
 
-`lookup('image', ...)` consults inventory-side `images_overrides.{role}.{service}` field-wise on top of the role default. Setting that key by hand in inventory remains supported for non-mirror overrides, but the mirror pipeline writes only into `applications.*`.
+Role templates read image refs via `lookup('config', '<role>', 'services.<service>.image')` / `.version`, which resolves against the merged `applications.*` map.
+The mirror override applied above is what consumers see.
 
 ### Mirror Policy 📋
 

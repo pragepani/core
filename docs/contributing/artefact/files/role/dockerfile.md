@@ -82,10 +82,8 @@ MY_APP_VERSION: "{{ lookup('config', application_id, 'services.myapp.version') }
 
 ### Non-application roles 🔧
 
-For roles without `application_id` that need extra mirrored images (e.g. test runners,
-health checkers), follow the rules in [origin.md](../../image/origin.md) for declaration and access.
-Those images MUST be declared under `defaults/main.yml` and MUST be consumed via
-`lookup('image', ...)` instead of direct `images[...]` access.
+For roles without `application_id` that need extra mirrored images (e.g. test runners, health checkers), follow the rules in [origin.md](../../image/origin.md) for declaration and access.
+Those images MUST be declared under `meta/services.yml` and MUST be consumed via `lookup('config', '<role_id>', 'services.<service>.image')` (and `.version`) instead of direct `images[...]` access.
 
 ### Image Discovery 🔍
 
