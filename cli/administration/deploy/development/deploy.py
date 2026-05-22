@@ -10,6 +10,10 @@ from cli.administration.inventory.provision.services_disabler import (
     find_provider_roles,
     parse_services_disabled,
 )
+from cli.meta.roles.services.called import (
+    container_log_size,
+    verify as verify_required_system_services,
+)
 
 from . import PROJECT_ROOT
 from .common import (
@@ -45,6 +49,7 @@ def _run_deploy(
     debug: bool,
     passthrough: list[str],
     inventory_dir: str,
+    container_name: str,
     extra_ansible_vars: Mapping[str, Any] | None = None,
 ) -> int:
     inv_root = str(inventory_dir).rstrip("/")
@@ -88,9 +93,10 @@ def _run_deploy(
     if services_disabled:
         extra_env["INFINITO_SERVICES_DISABLED"] = services_disabled
 
-    ansible_log_path = os.environ.get("ANSIBLE_LOG_PATH")
-    if ansible_log_path:
-        extra_env["ANSIBLE_LOG_PATH"] = ansible_log_path
+    ansible_log_path = (
+        os.environ.get("ANSIBLE_LOG_PATH") or "/tmp/infinito-deploy.log"  # noqa: S108
+    )
+    extra_env["ANSIBLE_LOG_PATH"] = ansible_log_path
 
     # The Playwright E2E gate now keys on `RUNTIME` from the inventory's
     # host_vars (baked at init time by `cli.administration.deploy.development.init`).
@@ -98,6 +104,13 @@ def _run_deploy(
     # INFINITO_MAKE_DEPLOY / INFINITO_SKIP_E2E into the container at deploy
     # time: by then the runtime decision is already serialised into the
     # inventory the deploy stage consumes.
+
+    # Snapshot the ansible log size BEFORE the run so the post-run coverage
+    # check only scans the slice this invocation produced (matrix-deploy
+    # plays append to the same log path across rounds + PASS 1/2).
+    log_offset_before = container_log_size(
+        container=container_name, log_path=ansible_log_path
+    )
 
     # Live stream output for immediate visibility.
     r = compose.exec(
@@ -107,7 +120,33 @@ def _run_deploy(
         extra_env=extra_env,
     )
 
-    return int(r.returncode)
+    rc = int(r.returncode)
+    if rc != 0:
+        return rc
+
+    ok, missing = verify_required_system_services(
+        roles_dir=PROJECT_ROOT / "roles",
+        container=container_name,
+        log_path=ansible_log_path,
+        log_byte_offset=log_offset_before,
+        deployed_role_ids=deploy_ids,
+    )
+    if not ok:
+        print(
+            f">>> ERROR: required role(s) did not emit any TASK event for "
+            f"deploy {deploy_ids}:",
+            flush=True,
+        )
+        for role in missing:
+            print(f"          - {role}", flush=True)
+        print(
+            "        See `required_by` declarations in roles/*/meta/services.yml — "
+            "the role(s) above must run on every deploy whose primaries match.",
+            flush=True,
+        )
+        return 2
+
+    return rc
 
 
 def _purge_app_entities(*, container: str, app_ids: list[str]) -> None:
@@ -304,6 +343,7 @@ def handler(args: argparse.Namespace) -> int:
             debug=bool(args.debug),
             passthrough=passthrough,
             inventory_dir=inv_dir,
+            container_name=container_name,
             extra_ansible_vars={"VARIANT_INDEX": round_index},
         )
         if rc != 0:
@@ -322,6 +362,7 @@ def handler(args: argparse.Namespace) -> int:
                 debug=bool(args.debug),
                 passthrough=passthrough,
                 inventory_dir=inv_dir,
+                container_name=container_name,
                 extra_ansible_vars={
                     "ASYNC_ENABLED": True,
                     "VARIANT_INDEX": round_index,
