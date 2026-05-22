@@ -100,6 +100,13 @@ clean:
 clean-cache:
 	@bash scripts/system/cache/clean.sh
 
+.PHONY: clean-container-owned
+# Remove container-owned generated artefacts (build/, tasks/groups/*.yml).
+# Note: these files are created inside the compose container with the in-container UID (typically `nobody`); the host cannot rm them directly.
+# Note: the helper auto-starts a stopped infinito container before deleting; safe no-op when the targets do not exist.
+clean-container-owned:
+	@bash scripts/system/cache/clean_container_owned.sh
+
 .PHONY: clean-pycache-dirs
 # Remove tracked directories whose only child is a __pycache__ folder.
 # Note: catches orphans left after moving or deleting source files.
