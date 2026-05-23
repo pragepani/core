@@ -42,3 +42,15 @@
     ldap: # nocheck: variants-services-match
       enabled: true
       shared: true
+    gitea: # nocheck: variants-services-match
+      enabled: false
+      shared: false
+    keycloak: # nocheck: variants-services-match
+      enabled: false
+      shared: false
+    mariadb: # nocheck: variants-services-match
+      enabled: false
+      shared: false
+    postgres: # nocheck: variants-services-match
+      enabled: false
+      shared: false

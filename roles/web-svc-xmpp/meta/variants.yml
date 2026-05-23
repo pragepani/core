@@ -41,3 +41,6 @@
     oidc:
       enabled: false
       shared: false
+    prometheus:
+      enabled: false
+      shared: false

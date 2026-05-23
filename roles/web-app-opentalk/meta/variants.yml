@@ -71,3 +71,27 @@
     oidc:
       enabled: false
       shared: false
+    coturn:
+      enabled: false
+      shared: false
+    css:
+      enabled: false
+      shared: false
+    dashboard:
+      enabled: false
+      shared: false
+    email:
+      enabled: false
+      shared: false
+    logout:
+      enabled: false
+      shared: false
+    matomo:
+      enabled: false
+      shared: false
+    postgres:
+      enabled: false  # nocheck: variants-static-override
+      shared: false
+    prometheus:
+      enabled: false
+      shared: false
