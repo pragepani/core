@@ -65,11 +65,11 @@ ensure_git_safe_directory
 # print each one; fall back to the unsuffixed path when no variants
 # exist.
 #
-# INFINITO_CMD is executed via `sh -lc` (see scripts/tests/deploy/local/exec/container.sh)
+# cmd is executed via `sh -lc` (see scripts/tests/deploy/local/exec/container.sh)
 # — keep the inner shell strictly POSIX (no bash arrays, no `shopt`, no `(( ))`).
 inspect_glob_print() {
 	local glob_pattern="$1" fallback="$2"
-	make compose-exec INFINITO_CMD="set -eu; \
+	make compose-exec cmd="set -eu; \
 		any=; \
 		for f in ${glob_pattern}; do \
 			[ -f \"\$f\" ] || continue; \

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Open an interactive shell in the running infinito container, or execute a
-# one-off command inside it when INFINITO_CMD or positional arguments are set.
+# one-off command inside it when cmd or positional arguments are set.
 #
 # Usage:
 #   scripts/tests/deploy/local/exec/container.sh [command...]  # nocheck: self-path-reference
@@ -10,11 +10,11 @@ set -euo pipefail
 # Environment:
 #   INFINITO_DISTRO     arch|debian|ubuntu|fedora|centos
 #   INFINITO_CONTAINER  Optional explicit container name
-#   INFINITO_CMD        One-off shell command to run instead of an interactive shell
+#   cmd                 One-off shell command to run instead of an interactive shell
 #
 # Examples:
 #   scripts/tests/deploy/local/exec/container.sh whoami  # nocheck: self-path-reference
-#   INFINITO_CMD='whoami && id' scripts/tests/deploy/local/exec/container.sh  # nocheck: self-path-reference
+#   cmd='whoami && id' scripts/tests/deploy/local/exec/container.sh  # nocheck: self-path-reference
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../../" && pwd)"
@@ -28,12 +28,12 @@ Usage:
 Environment:
   INFINITO_DISTRO     arch|debian|ubuntu|fedora|centos
   INFINITO_CONTAINER  Optional explicit container name
-  INFINITO_CMD        One-off shell command to run instead of an interactive shell
+  cmd                 One-off shell command to run instead of an interactive shell
 
 Examples:
   ${0}
   ${0} whoami
-  INFINITO_CMD='whoami && id' ${0}
+  cmd='whoami && id' ${0}
 EOF
 }
 
@@ -73,8 +73,8 @@ if [[ $# -gt 0 ]]; then
 	exec docker exec "${docker_exec_flags[@]}" -w "${INFINITO_SRC_DIR}" "${container}" "$@"
 fi
 
-if [[ -n "${INFINITO_CMD:-}" ]]; then
-	exec docker exec "${docker_exec_flags[@]}" -w "${INFINITO_SRC_DIR}" "${container}" sh -lc "${INFINITO_CMD}"
+if [[ -n "${cmd:-}" ]]; then
+	exec docker exec "${docker_exec_flags[@]}" -w "${INFINITO_SRC_DIR}" "${container}" sh -lc "${cmd}"
 fi
 
 exec docker exec "${docker_exec_flags[@]}" -w "${INFINITO_SRC_DIR}" "${container}" sh

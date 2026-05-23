@@ -12,7 +12,7 @@ set -euo pipefail
 #                      mcr.microsoft.com/playwright:v1.59.1-noble)
 #
 # Optional env:
-#   INFINITO_CMD       Command to execute inside the sidecar container.
+#   cmd                Command to execute inside the sidecar container.
 #                      When omitted, the image's default entrypoint runs.
 #   INFINITO_RUN_FLAGS          Extra flags forwarded verbatim to `docker run`
 #                      (e.g. "--env-file /tmp/x.env -v /tmp/y:/y -w /e2e").
@@ -22,11 +22,11 @@ set -euo pipefail
 #
 # Examples:
 #   IMAGE=alpine make compose-inner-run
-#   IMAGE=alpine INFINITO_CMD='env | grep PATH' make compose-inner-run
+#   IMAGE=alpine cmd='env | grep PATH' make compose-inner-run
 #   IMAGE=mcr.microsoft.com/playwright:v1.59.1-noble \
 #     INFINITO_RUN_FLAGS='--env-file /tmp/test-e2e-playwright/web-app-friendica/.env \
 #                -v /tmp/test-e2e-playwright/web-app-friendica:/e2e -w /e2e' \
-#     INFINITO_CMD='npx playwright test --grep dashboard' \
+#     cmd='npx playwright test --grep dashboard' \
 #     make compose-inner-run
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,14 +35,14 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../../" && pwd)"
 usage() {
 	cat <<EOF
 Usage:
-  IMAGE=<ref> [INFINITO_CMD='<shell>'] [INFINITO_RUN_FLAGS='<flags>'] ${0}
+  IMAGE=<ref> [cmd='<shell>'] [INFINITO_RUN_FLAGS='<flags>'] ${0}
 
 Examples:
   IMAGE=alpine ${0}
-  IMAGE=alpine INFINITO_CMD='env' ${0}
+  IMAGE=alpine cmd='env' ${0}
   IMAGE=mcr.microsoft.com/playwright:v1.59.1-noble \\
     INFINITO_RUN_FLAGS='--env-file /tmp/.env -v /tmp/proj:/e2e -w /e2e' \\
-    INFINITO_CMD='npx playwright test' \\
+    cmd='npx playwright test' \\
     ${0}
 EOF
 }
@@ -69,8 +69,8 @@ if [[ -n "${INFINITO_RUN_FLAGS:-}" ]]; then
 	docker_run_argv+=(${INFINITO_RUN_FLAGS})
 fi
 docker_run_argv+=("${IMAGE}")
-if [[ -n "${INFINITO_CMD:-}" ]]; then
-	docker_run_argv+=(sh -lc "${INFINITO_CMD}")
+if [[ -n "${cmd:-}" ]]; then
+	docker_run_argv+=(sh -lc "${cmd}")
 fi
 
 exec_flags=(-i)

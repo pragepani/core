@@ -8,7 +8,7 @@ The Hugo site is built into the custom Docker image at `compose build` time. The
 - **A force rebuild** without a source-version change can be triggered by clearing the role's image cache:
 
   ```bash
-  make compose-exec INFINITO_CMD="docker compose -f /opt/docker/web-app-hugo/docker-compose.yml build --no-cache"
+  make compose-exec cmd="docker compose -f /opt/docker/web-app-hugo/docker-compose.yml build --no-cache"
   ```
 
   The next `make compose-deploy mode=update apps=web-app-hugo` will pull the image, restart nginx, and serve the freshly rendered output.
@@ -36,7 +36,7 @@ The Hugo site is built into the custom Docker image at `compose build` time. The
 The Hugo build runs inside `docker compose build`. If `hugo` exits non-zero, the play fails and the previous image keeps serving. To inspect the failure log:
 
 ```bash
-make compose-exec INFINITO_CMD="docker compose -f /opt/docker/web-app-hugo/docker-compose.yml build --progress=plain --no-cache web-app-hugo 2>&1 | tail -200"
+make compose-exec cmd="docker compose -f /opt/docker/web-app-hugo/docker-compose.yml build --progress=plain --no-cache web-app-hugo 2>&1 | tail -200"
 ```
 
 Common causes:

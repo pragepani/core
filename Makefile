@@ -150,21 +150,21 @@ compose-entity-purge:
 
 .PHONY: compose-exec
 # Run a shell or one-off command in the running development container.
-# Usage: make compose-exec [INFINITO_CMD="..."]
-# Example: make compose-exec INFINITO_CMD="ls /opt/src/infinito"
-# Param INFINITO_CMD: shell command to run; when unset, opens an interactive shell.
+# Usage: make compose-exec [cmd="..."]
+# Example: make compose-exec cmd="ls /opt/src/infinito"
+# Param cmd: shell command to run; when unset, opens an interactive shell.
 compose-exec:
-	@bash scripts/tests/deploy/local/exec/container.sh
+	@cmd='$(cmd)' bash scripts/tests/deploy/local/exec/container.sh
 
 .PHONY: compose-inner-run
 # Run a one-off `docker run` inside the running container (nested Docker-in-Docker).
-# Usage: IMAGE=<ref> [INFINITO_CMD="..."] [INFINITO_RUN_FLAGS="..."] make compose-inner-run
-# Example: IMAGE=alpine INFINITO_CMD='env' make compose-inner-run
+# Usage: IMAGE=<ref> [cmd="..."] [INFINITO_RUN_FLAGS="..."] make compose-inner-run
+# Example: IMAGE=alpine cmd='env' make compose-inner-run
 # Param IMAGE: image reference passed to `docker run` (required, e.g. alpine).
-# Param INFINITO_CMD: command to execute inside the sidecar; defaults to the image entrypoint.
+# Param cmd: command to execute inside the sidecar; defaults to the image entrypoint.
 # Param INFINITO_RUN_FLAGS: extra flags forwarded verbatim to `docker run`.
 compose-inner-run:
-	@bash scripts/tests/deploy/local/exec/run.sh
+	@cmd='$(cmd)' bash scripts/tests/deploy/local/exec/run.sh
 
 .PHONY: compose-inventory-refresh
 # Refresh the container inventory without deploying apps.
@@ -177,7 +177,7 @@ compose-inventory-refresh:
 # Example: make compose-playwright role=web-app-dashboard pw="--grep icons" keep=true
 compose-playwright:
 	@: $${role:?role=<role> required, e.g. role=web-app-dashboard}
-	@INFINITO_CMD='$(if $(keep),INFINITO_PLAYWRIGHT_KEEP=$(keep) )bash scripts/tests/e2e/rerun-spec.sh $(role) $(pw)' \
+	@cmd='$(if $(keep),INFINITO_PLAYWRIGHT_KEEP=$(keep) )bash scripts/tests/e2e/rerun-spec.sh $(role) $(pw)' \
 	 bash scripts/tests/deploy/local/exec/container.sh
 
 .PHONY: compose-restart
@@ -218,7 +218,7 @@ diagnose-disk-usage:
 # Run the network-diagnose script inside the infinito container.
 # Note: covers DNS, TCP, TLS, and PMTU on both IPv4 and IPv6.
 diagnose-network:
-	@$(MAKE) compose-exec INFINITO_CMD="python3 -m cli.contributing.network.diagnose"
+	@$(MAKE) compose-exec cmd="python3 -m cli.contributing.network.diagnose"
 
 .PHONY: dotenv
 # Regenerate .env (SPOT) from default.env + runtime context.
