@@ -11,13 +11,11 @@ exports.register = function (shared) {
   test.describe("keycloak → ldap write-through, verified via LAM", () => {
     test.skip(!shared.env.oidcEnabled, "OIDC shared service disabled");
     test.skip(!lamEnabled, "LAM not deployed (LAM_SERVICE_ENABLED=false)");
-    test.skip(lamOauth2Fronted, "LAM is OAuth2-fronted (LAM_OAUTH2_FRONTED=true) — UI verifier inapplicable");
 
     test("middleName edited in Keycloak appears in LDAP via LAM", async ({ page, context }) => {
       expect(shared.env.oidcIssuerUrl, "OIDC_ISSUER_URL must be set in env").toBeTruthy();
       expect(shared.env.oidcClientId, "OIDC_CLIENT_ID must be set in env").toBeTruthy();
       expect(lamBaseUrl, "LAM_BASE_URL must be set in env").toBeTruthy();
-      expect(lamPassword, "LAM_PASSWORD must be set in env").toBeTruthy();
 
       const probe = `LAM-${Date.now()}`;
 
@@ -35,14 +33,32 @@ exports.register = function (shared) {
         restResult.stage,
         `Keycloak write must succeed: stage=${restResult.stage} status=${restResult.status}`
       ).toBe("ok");
+
       const lamPage = await context.newPage();
       await lamPage.goto(`${lamBaseUrl}/templates/login.php`, { waitUntil: "load" });
 
-      const lamPwInput = lamPage.locator("input[name='password'], input#passwd").first();
-      await expect(lamPwInput, "LAM login form must render").toBeVisible({ timeout: 30_000 });
-      await lamPwInput.fill(lamPassword);
-      await lamPage.locator("button[type='submit'], input[type='submit']").first().click();
-      await lamPage.waitForLoadState("networkidle");
+      if (lamOauth2Fronted) {
+        const kcUsername = lamPage.locator("input[name='username'], input#username").first();
+        await expect(kcUsername, "Keycloak login form must render for OAuth2-fronted LAM").toBeVisible({ timeout: 30_000 });
+        await kcUsername.fill(shared.env.adminUsername);
+        await lamPage.locator("input[name='password'], input#password").first().fill(shared.env.adminPassword);
+        await lamPage.locator("button[type='submit'], input[name='login'], input[type='submit']").first().click();
+        await lamPage.waitForLoadState("networkidle");
+
+        const lamPwAfterSso = lamPage.locator("input[name='password'], input#passwd").first();
+        if (lamPassword && await lamPwAfterSso.isVisible({ timeout: 5_000 }).catch(() => false)) {
+          await lamPwAfterSso.fill(lamPassword);
+          await lamPage.locator("button[type='submit'], input[type='submit']").first().click();
+          await lamPage.waitForLoadState("networkidle");
+        }
+      } else {
+        expect(lamPassword, "LAM_PASSWORD must be set when LAM is not OAuth2-fronted").toBeTruthy();
+        const lamPwInput = lamPage.locator("input[name='password'], input#passwd").first();
+        await expect(lamPwInput, "LAM native login form must render").toBeVisible({ timeout: 30_000 });
+        await lamPwInput.fill(lamPassword);
+        await lamPage.locator("button[type='submit'], input[type='submit']").first().click();
+        await lamPage.waitForLoadState("networkidle");
+      }
 
       await lamPage.goto(`${lamBaseUrl}/templates/lists/list.php?type=user`, { waitUntil: "load" });
       const filter = lamPage.locator("input[name='filter_uid'], input[name*='filter']").first();
@@ -58,8 +74,7 @@ exports.register = function (shared) {
 
       await expect(
         lamPage.locator("body"),
-        `LAM-rendered LDAP entry for ${shared.env.biberUsername} must contain probe "${probe}" — ` +
-        "proves Keycloak Account REST → WRITABLE federation → LDAP write-through"
+        `LAM-rendered LDAP entry for ${shared.env.biberUsername} must contain probe "${probe}"`
       ).toContainText(probe, { timeout: 30_000 });
     });
   });

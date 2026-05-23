@@ -12,20 +12,19 @@ const env = {
   moodleBaseUrl: normalizeBaseUrl(process.env.APP_BASE_URL),
   oidcIssuerUrl: normalizeBaseUrl(process.env.OIDC_ISSUER_URL || ""),
   oidcClientId: decodeDotenvQuotedValue(process.env.OIDC_CLIENT_ID || ""),
+  adminUsername: decodeDotenvQuotedValue(process.env.ADMIN_USERNAME),
+  adminPassword: decodeDotenvQuotedValue(process.env.ADMIN_PASSWORD),
   biberUsername: decodeDotenvQuotedValue(process.env.BIBER_USERNAME),
   biberPassword: decodeDotenvQuotedValue(process.env.BIBER_PASSWORD),
   oidcEnabled: isServiceEnabled("oidc"),
   ldapEnabled: isServiceEnabled("ldap"),
 };
 
-const adminUsername = decodeDotenvQuotedValue(process.env.ADMIN_USERNAME);
-const adminPassword = decodeDotenvQuotedValue(process.env.ADMIN_PASSWORD);
-
 async function beforeEach({ page }) {
   await page.setViewportSize({ width: 1440, height: 1100 });
   expect(env.moodleBaseUrl, "APP_BASE_URL must be set").toBeTruthy();
-  expect(adminUsername, "ADMIN_USERNAME must be set").toBeTruthy();
-  expect(adminPassword, "ADMIN_PASSWORD must be set").toBeTruthy();
+  expect(env.adminUsername, "ADMIN_USERNAME must be set").toBeTruthy();
+  expect(env.adminPassword, "ADMIN_PASSWORD must be set").toBeTruthy();
   expect(env.biberUsername, "BIBER_USERNAME must be set").toBeTruthy();
   expect(env.biberPassword, "BIBER_PASSWORD must be set").toBeTruthy();
   await page.context().clearCookies();
