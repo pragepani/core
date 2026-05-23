@@ -103,6 +103,30 @@ class TestServiceDirect(unittest.TestCase):
         self.assertFalse(results[1]["required"])
         self.assertFalse(results[2]["required"])
 
+    def test_local_true_when_enabled_and_not_shared(self):
+        self.assertTrue(self._get("cdn")["local"])
+
+    def test_local_false_when_enabled_and_shared(self):
+        self.assertFalse(self._get("matomo")["local"])
+
+    def test_local_false_when_shared_only(self):
+        self.assertFalse(self._get("logout")["local"])
+
+    def test_local_false_when_service_absent(self):
+        self.assertFalse(self._get("collab")["local"])
+
+    def test_local_false_when_group_names_do_not_match(self):
+        self.assertFalse(self._get("cdn", ["web-app-unknown"])["local"])
+
+    def test_local_and_required_are_mutually_exclusive(self):
+        for term in ("matomo", "cdn", "logout", "collab"):
+            result = self._get(term)
+            if result["enabled"]:
+                self.assertFalse(
+                    result["local"] and result["required"],
+                    msg=f"{term}: local and required must not both be True",
+                )
+
     def test_empty_terms_returns_empty(self):
         self.assertEqual(
             _run(

@@ -164,7 +164,17 @@ def _compute_flags(
         _is_service_required(applications, service_registry, app_id, primary_key, set())
         for app_id in deployed
     )
-    return {"enabled": any_enabled, "shared": any_shared, "required": any_required}
+    any_local = any(
+        _get_service_flag(applications, app_id, equivalent_keys, "enabled")
+        and not _get_service_flag(applications, app_id, equivalent_keys, "shared")
+        for app_id in deployed
+    )
+    return {
+        "enabled": any_enabled,
+        "shared": any_shared,
+        "required": any_required,
+        "local": any_local,
+    }
 
 
 class LookupModule(LookupBase):
@@ -188,6 +198,10 @@ class LookupModule(LookupBase):
                  "Required" was chosen over "needed" to express that the
                  service is contractually required by a real consumer, not
                  merely convenient.
+      local    — True if any deployed app has enabled AND NOT shared, i.e.
+                 the service runs embedded inside that app's own compose
+                 stack rather than centrally. Mutually exclusive with the
+                 shared/required axis when enabled is True.
     """
 
     def run(

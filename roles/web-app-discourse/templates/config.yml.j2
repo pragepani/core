@@ -1,5 +1,5 @@
 templates:
-{% if not lookup('database', application_id, 'shared')%}
+{% if lookup('database', application_id, 'local') %}
   - "templates/postgres.template.yml"
 {% endif %}
   #- "templates/redis.template.yml"

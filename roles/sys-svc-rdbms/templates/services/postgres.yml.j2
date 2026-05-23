@@ -1,6 +1,6 @@
 {# This template needs to be included in compose.yml, which depend on a postgres database #}
 
-{% if not lookup('database', application_id, 'shared') %}
+{% if lookup('database', application_id, 'local') %}
 {% set _extensions = lookup('service_extensions', 'postgres').get(application_id, []) %}
 {% set _libraries = lookup('postgres_libraries', _extensions) %}
   {{ lookup('database', application_id, 'host') }}:

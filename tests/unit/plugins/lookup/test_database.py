@@ -89,6 +89,7 @@ class DatabaseLookupTests(unittest.TestCase):
         # enabled/shared are surfaced even if type is empty
         self.assertFalse(out["enabled"])
         self.assertFalse(out["shared"])
+        self.assertFalse(out["local"])
 
         # id should be empty when dbtype is empty
         self.assertEqual(out.get("id", ""), "")
@@ -156,6 +157,7 @@ class DatabaseLookupTests(unittest.TestCase):
         # enabled/shared surfaced
         self.assertTrue(out["enabled"])
         self.assertFalse(out["shared"])
+        self.assertTrue(out["local"])
 
         # id should be present
         self.assertEqual(out["id"], "svc-db-postgres")
@@ -230,6 +232,7 @@ class DatabaseLookupTests(unittest.TestCase):
         # enabled/shared surfaced
         self.assertTrue(out["enabled"])
         self.assertTrue(out["shared"])
+        self.assertFalse(out["local"])
 
         # id should be present
         self.assertEqual(out["id"], "svc-db-postgres")
@@ -283,6 +286,7 @@ class DatabaseLookupTests(unittest.TestCase):
 
         self.assertTrue(out["enabled"])
         self.assertFalse(out["shared"])
+        self.assertTrue(out["local"])
 
         # id should be present
         self.assertEqual(out["id"], "svc-db-mariadb")
@@ -335,6 +339,41 @@ class DatabaseLookupTests(unittest.TestCase):
 
         # consumer override should win:
         self.assertEqual(out["version"], "15")
+
+    def test_local_flag_for_variant_disabling_dedicated_db(self):
+        applications = {
+            "web-app-foo": {
+                "services": {"postgres": {"enabled": False, "shared": False}},
+                "credentials": {"database_password": "pw"},
+            }
+        }
+        ports = {"localhost": {"database": {"svc-db-postgres": "5432"}}}
+        vars_ = {
+            "applications": applications,
+            "ports": ports,
+            "DIR_COMPOSITIONS": "/opt/compose/",
+        }
+
+        lookup = self._make_lookup(vars_)
+
+        with patch.object(
+            self.db_lookup_mod,
+            "get_entity_name",
+            side_effect=self._fake_get_entity_name,
+        ):
+            out = lookup.run(["web-app-foo"], variables=vars_)[0]
+
+        self.assertFalse(out["enabled"])
+        self.assertFalse(out["shared"])
+        self.assertFalse(out["local"])
+        self.assertEqual(out["host"], "")
+
+        with patch.object(
+            self.db_lookup_mod,
+            "get_entity_name",
+            side_effect=self._fake_get_entity_name,
+        ):
+            self.assertFalse(lookup.run(["web-app-foo", "local"], variables=vars_)[0])
 
     def test_multiple_database_services_raise(self):
         applications = {
