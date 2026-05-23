@@ -221,7 +221,7 @@ fail explicitly if more than one canonical domain is configured.
 - [x] `roles/web-app-hugo/Administration.md` documents day-2 ops:
       forcing a rebuild (`docker compose build --no-cache`), bumping
       the source ref, debugging a failed Hugo build (where to find
-      the `compose build` log via `make exec`).
+      the `compose build` log via `make compose-exec`).
 
 ## Out of Scope
 

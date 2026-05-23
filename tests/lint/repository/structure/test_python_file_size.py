@@ -23,7 +23,7 @@ marker grammar.
 
 The walker uses the SPOT helpers in :mod:`utils.cache.files` so the
 lint runs in environments where ``.git/`` is not mounted (the
-``make exec`` container) and stays consistent with other gitignore-
+``make compose-exec`` container) and stays consistent with other gitignore-
 aware lint tests.
 """
 

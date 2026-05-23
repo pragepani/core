@@ -640,7 +640,7 @@ without login (both variants), and direct LDAP-bind login
       via direct LDAP modify), wait for the next `auth_ldap`
       sync cycle (or trigger it explicitly via
       `php /var/www/html/admin/cli/scheduled_task.php
-      --execute='\auth_ldap\task\sync_task'` through `make exec`),
+      --execute='\auth_ldap\task\sync_task'` through `make compose-exec`),
       and assert that biber's Moodle profile reflects the new
       `phone1` **without biber logging in again**. This proves
       the LDAP cron-sync path is wired correctly.
@@ -668,7 +668,7 @@ without login (both variants), and direct LDAP-bind login
       mutated `phone2` is present in LDAP. The assertion path
       MUST be one of:
   1. an `ldapsearch` (or equivalent) query executed inside the
-     runner via `make exec`, OR
+     runner via `make compose-exec`, OR
   2. a Keycloak Account Console fetch that round-trips the
      attribute from LDAP (only acceptable if the federation
      provider is configured `READ_ONLY` and Keycloak's LDAP
@@ -695,7 +695,7 @@ without login (both variants), and direct LDAP-bind login
       whose "LDAP attribute" cell is non-empty renders the
       value seeded directly in LDAP.
 - [ ] The spec MUST mutate biber's `phone1` directly in LDAP
-      (via `make exec` and `ldapmodify` against the project
+      (via `make compose-exec` and `ldapmodify` against the project
       LDAP service), wait for the next `auth_ldap` sync cycle
       (or trigger it explicitly), and assert the new value
       appears on biber's Moodle profile **without biber
@@ -786,7 +786,7 @@ applied because the role ships two identity-integration variants.
       against `roles/web-app-moodle/files/playwright/playwright.spec.js`
       pinned to each variant in turn, and confirm every spec
       scenario passes on the local stack for both variants.
-- [x] All inspection (live logs, browser, `make exec`) MUST happen
+- [x] All inspection (live logs, browser, `make compose-exec`) MUST happen
       before each redeploy, per [role.md](../agents/action/iteration/role.md).
 
 ## Autonomy & commit policy

@@ -15,7 +15,7 @@ class TestTestFilesLocation(unittest.TestCase):
 
     Files matched by `.gitignore` are skipped via the SPOT helpers in
     :mod:`utils.cache.files`, so the lint works in environments where
-    `.git/` is not mounted (e.g. the `make exec` container).
+    `.git/` is not mounted (e.g. the `make compose-exec` container).
     """
 
     def test_no_test_files_outside_tests_dir(self):
