@@ -42,7 +42,7 @@ galaxy_info:
   lifecycle: pre-alpha
 ```
 
-- **`run_after:`** is the project-specific role-load-order list introduced by req-002. `roles/sys-utils-service-loader` reads it to order role loads within a deploy-type pass.
+- **`run_after:`** is the project-specific role-load-order list introduced by req-002. `roles/sys-service-loader` reads it to order role loads within a deploy-type pass.
 - **`lifecycle:`** is a maturity marker (`pre-alpha`, `alpha`, `beta`, `stable`, …) used by `cli meta roles lifecycle` and other introspection commands to filter or report on role status.
 
 Bundling these under `galaxy_info` mixes Ansible-standard fields with project-internal ones; Galaxy publishers ignore unknown keys, so the values have always lived there as a workaround. With req-008 we now have a project-owned location for per-role/per-entity metadata (`meta/services.yml`), and these two fields belong there.
@@ -165,7 +165,7 @@ primary-entity derivation at every call site.
       `meta/services.yml.<primary_entity>.lifecycle`. The
       `galaxy_info.lifecycle` key is removed from `meta/main.yml`.
 - [ ] `<primary_entity>` is derived via `get_entity_name(role_name)` (the
-      same function used by `sys-utils-service-loader` per req-002).
+      same function used by `sys-service-loader` per req-002).
 - [ ] For roles where `<primary_entity>` does not exist as a compose entity
       in `meta/services.yml` today (e.g. `web-app-bluesky` → `bluesky`,
       `web-app-matrix` → `matrix`, desk/dev/drv/gen roles with no compose
@@ -207,7 +207,7 @@ The following consumers read `run_after` and/or `lifecycle` from
 - [ ] `utils/roles/dependency_resolver.py`
 - [ ] `utils/roles/applications/services/registry.py`
 - [ ] `utils/roles/validation/invokable.py`
-- [ ] `roles/sys-utils-service-loader` (its tasks/templates that drive the load-order pass)
+- [ ] `roles/sys-service-loader` (its tasks/templates that drive the load-order pass)
 - [ ] `cli/meta/roles/applications/resolution/run_after/__main__.py`
 - [ ] `cli/meta/roles/lifecycle/__main__.py`
 - [ ] `cli/meta/roles/applications/resolution/combined/__main__.py`

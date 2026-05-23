@@ -28,7 +28,7 @@
             ) != '__missing__'
         fail_msg: >-
           Shared database provider '{{ _database_provider_role }}' was not preloaded by
-          sys-utils-service-loader before sys-svc-rdbms ran.
+          sys-service-loader before sys-svc-rdbms ran.
 
     - name: "For '{{ application_id }}': Initialize dedicated database on preloaded provider"
       ansible.builtin.include_role:

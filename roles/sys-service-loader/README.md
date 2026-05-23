@@ -1,14 +1,16 @@
-# sys-utils-service-loader
+# sys-service-loader
 
 ## Description
 
-Internal utility role that exposes shared task helpers used by frontend
-service-loading roles. It is included by other roles to avoid duplicating
-boilerplate when assembling per-service task chains.
+SPOT loader for shared services. Drives the ordered preload pass via
+`tasks/main.yml` and the post-load queue flush, plus the shared helper
+`tasks/list_or_shoot.yml` used by service roles to route their dependent
+roles through the loader's queue.
 
 ## Overview
 
-Utility role providing shared task helpers for frontend service loading.
+Loader role providing the shared-service preload pass and helper tasks
+for queueing post-load role inclusions.
 
 ## Features
 

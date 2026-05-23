@@ -137,7 +137,7 @@
 
 - name: Preload shared services
   ansible.builtin.include_role:
-    name: sys-utils-service-loader
+    name: sys-service-loader
 
 - name: "Load base roles"
   ansible.builtin.include_tasks: "./tasks/groups/{{ role_group }}-roles.yml"

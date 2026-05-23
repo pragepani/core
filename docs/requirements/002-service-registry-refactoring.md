@@ -14,23 +14,23 @@ self-describing.
       instead of in the central registry.
 - [x] Load order *within* the same deploy type (universal, workstation, server) is
       declared via a custom `run_after:` list in the role's `meta/main.yml`. Each
-      entry is a role name (e.g. `web-svc-cdn`). `roles/sys-utils-service-loader`
+      entry is a role name (e.g. `web-svc-cdn`). `roles/sys-service-loader`
       MUST read this field and load the listed roles before the declaring role within
       the same deploy-type pass. This is a project-specific convention; Ansible does
       not process `run_after:` natively.
       Cross-type dependencies are handled implicitly by stage ordering:
-      `roles/sys-utils-service-loader` runs in the constructor stage and loads all
+      `roles/sys-service-loader` runs in the constructor stage and loads all
       services (databases, `web-app-keycloak` via `provides: oidc`, etc.) before
       apps are deployed in the server stage. Apps MUST NOT declare `run_after:`
       entries for services of a different deploy type. If a role declares such a
-      cross-type dependency, `roles/sys-utils-service-loader` MUST fail hard with a
+      cross-type dependency, `roles/sys-service-loader` MUST fail hard with a
       clear error instead of ignoring it. Apps MUST NOT require the user to list
       those dependencies explicitly in `INFINITO_APPS`.
 - [x] The special `role_template: "svc-db-{type}"` database loading logic is removed;
       PostgreSQL and MariaDB are defined as regular services in their own
       `config/main.yml` (same as any other service). Because databases are a different
       deploy type from apps, they are loaded automatically before apps by
-      `roles/sys-utils-service-loader`; no `run_after:` declaration is needed in
+      `roles/sys-service-loader`; no `run_after:` declaration is needed in
       the app.
 
       **Before:**
@@ -95,7 +95,7 @@ self-describing.
             canonical: cdn
       ```
 - [x] A role MAY declare an optional `provides:` field under its primary service entry
-      in `config/main.yml`. When present, `roles/sys-utils-service-loader` registers
+      in `config/main.yml`. When present, `roles/sys-service-loader` registers
       the role under that functional name instead of the entity name returned by
       `get_entity_name`. Roles without `provides:` are registered under their entity
       name by default. `provides:` MUST only be declared when the desired functional
@@ -129,16 +129,16 @@ self-describing.
       All consumers (templates, lookups, `run_after:` lists) continue to reference
       the functional name (e.g. `oidc`, `email`, `ldap`); no consumer changes are
       required for roles that already use these names.
-- [x] `roles/sys-utils-service-loader` is the single place that loads all services.
+- [x] `roles/sys-service-loader` is the single place that loads all services.
       It MUST use the existing function that determines which roles are universal,
       workstation, or server to derive the load order: universal roles first,
       then `web-svc-*`, then `web-app-*`.
-- [x] `roles/sys-utils-service-loader` is invoked from the constructor stage
+- [x] `roles/sys-service-loader` is invoked from the constructor stage
       (`tasks/stages/01_constructor.yml`) instead of the server block
       (`tasks/stages/02_server.yml`).
 - [x] All service dependencies, including databases (e.g. `svc-db-mariadb`,
       `svc-db-postgres`) and shared services (e.g. `web-app-keycloak`), are loaded
-      automatically by `roles/sys-utils-service-loader` in the constructor stage.
+      automatically by `roles/sys-service-loader` in the constructor stage.
       No service dependency MUST ever require the user to list it explicitly in `INFINITO_APPS`.
 - [x] Every file that currently reads from `SERVICE_REGISTRY` or `20_services.yml`
       MUST be updated to discover service metadata from role `config/main.yml` files
@@ -154,7 +154,7 @@ self-describing.
       Tests MUST cover at minimum:
       - Discovery of `provides:`, `canonical:`, `shared:`, `enabled:` from role
         `config/main.yml`
-      - Correct load order produced by `sys-utils-service-loader`
+      - Correct load order produced by `sys-service-loader`
       - `get_entity_name` derivation for all relevant role name prefixes
       - `run_after:` ordering within the same deploy type
 - [x] Every file and role that is modified as part of this refactoring MUST also be

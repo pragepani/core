@@ -253,7 +253,7 @@ the old `compose.…` or top-level paths.
 - [ ] The `compose.volumes:` block is migrated to its own `meta/volumes.yml`
       file (file root IS the volumes map, with no `volumes:` wrapper).
 - [ ] `<entity_name>` is derived via `get_entity_name(role_name)` (the same
-      function used by `sys-utils-service-loader` per requirement 002).
+      function used by `sys-service-loader` per requirement 002).
 - [ ] `meta/services.yml` is a map keyed by `<entity_name>` at file root,
       with no `services:` wrapper and no `compose:` wrapper.
 

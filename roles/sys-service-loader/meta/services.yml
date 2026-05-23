@@ -1,4 +1,4 @@
 ---
 # nocheck: required-by-coverage — TODO: declare proper required_by
-utils-service-loader:
+service-loader:
   lifecycle: beta

@@ -2,10 +2,11 @@
 - include_tasks: 01_core.yml
   when: run_once_sys_svc_webserver_core is not defined
 
-- name: Include health dependencies
-  include_role:
-    name: "{{ item }}"
-  loop:
-    - sys-ctl-hlth-webserver
-    - sys-ctl-hlth-csp
-  when: not (_service_loader_preloading | default(false) | bool)
+- name: "Route webserver health deps through service-loader"
+  ansible.builtin.include_role:
+    name: sys-service-loader
+    tasks_from: list_or_shoot.yml
+  vars:
+    list_or_shoot_roles:
+      - sys-ctl-hlth-webserver
+      - sys-ctl-hlth-csp

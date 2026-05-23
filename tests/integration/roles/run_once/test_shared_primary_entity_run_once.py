@@ -14,7 +14,7 @@ holds:
       which the variant-aware deploy planner resolves to this role.
 
 In every case the role can be pulled in dynamically by
-``sys-utils-service-loader``'s ``load_app.yml`` (which gates inclusion
+``sys-service-loader``'s ``load_app.yml`` (which gates inclusion
 on ``run_once_<role>``) — both directly when listed in ``INFINITO_APPS=`` and
 transitively when a consumer's variant aktivates it. Without the guard
 in ``tasks/main.yml`` the loader can include the role multiple times

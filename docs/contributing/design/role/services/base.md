@@ -76,7 +76,7 @@ The discovery layer:
 
 ## Load Order 🧮
 
-[main.yml](../../../../../roles/sys-utils-service-loader/tasks/main.yml) is the single loader entry point for all shared services.
+[main.yml](../../../../../roles/sys-service-loader/tasks/main.yml) is the single loader entry point for all shared services.
 
 It runs from [01_constructor.yml](../../../../../tasks/stages/01_constructor.yml) before the normal application stage.
 
@@ -105,7 +105,7 @@ Service loading and frontend injection are separate mechanisms.
 
 Loading decides whether the provider role is deployed at all.
 
-[main.yml](../../../../../roles/sys-utils-service-loader/tasks/main.yml):
+[main.yml](../../../../../roles/sys-service-loader/tasks/main.yml):
 
 - queries the ordered discovered service list
 - checks `lookup('service', service_key).required`
@@ -114,7 +114,7 @@ Loading decides whether the provider role is deployed at all.
 
 Frontend service probe/load helper:
 
-- [load_service.yml](../../../../../roles/sys-utils-service-loader/tasks/load_service.yml)
+- [load_service.yml](../../../../../roles/sys-service-loader/tasks/load_service.yml)
 
 ### Injection 🔌
 
@@ -216,8 +216,8 @@ The `lookup('database', ...)` API is the convenience accessor for database conne
 | [service_registry.py lookup](../../../../../plugins/lookup/service_registry.py) | Exposes the discovered registry and ordered provider list to Ansible |
 | [service.py](../../../../../plugins/lookup/service.py) | Resolves service flags and transitive need |
 | [applications_current_play.py](../../../../../plugins/lookup/applications_current_play.py) | Builds the current play app graph with shared service deps |
-| [main.yml](../../../../../roles/sys-utils-service-loader/tasks/main.yml) | Single shared-service loader entry point |
-| [load_service.yml](../../../../../roles/sys-utils-service-loader/tasks/load_service.yml) | Per-service load helper used by the central service loader |
+| [main.yml](../../../../../roles/sys-service-loader/tasks/main.yml) | Single shared-service loader entry point |
+| [load_service.yml](../../../../../roles/sys-service-loader/tasks/load_service.yml) | Per-service load helper used by the central service loader |
 | [01_constructor.yml](../../../../../tasks/stages/01_constructor.yml) | Calls the service loader during constructor |
 | [load_app.yml](../../../../../tasks/utils/load_app.yml) | Run-once role loader |
 | [test_service_registry.py](../../../../../tests/unit/utils/roles/applications/services/test_registry.py) | Unit tests for discovery, buckets, and `run_after` ordering |
