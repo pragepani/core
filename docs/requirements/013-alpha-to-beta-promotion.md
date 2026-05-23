@@ -59,7 +59,7 @@ one of:
   exception per [lifecycle.md](../contributing/design/role/services/lifecycle.md).
 - 🛠️ **glue**. The upstream software has no first-party adapter, but
   the integration is reachable with project-supplied scaffolding at
-  no extra cost. Examples include a sidecar `web-app-oauth2-proxy`,
+  no extra cost. Examples include a sidecar `web-app-keycloak`'s SSO-proxy sidecar,
   a Django auth middleware patch, an ejabberd mod, or a Keycloak
   event-listener bridge that auto-provisions accounts on the role's
   admin API and hands the user a synthesised credential (used for
@@ -130,7 +130,7 @@ executed and verified.
 
 ### web-app-akaunting 🐣
 
-- [x] **OIDC (🛠️):** `web-app-oauth2-proxy` sidecar (perimeter gate)
+- [x] **OIDC (🛠️):** `web-app-keycloak`'s SSO-proxy sidecar sidecar (perimeter gate)
   in front of the Akaunting web UI. Native Laravel auth middleware
   with per-user provisioning is deferred to follow-up issue
   [#221](https://github.com/infinito-nexus/core/issues/221). The
@@ -150,7 +150,7 @@ executed and verified.
 
 ### web-app-baserow 🐣
 
-- [x] **OIDC (🛠️):** `web-app-oauth2-proxy` sidecar (perimeter gate)
+- [x] **OIDC (🛠️):** `web-app-keycloak`'s SSO-proxy sidecar sidecar (perimeter gate)
   in front of the Baserow web UI. Native `mozilla-django-oidc`
   integration is deferred to follow-up issue
   [#219](https://github.com/infinito-nexus/core/issues/219). The
@@ -171,7 +171,7 @@ executed and verified.
 
 - [x] **OIDC (🛠️):** Variant A+ in-role login-broker (under
   [files/login-broker/](../../roles/web-app-bluesky/files/login-broker/))
-  sits behind `web-app-oauth2-proxy` and in front of the official
+  sits behind `web-app-keycloak`'s SSO-proxy sidecar and in front of the official
   `@bluesky-social/social-app` web client. On a user's first
   OIDC-authenticated visit the broker auto-provisions a Bluesky PDS
   account via `com.atproto.server.createAccount`, encrypts the
@@ -216,7 +216,7 @@ executed and verified.
 
 ### web-app-bookwyrm 🐣
 
-- [x] **OIDC (🛠️):** `web-app-oauth2-proxy` sidecar (perimeter gate)
+- [x] **OIDC (🛠️):** `web-app-keycloak`'s SSO-proxy sidecar sidecar (perimeter gate)
   in front of the BookWyrm web UI. Native `mozilla-django-oidc`
   integration is deferred to follow-up issue
   [#220](https://github.com/infinito-nexus/core/issues/220). The
@@ -251,7 +251,7 @@ executed and verified.
 
 ### web-app-flowise 🐣
 
-- [x] **OIDC (🛠️):** `web-app-oauth2-proxy` sidecar in front of
+- [x] **OIDC (🛠️):** `web-app-keycloak`'s SSO-proxy sidecar sidecar in front of
   Flowise. Native `FLOWISE_OIDC_*` integration is deferred because
   the free Flowise tier does not consistently expose the OIDC env
   vars across versions, so the universal oauth2-proxy glue path is
@@ -267,7 +267,7 @@ executed and verified.
 
 ### web-app-fusiondirectory 🛣️
 
-- [x] **OIDC (🛠️):** `web-app-oauth2-proxy` sidecar in front of FD.
+- [x] **OIDC (🛠️):** `web-app-keycloak`'s SSO-proxy sidecar sidecar in front of FD.
   The first-party FusionDirectory OIDC plugin (Composer) is deferred
   to a follow-up. The universal oauth2-proxy glue path is reliable
   across FD release cadences and avoids a Composer pin treadmill.
@@ -342,7 +342,7 @@ executed and verified.
 
 ### web-app-postmarks 🐣
 
-- [x] **OIDC (🛠️):** Sidecar `web-app-oauth2-proxy` in front of the
+- [x] **OIDC (🛠️):** Sidecar `web-app-keycloak`'s SSO-proxy sidecar in front of the
   Postmarks web UI. Verified V0 standalone, with the Playwright spec
   confirming the OAuth2 redirect to Keycloak.
 - [x] **LDAP (🛠️):** Same oauth2-proxy path with Keycloak federating
@@ -371,8 +371,8 @@ executed and verified.
 
 ### web-svc-libretranslate 🛣️
 
-- [x] **OIDC (🛠️):** `web-app-oauth2-proxy` sidecar in front of the
-  web UI; the meta `services.oauth2.acl.whitelist` allows
+- [x] **OIDC (🛠️):** `web-app-keycloak`'s SSO-proxy sidecar sidecar in front of the
+  web UI; the meta `services.sso.oauth2.acl.whitelist` allows
   `/translate`, `/detect`, `/languages`, `/spec`, `/frontend/settings`,
   `/api` so programmatic API endpoints stay reachable.
 - [x] **LDAP (❌):** Not feasible because LibreTranslate has no per-user

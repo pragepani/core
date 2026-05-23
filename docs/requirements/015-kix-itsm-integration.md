@@ -2,7 +2,7 @@
 
 ## User Story
 
-As an operator running an Infinito.Nexus stack, I want [KIX Start](https://www.kixdesk.com/) deployed as a first-class `web-app-*` role, fronted by `web-app-oauth2-proxy` so that **every** access to KIX is gated by Keycloak SSO with the realm's 2FA policy enforced, and so that helpdesk tickets share the same identity store, mail relay, dashboard, logout flow and proxy edge as every other service on the host.
+As an operator running an Infinito.Nexus stack, I want [KIX Start](https://www.kixdesk.com/) deployed as a first-class `web-app-*` role, fronted by `web-app-keycloak`'s SSO-proxy sidecar so that **every** access to KIX is gated by Keycloak SSO with the realm's 2FA policy enforced, and so that helpdesk tickets share the same identity store, mail relay, dashboard, logout flow and proxy edge as every other service on the host.
 
 ## Acceptance Criteria
 
@@ -10,7 +10,7 @@ As an operator running an Infinito.Nexus stack, I want [KIX Start](https://www.k
 - [x] The role declares its host-bound ports under `meta/services.yml.<entity>.ports.local.http` inside the `local.http` band from `group_vars/all/08_networks.yml`, picked via `cli meta ports suggest`.
 - [x] The role declares a per-role docker subnet under `meta/server.yml.networks.local.subnet`, picked via `cli meta networks suggest`.
 - [x] KIX is reachable at `kix.{{ DOMAIN_PRIMARY }}` over TLS through `sys-stk-front-proxy` and emits HSTS.
-- [x] An `web-app-oauth2-proxy` instance sits between `sys-stk-front-proxy` and the KIX backend: every request to `kix.{{ DOMAIN_PRIMARY }}` that does not carry a valid OAuth2-proxy session cookie is redirected to Keycloak. The KIX backend is NOT reachable directly from the front proxy without traversing the OAuth2 proxy.
+- [x] An `web-app-keycloak`'s SSO-proxy sidecar instance sits between `sys-stk-front-proxy` and the KIX backend: every request to `kix.{{ DOMAIN_PRIMARY }}` that does not carry a valid OAuth2-proxy session cookie is redirected to Keycloak. The KIX backend is NOT reachable directly from the front proxy without traversing the OAuth2 proxy.
 - [x] 2FA enforcement is realm-level: the Keycloak realm that backs the OAuth2 proxy has an OTP / WebAuthn flow configured, so a user without a second factor cannot complete the OAuth2 proxy redirect chain. The realm-level configuration is the single source of truth, so no 2FA logic lives in KIX or the role itself.
 - [x] LDAP is wired as KIX's user-directory backend against `svc-db-openldap` (`Auth::LDAP` + `Auth::Sync::LDAP`): when a user authenticates against KIX their profile (display name, email, role group) is sourced from LDAP, so no manual KIX-side user pre-creation is required.
 - [x] The `web-app-dashboard` role surfaces a card for KIX that links to its canonical URL, with the logo / title resolved via the standard `lookup('config', 'web-app-kix', ...)` path used by every other dashboard tile.

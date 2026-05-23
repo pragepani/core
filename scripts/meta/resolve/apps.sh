@@ -102,7 +102,7 @@ apps_json="$(
 # ------------------------------------------------------------
 apps_json="$(
 	printf '%s\n' "${apps_json}" |
-		jq_exclude_regex '^(web-opt-rdr-www|web-app-oauth2-proxy)$'
+		jq_exclude_regex '^(web-opt-rdr-www)$'
 )"
 
 # ------------------------------------------------------------

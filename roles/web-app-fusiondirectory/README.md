@@ -6,7 +6,7 @@
 
 ## Overview
 
-This role deploys FusionDirectory on Docker Compose against the project's central `svc-db-openldap` server. The OIDC variant gates the FusionDirectory web UI through `web-app-oauth2-proxy` for SSO; the LDAP variant relies on the same FusionDirectory binding to `svc-db-openldap` as its primary auth path. RBAC follows the LDAP group model that FusionDirectory already understands natively, so no glue layer is required for authorisation mapping.
+This role deploys FusionDirectory on Docker Compose against the project's central `svc-db-openldap` server. The OIDC variant gates the FusionDirectory web UI through `web-app-keycloak`'s SSO-proxy sidecar for SSO; the LDAP variant relies on the same FusionDirectory binding to `svc-db-openldap` as its primary auth path. RBAC follows the LDAP group model that FusionDirectory already understands natively, so no glue layer is required for authorisation mapping.
 
 ## Features
 
@@ -18,7 +18,7 @@ This role deploys FusionDirectory on Docker Compose against the project's centra
 ## Further Resources
 
 - [FusionDirectory Official Website](https://www.fusiondirectory.org/)
-- [FusionDirectory Docker Image (tiredofit/fusiondirectory)](https://hub.docker.com/r/tiredofit/fusiondirectory)
+- [FusionDirectory Documentation](https://www.fusiondirectory.org/en/documentations/)
 
 ## Credits
 

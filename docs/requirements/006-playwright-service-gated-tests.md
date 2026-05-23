@@ -60,7 +60,7 @@ and retroactively migrates the existing specs onto it.
 - [x] The test-e2e-playwright role MUST render one boolean env
   variable per gateable shared service into the role's staged
   Playwright `.env`, named `<SERVICE>_SERVICE_ENABLED` in
-  UPPER_SNAKE_CASE (for example `OIDC_SERVICE_ENABLED=true`,
+  UPPER_SNAKE_CASE (for example `SSO_SERVICE_ENABLED=true`,
   `EMAIL_SERVICE_ENABLED=false`, `MATOMO_SERVICE_ENABLED=false`).
   Values MUST be the literal strings `"true"` or `"false"`. No other
   string (e.g. `1`, `0`, `yes`, empty) is permitted.

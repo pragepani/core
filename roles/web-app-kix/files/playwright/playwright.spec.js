@@ -4,7 +4,7 @@ const { decodeDotenvQuotedValue, performKeycloakLoginForm, runBiberFlow, runGues
 const { isServiceEnabled } = require("./service-gating");
 test.use({ ignoreHTTPSErrors: true });
 
-const oauth2Enabled = isServiceEnabled("oauth2");
+const oauth2Enabled = isServiceEnabled("sso");
 const ldapEnabled   = isServiceEnabled("ldap");
 
 const appBaseUrl         = decodeDotenvQuotedValue(process.env.APP_BASE_URL         || "").replace(/\/$/, "");

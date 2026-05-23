@@ -137,7 +137,7 @@ async function ssoLoginAndAssertUsername(page, username, password) {
 }
 
 test("opencloud sso login (administrator) lands on files view", async ({ page }) => {
-  skipUnlessServiceEnabled("oidc");
+  skipUnlessServiceEnabled("sso");
   expect(adminUsername, "LOGIN_USERNAME must be set").toBeTruthy();
   expect(adminPassword, "LOGIN_PASSWORD must be set").toBeTruthy();
 
@@ -145,7 +145,7 @@ test("opencloud sso login (administrator) lands on files view", async ({ page })
 });
 
 test("opencloud sso login (biber) lands on files view", async ({ page }) => {
-  skipUnlessServiceEnabled("oidc");
+  skipUnlessServiceEnabled("sso");
   expect(biberUsername, "BIBER_USERNAME must be set").toBeTruthy();
   expect(biberPassword, "BIBER_PASSWORD must be set").toBeTruthy();
 

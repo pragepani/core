@@ -113,7 +113,7 @@ async function signInViaDashboardOidc(page, username, password, personaLabel) {
 }
 
 test("administrator: openwebui OIDC login and logout", async ({ page }) => {
-  skipUnlessServiceEnabled("oidc");
+  skipUnlessServiceEnabled("sso");
   const diagnostics = attachDiagnostics(page);
 
   await signInViaDashboardOidc(page, adminUsername, adminPassword, "administrator");
@@ -143,7 +143,7 @@ test("administrator: openwebui OIDC login and logout", async ({ page }) => {
 });
 
 test("biber: openwebui OIDC login and logout", async ({ page }) => {
-  skipUnlessServiceEnabled("oidc");
+  skipUnlessServiceEnabled("sso");
   const diagnostics = attachDiagnostics(page);
 
   await signInViaDashboardOidc(page, biberUsername, biberPassword, "biber");

@@ -19,7 +19,7 @@ const biberUsername   = decodeDotenvQuotedValue(process.env.BIBER_USERNAME);
 const biberPassword   = decodeDotenvQuotedValue(process.env.BIBER_PASSWORD);
 const canonicalDomain = decodeDotenvQuotedValue(process.env.CANONICAL_DOMAIN);
 
-const oidcEnabled = isServiceEnabled("oidc");
+const oidcEnabled = isServiceEnabled("sso");
 const ldapEnabled = isServiceEnabled("ldap");
 const lamEnabled  = isServiceEnabled("lam");
 

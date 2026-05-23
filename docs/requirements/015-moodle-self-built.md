@@ -104,7 +104,7 @@ Keycloak is part of the topology at all.
 ### Variant 1: `auth_ldap` only (no OIDC)
 
 - [x] `auth_oidc` is **disabled** (`disable_plugin auth_oidc`),
-      and `services.oidc.enabled` in this variant's
+      and `services.sso.enabled` in this variant's
       `meta/variants.yml` block MUST be `false` so the
       shared-service plumbing does NOT add the role to Keycloak's
       client list.
@@ -517,15 +517,15 @@ URN prefix for these claims.
 The Keycloak OIDC client representing Moodle MUST be provisioned
 exclusively through the existing
 [`web-app-keycloak`](../../roles/web-app-keycloak) auto-provisioning
-path that consumes the per-app `services.oidc.enabled` flag
+path that consumes the per-app `services.sso.enabled` flag
 in [meta/services.yml](../../roles/web-app-moodle/meta/services.yml).
 The Moodle role MUST NOT call `kcadm.sh create clients` itself.
 
-- [x] In **variant 0**, `services.oidc.enabled` is `true`, which
+- [x] In **variant 0**, `services.sso.enabled` is `true`, which
       triggers `web-app-keycloak`'s usual auto-provisioning of
       the client, the redirect URIs, and the role/scope
       mappings.
-- [x] In **variant 1**, `services.oidc.enabled` is `false`. The
+- [x] In **variant 1**, `services.sso.enabled` is `false`. The
       Moodle client MUST NOT be created in Keycloak in this
       variant (auto-provisioning skips it). Operators that
       switch between variants MUST be free to do so without

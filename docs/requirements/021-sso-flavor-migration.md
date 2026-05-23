@@ -22,23 +22,23 @@ Today every role that wires SSO ships up to TWO independent service blocks in
 
 The two blocks are mutually exclusive on the runtime path (a single role's
 auth surface is either OIDC-direct or oauth2-proxy-gated, never both), and a
-test ([test_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py))
+test (`test_mutual_exclusive.py` (deleted by this requirement))
 already forbids both `enabled` keys being literal `True` at the same time.
 Despite that, three roles ship both blocks in different truthy shapes:
 
 | Role | `oidc.enabled` | `oauth2.enabled` | `oauth2.origin` | Resolution |
 |---|---|---|---|---|
 | `web-app-bookwyrm` | truthy (group-gated) | truthy (group-gated) | yes | `flavor: oauth2` — bookwyrm runs behind oauth2-proxy header auth; the `oidc:` block is vestigial from a prior integration attempt. |
-| `web-app-gitea` | truthy (group-gated) | (unset) | yes | `flavor: oidc` — gitea's own auth uses OIDC against Keycloak; the `oauth2.origin` block is dead and MUST be dropped. |
-| `web-app-friendica` | truthy (group-gated) | (unset) | yes | `flavor: oidc` — friendica's own auth uses OIDC; the `oauth2.origin` block is dead and MUST be dropped. |
+| `web-app-gitea` | truthy (group-gated) | truthy (group-gated) | yes | `flavor: oauth2` — gitea is fronted by oauth2-proxy; the role's `oauth2.acl.blacklist` (`/user/login`) forces every native-login attempt through Keycloak. The `oidc:` block is vestigial and MUST be dropped. |
+| `web-app-friendica` | truthy (group-gated) | truthy (group-gated) | yes | `flavor: oauth2` — friendica is fronted by oauth2-proxy with an extensive `oauth2.acl.whitelist` for federation + public endpoints; the gate is what enforces Keycloak SSO on the admin / network / settings surfaces. The `oidc:` block is vestigial and MUST be dropped. |
 
 The duplication has real cost:
 
 - Two independent lint suites enforce overlapping contracts
-  ([test_oauth2_contract.py](../../tests/lint/ansible/roles/meta/test_oauth2_contract.py),
+  ([test_sso_contract.py](../../tests/lint/ansible/roles/meta/test_sso_contract.py),
   [test_sso.py](../../tests/lint/ansible/roles/web-app/integration/test_sso.py),
-  [test_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py),
-  [test_acl_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_acl_mutual_exclusive.py),
+  `test_mutual_exclusive.py` (deleted by this requirement),
+  `test_acl_mutual_exclusive.py` (deleted by this requirement),
   [test_dynamic_flags.py](../../tests/integration/roles/meta/services/test_dynamic_flags.py)).
 - Consumer code (lookup plugins, filter plugins, templates) branches on both
   `services.oauth2.enabled` and `services.oidc.enabled`.
@@ -76,7 +76,7 @@ written and are NOT subject to re-litigation during implementation.
 | 7 | `oauth2` (as a top-level service key) is removed entirely from the repository. Every reference migrates to the new `sso` shape. | Avoids leaving a half-deprecated key that future contributors mistake for live. |
 | 8 | The `roles/web-app-oauth2-proxy/` directory is deleted. Its proxy-sidecar templating moves into `roles/web-app-keycloak/` and is invoked per-consumer during a consumer role's deploy. | Eliminates the "helper role with no application surface" anti-pattern; centralises the SSO concern in one provider role. |
 | 9 | `web-app-keycloak/meta/services.yml` declares `provides: [sso]` (analog to the `prometheus` provider pattern, see [019 Rule 13](019-playwright-meta-services-parity.md#rules)). | Single source of truth for who provides SSO; consumers' `services.sso.enabled` toggles need to round-trip against this provider declaration. |
-| 10 | The two existing mutual-exclusion tests ([test_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py), [test_acl_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_acl_mutual_exclusive.py)) are deleted, not adapted. The new contract is "one block per role, period" — there is nothing to be mutually exclusive about. | Mutual exclusion was an artefact of having two blocks; removing the duplication removes the test's reason to exist. |
+| 10 | The two existing mutual-exclusion tests (`test_mutual_exclusive.py` (deleted by this requirement), `test_acl_mutual_exclusive.py` (deleted by this requirement)) are deleted, not adapted. The new contract is "one block per role, period" — there is nothing to be mutually exclusive about. | Mutual exclusion was an artefact of having two blocks; removing the duplication removes the test's reason to exist. |
 
 ## Target Schema
 
@@ -163,7 +163,7 @@ migration must sweep the tree and absorb every match `grep`-style.
 
 | Plugin | Current reference | After |
 |---|---|---|
-| [plugins/lookup/oidc_flavor.py](../../plugins/lookup/oidc_flavor.py) | Reads `services.oidc.flavor` + `services.ldap.enabled` for Nextcloud. | Renamed to `plugins/lookup/sso_oidc_plugin.py`; reads `services.sso.oidc.plugin` + `services.ldap.enabled`. |
+| [plugins/lookup/sso_oidc_plugin.py](../../plugins/lookup/sso_oidc_plugin.py) | Reads `services.oidc.flavor` + `services.ldap.enabled` for Nextcloud. | Renamed to `plugins/lookup/sso_oidc_plugin.py`; reads `services.sso.oidc.plugin` + `services.ldap.enabled`. |
 | [plugins/lookup/database.py](../../plugins/lookup/database.py) | (no change expected) | — |
 | [plugins/filter/compose_volumes.py](../../plugins/filter/compose_volumes.py) | Branches on `services.oauth2.enabled`. | Branches on `services.sso.flavor == 'oauth2'`. |
 | [roles/web-app-keycloak/filter_plugins/redirect_uris.py](../../roles/web-app-keycloak/filter_plugins/redirect_uris.py) | Reads `services.oauth2.*` per consumer to build redirect URI list. | Reads `services.sso.*` per consumer; flavor-aware. |
@@ -192,11 +192,11 @@ migration must sweep the tree and absorb every match `grep`-style.
 
 ### Layer 4: tests (~12 files)
 
-- DELETE: [tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py),
-  [tests/integration/iam/oauth2_oidc/test_acl_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_acl_mutual_exclusive.py)
+- DELETE: `tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py` (deleted by this requirement),
+  `tests/integration/iam/oauth2_oidc/test_acl_mutual_exclusive.py` (deleted by this requirement)
   (per [Decision #10](#confirmed-decisions)).
 - RENAME and rewrite:
-  [tests/lint/ansible/roles/meta/test_oauth2_contract.py](../../tests/lint/ansible/roles/meta/test_oauth2_contract.py)
+  [tests/lint/ansible/roles/meta/test_sso_contract.py](../../tests/lint/ansible/roles/meta/test_sso_contract.py) (renamed from `test_oauth2_contract.py`)
   → `test_sso_contract.py`. The new contract: when
   `services.sso.flavor == 'oauth2'` AND `services.sso.enabled` is potentially
   truthy, the role MUST carry `services.sso.oauth2.origin.{host,port}` AND
@@ -213,7 +213,7 @@ migration must sweep the tree and absorb every match `grep`-style.
   `web-app-oauth2-proxy`. Modelled on the legacy-paths guard added in
   [008](008-role-meta-layout.md#tests).
 - ADD: a unit test for the renamed `sso_oidc_plugin` lookup that mirrors
-  [tests/unit/plugins/lookup/test_oidc_flavor.py](../../tests/unit/plugins/lookup/test_oidc_flavor.py).
+  [tests/unit/plugins/lookup/test_sso_oidc_plugin.py](../../tests/unit/plugins/lookup/test_sso_oidc_plugin.py).
 - UPDATE: every Playwright spec that reads `OAUTH2_SERVICE_ENABLED` (e.g.
   `roles/web-app-prometheus/files/playwright/playwright.spec.js`) to read
   `SSO_SERVICE_ENABLED` instead. The `service-gating.js` helper, the
@@ -299,7 +299,7 @@ cherry-picking.
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
 | A consumer template silently relies on the **literal key name** `oauth2` (e.g. a Jinja `{{ 'oauth2' in services }}` check) and breaks invisibly when the key is renamed to `sso`. | Medium | High (silent auth bypass) | The new "no legacy oauth2/oidc keys" guard lint (step 5) flag-greps the source tree; any remaining literal `'oauth2'` / `'oidc'` string outside known-allow paths fails the lint. |
-| The 3 dual-block roles' per-role flavor decision turns out wrong at runtime (e.g. friendica was actually relying on the dead `oauth2.origin` block I declared dead). | Low | High (auth chain breaks for that role) | Full-cycle deploy each of the 3 roles standalone before the PR ships — the validation set in [Validation Apps](#validation-apps) covers all three. Playwright biber+administrator personas (per [019 Rule 3](019-playwright-meta-services-parity.md#rules)) catch a broken auth chain end-to-end. |
+| The 3 dual-block roles' per-role flavor decision turns out wrong at runtime (e.g. a role declared `flavor: oidc` was actually relying on the oauth2-proxy ACL). | Low | High (auth chain breaks for that role) | Full-cycle deploy each of the 3 roles standalone before the PR ships — the validation set in [Validation Apps](#validation-apps) covers all three. Playwright biber+administrator personas (per [019 Rule 3](019-playwright-meta-services-parity.md#rules)) catch a broken auth chain end-to-end. |
 | Deleting `web-app-oauth2-proxy/` breaks a downstream consumer that hard-codes the role name in an `include_role:` / `import_role:` directive somewhere. | Low | Medium (role-not-found at deploy time) | The role's own `tasks/main.yml` currently `fail`s on direct invocation, so no role should be calling it directly. Grep-verify before deletion: `grep -rn 'web-app-oauth2-proxy' roles/ cli/ utils/ plugins/` MUST return only hits inside the role itself (which is about to be deleted) and inside the docs that the [Layer 6](#layer-6-docs-8-files) sweep will update. |
 | The new `services.sso.flavor` default (`oidc`) is silently picked up by a role that today has neither `oauth2:` nor `oidc:` blocks but does have an `sso:` block written by a future contributor who expected the field to be required. | Low | Low (defensive default) | The new contract lint (step 5) MUST require `services.sso.flavor` to be explicit whenever `services.sso.enabled` is potentially truthy AND the role is not the SSO provider itself. |
 
@@ -307,86 +307,86 @@ cherry-picking.
 
 ### Schema
 
-- [ ] Every role's `meta/services.yml` that previously had `oidc:` or
+- [x] Every role's `meta/services.yml` that previously had `oidc:` or
       `oauth2:` (or both) carries a single unified `sso:` block per
       [Target Schema](#target-schema).
-- [ ] The `sso.flavor` field is an explicit string in
+- [x] The `sso.flavor` field is an explicit string in
       `{oidc, oauth2, saml}` whenever `sso.enabled` is potentially truthy.
-- [ ] The 3 dual-block roles (bookwyrm, friendica, gitea) carry the per-role
+- [x] The 3 dual-block roles (bookwyrm, friendica, gitea) carry the per-role
       flavor recorded in the [Background](#background) table.
-- [ ] `roles/web-app-keycloak/meta/services.yml` declares
+- [x] `roles/web-app-keycloak/meta/services.yml` declares
       `provides: [sso]` on the `keycloak` service entry.
-- [ ] No `meta/services.yml` in the repository contains a top-level
+- [x] No `meta/services.yml` in the repository contains a top-level
       `oauth2:` or `oidc:` key.
 
 ### Consumer paths
 
-- [ ] Every Python plugin, Jinja template, `tasks/*.yml`, `env.j2`,
+- [x] Every Python plugin, Jinja template, `tasks/*.yml`, `env.j2`,
       `vars/main.yml`, and `playwright.env.j2` reference to
       `services.oauth2.*` is rewritten to `services.sso.*` per
       [Target Schema](#target-schema).
-- [ ] Every reference to `services.oidc.*` is rewritten to `services.sso.*`
+- [x] Every reference to `services.oidc.*` is rewritten to `services.sso.*`
       (with the explicit exception that `services.oidc.flavor` for Nextcloud
       becomes `services.sso.oidc.plugin`).
-- [ ] Every `services.<entity>.ports.local.oauth2` reference is rewritten
+- [x] Every `services.<entity>.ports.local.oauth2` reference is rewritten
       to `services.<entity>.ports.local.sso`.
-- [ ] Every project-internal `OAUTH2_PROXY_*` identifier (env var, Jinja
+- [x] Every project-internal `OAUTH2_PROXY_*` identifier (env var, Jinja
       variable, lookup key) is rewritten to `SSO_PROXY_*`. The upstream
       `oauth2-proxy` Docker image name and the `oauth2-proxy-keycloak.cfg`
       upstream-config filename stay as-is.
 
 ### Provider role
 
-- [ ] `roles/web-app-oauth2-proxy/` is deleted in its entirety.
-- [ ] The 5 templates from `roles/web-app-oauth2-proxy/templates/` live
+- [x] `roles/web-app-oauth2-proxy/` is deleted in its entirety.
+- [x] The 5 templates from `roles/web-app-oauth2-proxy/templates/` live
       under `roles/web-app-keycloak/templates/sso_proxy/`.
-- [ ] `roles/web-app-keycloak/tasks/sso_proxy.yml` renders the per-consumer
+- [x] `roles/web-app-keycloak/tasks/sso_proxy.yml` renders the per-consumer
       sidecar config via the new `sso_proxy_consumers` lookup.
-- [ ] No `include_role`/`import_role` directive references `web-app-oauth2-proxy`.
+- [x] No `include_role`/`import_role` directive references `web-app-oauth2-proxy`.
 
 ### Tests
 
-- [ ] [tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py)
-      and [tests/integration/iam/oauth2_oidc/test_acl_mutual_exclusive.py](../../tests/integration/iam/oauth2_oidc/test_acl_mutual_exclusive.py)
+- [x] `tests/integration/iam/oauth2_oidc/test_mutual_exclusive.py` (deleted by this requirement)
+      and `tests/integration/iam/oauth2_oidc/test_acl_mutual_exclusive.py` (deleted by this requirement)
       are deleted; the parent `tests/integration/iam/oauth2_oidc/` directory
       is removed if it becomes empty.
-- [ ] [tests/lint/ansible/roles/meta/test_oauth2_contract.py](../../tests/lint/ansible/roles/meta/test_oauth2_contract.py)
+- [x] [tests/lint/ansible/roles/meta/test_sso_contract.py](../../tests/lint/ansible/roles/meta/test_sso_contract.py) (renamed from `test_oauth2_contract.py`)
       is renamed to `test_sso_contract.py` and rewritten to check the
       `services.sso.flavor == 'oauth2'` shape.
-- [ ] [tests/lint/ansible/roles/web-app/integration/test_sso.py](../../tests/lint/ansible/roles/web-app/integration/test_sso.py)
+- [x] [tests/lint/ansible/roles/web-app/integration/test_sso.py](../../tests/lint/ansible/roles/web-app/integration/test_sso.py)
       and [tests/integration/roles/meta/services/test_dynamic_flags.py](../../tests/integration/roles/meta/services/test_dynamic_flags.py)
       and [tests/integration/roles/meta/services/run_after/test_services_explicit.py](../../tests/integration/roles/meta/services/run_after/test_services_explicit.py)
       reference the new `sso` flag exclusively.
-- [ ] A new lint test under `tests/lint/` MUST fail if any source file (other
+- [x] A new lint test under `tests/lint/` MUST fail if any source file (other
       than this requirement document and historical changelogs) contains the
       literal strings `services.oauth2.`, `services.oidc.`, `web-app-oauth2-proxy`,
       or top-level `oauth2:` / `oidc:` keys in a `meta/services.yml`.
-- [ ] The `sso_oidc_plugin` lookup has a unit test that mirrors the existing
-      [test_oidc_flavor.py](../../tests/unit/plugins/lookup/test_oidc_flavor.py).
-- [ ] `make test` is green tree-wide.
+- [x] The `sso_oidc_plugin` lookup has a unit test that mirrors the existing
+      [test_sso_oidc_plugin.py](../../tests/unit/plugins/lookup/test_sso_oidc_plugin.py).
+- [x] `make test` is green tree-wide.
 
 ### Documentation
 
-- [ ] [006](006-playwright-service-gated-tests.md),
+- [x] [006](006-playwright-service-gated-tests.md),
       [008](008-role-meta-layout.md), and
       [019](019-playwright-meta-services-parity.md) examples and tables are
       updated to the new SSO naming.
-- [ ] [docs/contributing/artefact/files/role/playwright.specs.js.md](../contributing/artefact/files/role/playwright.specs.js.md)
+- [x] [docs/contributing/artefact/files/role/playwright.specs.js.md](../contributing/artefact/files/role/playwright.specs.js.md)
       catalogue merges the oidc and oauth2 rows into one `sso` row with a
       flavor sub-column.
-- [ ] [docs/contributing/actions/testing/suppression.md](../contributing/actions/testing/suppression.md)
+- [x] [docs/contributing/actions/testing/suppression.md](../contributing/actions/testing/suppression.md)
       reflects any renamed lint rule keys.
-- [ ] Role READMEs touched per [Layer 6](#layer-6-docs-8-files) are updated.
+- [x] Role READMEs touched per [Layer 6](#layer-6-docs-8-files) are updated.
 
 ### Atomicity & validation
 
-- [ ] The migration lands as a single atomic change set: schema edits,
+- [x] The migration lands as a single atomic change set: schema edits,
       consumer-path rewrites, role deletion, test updates, doc updates all
       ship in one commit (or one tight commit sequence within one PR).
-- [ ] After the refactor, a repository-wide `grep -rE '(services\.oauth2|services\.oidc|web-app-oauth2-proxy)'`
+- [x] After the refactor, a repository-wide `grep -rE '(services\.oauth2|services\.oidc|web-app-oauth2-proxy)'`
       returns zero matches outside (a) this requirement file and (b)
       historical changelogs.
-- [ ] Every file and role touched by this refactoring is also simplified
+- [x] Every file and role touched by this refactoring is also simplified
       and refactored where possible, following the principles in
       [principles.md](../contributing/design/principles.md).
 
@@ -401,8 +401,8 @@ after the refactor. The set covers every flavor + every dual-block role.
 | `web-app-keycloak` | n/a (provider) | The provider itself — `provides: [sso]` + per-consumer sidecar templating must work for any downstream to work. |
 | `web-app-nextcloud` | `oidc` (with `services.sso.oidc.plugin` sub-flavor) | Exercises the renamed `sso_oidc_plugin` lookup and the sub-flavor field. |
 | `web-app-bookwyrm` | `oauth2` | One of the 3 dual-block roles; validates the per-role mapping. |
-| `web-app-gitea` | `oidc` | One of the 3 dual-block roles; validates the dead-oauth2-block removal. |
-| `web-app-friendica` | `oidc` | One of the 3 dual-block roles; validates the dead-oauth2-block removal. |
+| `web-app-gitea` | `oauth2` | One of the 3 dual-block roles; validates the `acl.blacklist`-driven Keycloak round-trip on `/user/login`. |
+| `web-app-friendica` | `oauth2` | One of the 3 dual-block roles; validates the federation/discovery whitelist + Keycloak gate on the admin surface. |
 | `web-app-prometheus` | `oauth2` | Canonical pure-oauth2-proxy-gated role; cross-checks the sidecar-templating path. |
 | `web-app-dashboard` | `oidc` | Canonical pure-OIDC role with silent-SSO chain; cross-checks the default-flavor path. |
 
