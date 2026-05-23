@@ -17,7 +17,7 @@ TEST_E2E_PLAYWRIGHT_WAIT_RETRIES: 30
 TEST_E2E_PLAYWRIGHT_WAIT_DELAY: 5
 
 # Run only a subset (optional)
-TEST_E2E_PLAYWRIGHT_ONLY_ROLES: "{{ lookup('status').groups }}"
+TEST_E2E_PLAYWRIGHT_ONLY_ROLES: "{{ lookup('deployment').groups }}"
 TEST_E2E_PLAYWRIGHT_SKIP_ROLES: [] # e.g. ["svc-something"]
 
 TEST_E2E_PLAYWRIGHT_KEEP: false

@@ -8,6 +8,8 @@ from utils.roles.validation.invokable import list_invokable_app_ids
 
 _STATUS_CACHE: dict[tuple, dict[str, list[str]]] = {}
 
+_EPHEMERAL_RUNTIMES = frozenset({"act", "github"})
+
 
 def _reset_cache_for_tests() -> None:
     _STATUS_CACHE.clear()
@@ -33,17 +35,21 @@ class LookupModule(LookupBase):
 
         whitelist = _coerce_to_list(vars_.get("APPLICATIONS_WHITELIST"))
         groups = _coerce_to_list(vars_.get("group_names"))
-        key = (tuple(whitelist), tuple(groups))
+        runtime = str(vars_.get("RUNTIME", "")).strip().lower()
+        key = (tuple(whitelist), tuple(groups), runtime)
 
         cached = _STATUS_CACHE.get(key)
         if cached is not None:
             return [cached]
 
         running = whitelist or groups
+        deployed = list(running) if runtime in _EPHEMERAL_RUNTIMES else list(groups)
         result = {
             "whitelist": whitelist,
             "running": list(running),
             "groups": groups,
+            "deployed": deployed,
+            "runtime": runtime,
             "all": list(list_invokable_app_ids()),
         }
         _STATUS_CACHE[key] = result
