@@ -8,8 +8,9 @@ local/example hosts are skipped. Per-line suppression uses the unified
 
 This is an external test because it performs live HTTP requests against the
 referenced third-party URLs. HTTP ``401`` (Unauthorized), ``403`` (Forbidden),
-and ``405`` (Method Not Allowed) are treated as reachable (server is alive but
-auth-gated or method-restricted). HTTP ``418`` (I'm a teapot), ``429`` (Too
+``405`` (Method Not Allowed) and ``415`` (Unsupported Media Type) are treated
+as reachable (server is alive but auth-gated, method-restricted, or rejecting
+the probe's content-type). HTTP ``418`` (I'm a teapot), ``429`` (Too
 Many Requests), ``451`` (Unavailable For Legal Reasons), every ``5xx`` server
 response, plus timeouts and connection errors (reset, aborted) emit warning
 annotations rather than failing the test, since these signal an upstream issue
@@ -70,6 +71,7 @@ _OK_STATUS_CODES = {
     401,  # Unauthorized: credentials required, server is alive.
     403,  # Forbidden: server is alive, resource intentionally gated.
     405,  # Method Not Allowed: server is alive, HEAD/GET rejected by design.
+    415,  # Unsupported Media Type: server is alive, probe content-type rejected.
 }
 # 4xx codes that mean the server is alive but the resource is not reliably
 # probeable. Emit a warning annotation instead of failing the test. All 5xx
