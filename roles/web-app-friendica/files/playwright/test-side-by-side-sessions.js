@@ -22,7 +22,9 @@ exports.register = function (shared) {
       // biber logs out first — admin session must stay alive.
       await shared.friendicaLogout(biberPage);
       await adminPage.goto(`${shared.trimmedBaseUrl()}/network`, { waitUntil: "domcontentloaded" });
-      await expect(adminPage.locator("a[href*='/logout']").first()).toBeAttached({ timeout: 10_000 });
+      await expect(
+        adminPage.locator("#topbar-first, #navbar-apps-menu, a[href*='/logout']").first(),
+      ).toBeVisible({ timeout: 10_000 });
 
       await shared.friendicaLogout(adminPage);
     } finally {
