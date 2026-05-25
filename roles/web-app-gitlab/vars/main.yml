@@ -1,6 +1,7 @@
 ---
 # General
 application_id: "web-app-gitlab"
+entity_name: "{{ application_id | get_entity_name }}"
 
 # GitLab
 GITLAB_URL: "{{ lookup('tls', application_id, 'url.base') }}"
@@ -23,6 +24,7 @@ GITLAB_OIDC_REDIRECT_URI: "{{ GITLAB_URL }}/users/auth/openid_connect/callback"
 GITLAB_INIT_ROOT_PASSWORD: "{{ lookup('users', 'administrator').password }}"
 GITLAB_VERSION: "{{ lookup('config', application_id, 'services.gitlab.version') }}"
 GITLAB_IMAGE: "{{ lookup('config', application_id, 'services.gitlab.image') }}"
+GITLAB_CUSTOM_IMAGE: "{{ entity_name }}_custom:{{ GITLAB_VERSION }}"
 GITLAB_CONTAINER: "{{ lookup('config', application_id, 'services.gitlab.name') }}"
 GITLAB_CONF_VOLUME: "{{ lookup('config', application_id, 'volumes.config') }}"
 GITLAB_LOGS_VOLUME: "{{ lookup('config', application_id, 'volumes.logs') }}"

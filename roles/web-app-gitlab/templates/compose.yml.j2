@@ -1,9 +1,16 @@
 {% include 'roles/sys-svc-compose/templates/base.yml.j2' %}
 
   gitlab:
-    image: "{{ GITLAB_IMAGE }}:{{ GITLAB_VERSION }}"
+    image: "{{ GITLAB_CUSTOM_IMAGE }}"
     hostname: '{{ GITLAB_HOSTNAME }}'
     container_name:  "{{ GITLAB_CONTAINER }}"
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GITLAB_IMAGE: "{{ GITLAB_IMAGE }}"
+        GITLAB_VERSION: "{{ GITLAB_VERSION }}"
 {% include 'roles/sys-svc-container/templates/base.yml.j2' %}
     ports:
       - "{{ DOCKER_BIND_HOST }}:{{ lookup('config', application_id, 'services.gitlab.ports.local.http') }}:80"
