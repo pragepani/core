@@ -137,6 +137,44 @@ class TestIterVhostFiles(NginxVhostsTestBase, unittest.TestCase):
         )
         self.assertEqual(got, [])
 
+    def test_yields_www_redirect_variant(self) -> None:
+        self._mk_role(
+            "web-svc-cdn",
+            application_id="web-svc-cdn",
+            canonical=["cdn.infinito.example"],
+        )
+        bare = self._touch_vhost("cdn.infinito.example", "https")
+        redirect = self._touch_vhost("www.cdn.infinito.example", "https")
+
+        got = sorted(
+            iter_vhost_files_for_entity(
+                "cdn",
+                nginx_dir=self.nginx_dir,
+                domain_primary="infinito.example",
+                roles_dir=self.roles_dir,
+            )
+        )
+        self.assertEqual(got, sorted([bare, redirect]))
+
+    def test_www_prefixed_domain_not_double_prefixed(self) -> None:
+        self._mk_role(
+            "web-opt-rdr-www",
+            application_id="web-opt-rdr-www",
+            canonical=["www.w3redirect.infinito.example"],
+        )
+        existing = self._touch_vhost("www.w3redirect.infinito.example", "https")
+        self._touch_vhost("www.www.w3redirect.infinito.example", "https")
+
+        got = list(
+            iter_vhost_files_for_entity(
+                "opt-rdr-www",
+                nginx_dir=self.nginx_dir,
+                domain_primary="infinito.example",
+                roles_dir=self.roles_dir,
+            )
+        )
+        self.assertEqual(got, [existing])
+
 
 class TestPurgeVhostFiles(NginxVhostsTestBase, unittest.TestCase):
     def test_removes_only_matching_vhosts(self) -> None:
@@ -182,6 +220,30 @@ class TestPurgeVhostFiles(NginxVhostsTestBase, unittest.TestCase):
             roles_dir=self.roles_dir,
         )
         self.assertEqual(removed, [])
+
+    def test_removes_www_redirect_variant(self) -> None:
+        self._mk_role(
+            "web-svc-cdn",
+            application_id="web-svc-cdn",
+            canonical=["cdn.infinito.example"],
+        )
+        bare = self._touch_vhost("cdn.infinito.example", "https")
+        redirect = self._touch_vhost("www.cdn.infinito.example", "https")
+        unrelated = self._touch_vhost("www.unrelated.infinito.example", "https")
+
+        removed = sorted(
+            purge_vhost_files_for_entities(
+                ["cdn"],
+                nginx_dir=self.nginx_dir,
+                domain_primary="infinito.example",
+                roles_dir=self.roles_dir,
+            )
+        )
+
+        self.assertEqual(removed, sorted([bare, redirect]))
+        self.assertFalse(bare.exists())
+        self.assertFalse(redirect.exists())
+        self.assertTrue(unrelated.exists())
 
     def test_multiple_entities_in_one_call(self) -> None:
         self._mk_role(
