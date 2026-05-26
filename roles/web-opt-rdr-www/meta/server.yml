@@ -1,4 +1,4 @@
 ---
-csp:
-  health:
-    skip: true
+domains:
+  canonical:
+    - "w3redirect.{{ DOMAIN_PRIMARY }}"

@@ -18,10 +18,23 @@ def _load_module_from_path(name, file_path):
     return module
 
 
+_STUBBED_MODULE_NAMES = (
+    "utils",
+    "utils.roles.applications",
+    "utils.roles.applications.config",
+    "utils.get_url",
+)
+
+
 class RedirectUrisTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Create stub package: utils, with applications.config and get_url submodules.
+        cls._orig_sys_modules = {
+            name: sys.modules[name]
+            for name in _STUBBED_MODULE_NAMES
+            if name in sys.modules
+        }
+
         mu = types.ModuleType("utils")
         mu_apps = types.ModuleType("utils.roles.applications")
         mu_config = types.ModuleType("utils.roles.applications.config")
@@ -77,6 +90,14 @@ class RedirectUrisTest(unittest.TestCase):
         # Restore plugin functions if a test monkeypatched them
         self.plugin.get = self._orig_get
         self.plugin.get_url = self._orig_get_url
+
+    @classmethod
+    def tearDownClass(cls):
+        for name in _STUBBED_MODULE_NAMES:
+            if name in cls._orig_sys_modules:
+                sys.modules[name] = cls._orig_sys_modules[name]
+            else:
+                sys.modules.pop(name, None)
 
     def test_single_domain_oauth2_enabled(self):
         domains = {"app1": "example.org"}

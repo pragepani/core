@@ -51,32 +51,9 @@
               )
           }}
 
-    - name: Merge CURRENT_PLAY_REDIRECT_DOMAINS
+    - name: Set CURRENT_PLAY_REDIRECT_DOMAINS
       ansible.builtin.set_fact:
-      # The following mapping is necessary to define the exceptions for domains which are created, but which aren't used
-        CURRENT_PLAY_REDIRECT_DOMAINS: >-
-          {{
-            []
-            | merge_mapping(redirect_domain_mappings | default([]), 'source')
-            | merge_mapping(
-                [
-                  {
-                    'source': ([ DOMAIN_PRIMARY  ] | flatten | map('string') | first),
-                    'target': ([ DOMAIN_HOMEPAGE ] | flatten | map('string') | first)
-                  }
-                ],
-                'source'
-              )
-          }}
-
-    - name: Set current play redirect domain mappings
-      ansible.builtin.set_fact:
-        CURRENT_PLAY_REDIRECT_DOMAINS: >-
-          {{
-            CURRENT_PLAY_APPLICATIONS
-            | domain_mappings(DOMAIN_PRIMARY, AUTO_BUILD_ALIASES)
-            | merge_mapping(CURRENT_PLAY_REDIRECT_DOMAINS, 'source')
-          }}
+        CURRENT_PLAY_REDIRECT_DOMAINS: "{{ lookup('current_play_redirect_domains') }}"
 
     - name: Set current play all domains incl. www redirect if enabled
       ansible.builtin.set_fact:

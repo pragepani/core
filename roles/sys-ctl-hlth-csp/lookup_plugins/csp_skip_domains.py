@@ -58,17 +58,9 @@ def _selection_from(group_names: Any) -> set[str]:
 class LookupModule(LookupBase):
     """Return domains the CSP probe should skip.
 
-    Resolves the applications dict via `get_merged_applications` itself, so
-    callers do not need to pipe `lookup('applications')` through a filter.
-
-    Usage:
-        lookup('csp_skip_domains', group_names=lookup('deployment').deployed)
-
-    `group_names` is optional. If omitted, all applications are considered.
-
-    Per-application opt-outs honored:
-      * server.status_codes.default with any HTTP code >= 400
-      * server.csp.health.skip: true (also covers `www.<domain>` variants)
+    Skips canonical + alias domains of every selected application whose
+    ``server.status_codes.default`` declares any HTTP code >= 400
+    (e.g. federation-only roles that legitimately serve 4xx at ``/``).
     """
 
     def run(
@@ -102,17 +94,7 @@ class LookupModule(LookupBase):
                 strict=False,
                 default=None,
             )
-            opt_out = bool(
-                get(
-                    applications,
-                    app_id,
-                    "server.csp.health.skip",
-                    strict=False,
-                    default=False,
-                )
-            )
-
-            if not opt_out and not _has_code_ge_400(default):
+            if not _has_code_ge_400(default):
                 continue
 
             canonical = get(
@@ -130,10 +112,7 @@ class LookupModule(LookupBase):
                 default=[],
             )
             for d in _to_list(canonical) + _to_list(aliases):
-                if not d:
-                    continue
-                skip.add(d)
-                if opt_out:
-                    skip.add(f"www.{d}")
+                if d:
+                    skip.add(d)
 
         return [sorted(skip)]

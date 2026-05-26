@@ -203,8 +203,13 @@ def _scan_ansible_expr_idents(node, sink: set[str]) -> None:
             _scan_ansible_expr_idents(item, sink)
 
 
-def _build_usage_indices(repo_root: Path) -> tuple[set[str], set[str]]:
-    """Single project-tree walk that builds both identifier indices.
+def _scan_py_idents(text: str, sink: set[str]) -> None:
+    for m in _IDENT_RE.finditer(text):
+        sink.add(m.group(1))
+
+
+def _build_usage_indices(repo_root: Path) -> tuple[set[str], set[str], set[str]]:
+    """Single project-tree walk that builds three identifier indices.
 
     Routes every read through the project's cached helpers:
     * ``iter_project_files_with_content`` walks the path list once
@@ -214,29 +219,41 @@ def _build_usage_indices(repo_root: Path) -> tuple[set[str], set[str]]:
       ``(path, mtime, size)`` signature and reuses the parsed
       structure on every later call in the same process — no
       `yaml.safe_load*` call bypasses the cache.
+
+    Python files (plugins, filter/lookup modules, utils) are also
+    scanned so that vars consumed only via ``variables.get("FOO")``
+    inside an Ansible plugin count as referenced.
     """
     jinja_idents: set[str] = set()
     ansible_expr_idents: set[str] = set()
+    py_idents: set[str] = set()
 
     for path_str, text in iter_project_files_with_content(
-        extensions=(".yml", ".yaml", ".j2"),
+        extensions=(".yml", ".yaml", ".j2", ".py"),
         exclude_tests=True,
         exclude_dirs=("docs",),
     ):
+        if path_str.endswith(".py"):
+            _scan_py_idents(text, py_idents)
+            continue
         _scan_jinja_block_idents(text, jinja_idents)
         if path_str.endswith((".yml", ".yaml")):
             data = load_yaml_any(path_str, default_if_missing=None)
             if data is not None:
                 _scan_ansible_expr_idents(data, ansible_expr_idents)
 
-    return jinja_idents, ansible_expr_idents
+    return jinja_idents, ansible_expr_idents, py_idents
 
 
 class TestRoleAndGroupVarsUsed(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.repo_root = PROJECT_ROOT
-        cls.jinja_idents, cls.ansible_expr_idents = _build_usage_indices(cls.repo_root)
+        (
+            cls.jinja_idents,
+            cls.ansible_expr_idents,
+            cls.py_idents,
+        ) = _build_usage_indices(cls.repo_root)
 
     def test_role_and_group_vars_referenced(self):
         unused: list[str] = []
@@ -245,14 +262,18 @@ class TestRoleAndGroupVarsUsed(unittest.TestCase):
             for name, lineno in _collect_top_level_keys(def_file):
                 if name in _WHITELIST:
                     continue
-                if name in self.jinja_idents or name in self.ansible_expr_idents:
+                if (
+                    name in self.jinja_idents
+                    or name in self.ansible_expr_idents
+                    or name in self.py_idents
+                ):
                     continue
                 unused.append(f"{rel}:{lineno}: '{name}' is never referenced")
 
         if unused:
             self.fail(
                 f"{len(unused)} role/group var(s) declared but never consumed "
-                f"in any project .yml/.yaml/.j2 file:\n"
+                f"in any project .yml/.yaml/.j2/.py file:\n"
                 + "\n".join(f"- {u}" for u in unused)
             )
 

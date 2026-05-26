@@ -1,4 +1,4 @@
-"""Guard: only ``web-app-*`` roles may integrate the dashboard.
+"""Guard: only ``web-*`` roles may integrate the dashboard.
 
 A role "integrates" the dashboard when its ``meta/services.yml`` (or
 any entry in ``meta/variants.yml``) declares a ``dashboard:`` block
@@ -7,19 +7,18 @@ canonical helper :func:`utils.roles.applications.services.registry.is_explicit_t
 
 Truthy means either the literal Python ``True`` *or* the dynamic Jinja
 form ``"{{ '<role>' in group_names }}"``. Both produce a runtime tile
-in the dashboard grid, so both are forbidden for non-``web-app-*``
-roles.
+in the dashboard grid, so both are forbidden for non-``web-*`` roles.
 
 Why
 ---
 
-The dashboard is the user-facing tile grid. Only end-user-visible
-``web-app-*`` surfaces belong in it. A shared service (``web-svc-*``),
-system role (``sys-*``), desktop role (``desk-*``), or driver role
-(``drv-*``) embedding the dashboard would spam the tile grid with
-non-clickable infrastructure entries.
+The dashboard is the user-facing tile grid. Only web-facing surfaces
+belong in it. A system role (``sys-*``), desktop role (``desk-*``),
+service role (``svc-*``), or driver role (``drv-*``) embedding the
+dashboard would spam the tile grid with non-clickable infrastructure
+entries.
 
-A non-``web-app-*`` role MAY still ship a ``dashboard:`` block with
+A non-``web-*`` role MAY still ship a ``dashboard:`` block with
 *explicitly disabled* flags (``enabled: false`` / ``shared: false``)
 - that's a static "we know this service exists in the registry but
 this role does not contribute a tile" declaration and is fine.
@@ -88,10 +87,10 @@ def _find_variants_violations(role_dir: Path) -> list[str]:
 
 
 class TestDashboardIntegrationScope(unittest.TestCase):
-    def test_only_web_app_roles_integrate_dashboard(self) -> None:
+    def test_only_web_roles_integrate_dashboard(self) -> None:
         offenders: list[str] = []
         for role_dir in sorted(p for p in ROLES_DIR.iterdir() if p.is_dir()):
-            if role_dir.name.startswith("web-app-"):
+            if role_dir.name.startswith("web-"):
                 continue
             services_violation = _find_services_violation(role_dir)
             if services_violation is not None:
@@ -100,10 +99,10 @@ class TestDashboardIntegrationScope(unittest.TestCase):
 
         if offenders:
             self.fail(
-                "Non-web-app roles MUST NOT integrate the dashboard via a "
+                "Non-web roles MUST NOT integrate the dashboard via a "
                 "truthy `enabled`/`shared` flag (literal `true` or the "
                 "`'<role>' in group_names` Jinja form). The dashboard tile "
-                "grid is reserved for end-user-visible web-app surfaces. "
+                "grid is reserved for web-facing surfaces. "
                 "Either drop the `dashboard:` block, or set both flags to "
                 "`false` if the registry declaration is intentional:\n"
                 + "\n".join(f"  - {o}" for o in offenders)

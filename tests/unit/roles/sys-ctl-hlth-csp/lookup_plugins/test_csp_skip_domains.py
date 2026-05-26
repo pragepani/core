@@ -56,7 +56,7 @@ class CspSkipDomainsLookupTests(unittest.TestCase):
         }
         self.assertEqual(self._run(apps), ["bridgy.example.com", "fed.example.com"])
 
-    def test_app_without_opt_out_is_not_skipped(self):
+    def test_app_without_status_code_ge_400_is_not_skipped(self):
         apps = {
             "web-app-foo": {
                 "server": {
@@ -67,135 +67,58 @@ class CspSkipDomainsLookupTests(unittest.TestCase):
         }
         self.assertEqual(self._run(apps), [])
 
-    def test_csp_health_skip_covers_canonical_and_www_prefix(self):
+    def test_app_without_status_codes_field_is_not_skipped(self):
         apps = {
-            "web-opt-rdr-www": {
-                "server": {
-                    "domains": {"canonical": ["redirect.example.com"]},
-                    "csp": {"health": {"skip": True}},
-                }
-            }
+            "web-app-foo": {"server": {"domains": {"canonical": ["foo.example.com"]}}}
         }
-        self.assertEqual(
-            self._run(apps),
-            ["redirect.example.com", "www.redirect.example.com"],
-        )
+        self.assertEqual(self._run(apps), [])
 
-    def test_csp_health_skip_covers_aliases_and_their_www_prefix(self):
-        apps = {
-            "web-opt-rdr-www": {
-                "server": {
-                    "domains": {
-                        "canonical": ["redirect.example.com"],
-                        "aliases": ["alias.example.com"],
-                    },
-                    "csp": {"health": {"skip": True}},
-                }
-            }
-        }
-        self.assertEqual(
-            self._run(apps),
-            [
-                "alias.example.com",
-                "redirect.example.com",
-                "www.alias.example.com",
-                "www.redirect.example.com",
-            ],
-        )
-
-    def test_status_code_path_does_not_add_www_prefix(self):
+    def test_group_names_selection_filters_apps(self):
         apps = {
             "web-app-bridgy": {
                 "server": {
                     "domains": {"canonical": ["bridgy.example.com"]},
                     "status_codes": {"default": [404]},
                 }
-            }
-        }
-        result = self._run(apps)
-        self.assertIn("bridgy.example.com", result)
-        self.assertNotIn("www.bridgy.example.com", result)
-
-    def test_group_names_selection_filters_apps(self):
-        apps = {
-            "web-opt-rdr-www": {
-                "server": {
-                    "domains": {"canonical": ["redirect.example.com"]},
-                    "csp": {"health": {"skip": True}},
-                }
             },
-            "web-app-foo": {
+            "web-app-other": {
                 "server": {
-                    "domains": {"canonical": ["foo.example.com"]},
+                    "domains": {"canonical": ["other.example.com"]},
                     "status_codes": {"default": [404]},
                 }
             },
         }
-        result = self._run(apps, group_names=["web-opt-rdr-www"])
-        self.assertEqual(result, ["redirect.example.com", "www.redirect.example.com"])
+        self.assertEqual(
+            self._run(apps, group_names=["web-app-bridgy"]),
+            ["bridgy.example.com"],
+        )
 
     def test_group_names_csv_string_is_accepted(self):
         apps = {
             "a": {
                 "server": {
                     "domains": {"canonical": ["a.example.com"]},
-                    "csp": {"health": {"skip": True}},
+                    "status_codes": {"default": [404]},
                 }
             },
             "b": {
                 "server": {
                     "domains": {"canonical": ["b.example.com"]},
-                    "csp": {"health": {"skip": True}},
-                }
-            },
-        }
-        result = self._run(apps, group_names="a,b")
-        self.assertEqual(
-            result,
-            [
-                "a.example.com",
-                "b.example.com",
-                "www.a.example.com",
-                "www.b.example.com",
-            ],
-        )
-
-    def test_combined_opt_outs_dedupe(self):
-        apps = {
-            "web-opt-rdr-www": {
-                "server": {
-                    "domains": {"canonical": ["redirect.example.com"]},
-                    "csp": {"health": {"skip": True}},
-                }
-            },
-            "web-app-bridgy": {
-                "server": {
-                    "domains": {"canonical": ["bridgy.example.com"]},
                     "status_codes": {"default": [404]},
                 }
             },
-            "web-app-foo": {
-                "server": {
-                    "domains": {"canonical": ["foo.example.com"]},
-                    "status_codes": {"default": [200]},
-                }
-            },
         }
         self.assertEqual(
-            self._run(apps),
-            [
-                "bridgy.example.com",
-                "redirect.example.com",
-                "www.redirect.example.com",
-            ],
+            self._run(apps, group_names="a,b"),
+            ["a.example.com", "b.example.com"],
         )
 
-    def test_skip_false_is_not_opt_out(self):
+    def test_non_4xx_codes_dont_count(self):
         apps = {
             "web-app-foo": {
                 "server": {
                     "domains": {"canonical": ["foo.example.com"]},
-                    "csp": {"health": {"skip": False}},
+                    "status_codes": {"default": [200, 301, 302]},
                 }
             }
         }
