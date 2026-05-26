@@ -141,6 +141,20 @@ class LookupModule(LookupBase):
         result = plugin.run([], variables=variables)
         return result[0] if result else None
 
+    def _resolve_str(self, value: Any) -> str:
+        """Template a possibly Jinja-tagged inventory value through
+        ``self._templar`` before string-coercion; bare ``str()`` would
+        strip the ``TrustedAsTemplate`` tag on Ansible 2.18+."""
+        if value is None:
+            return ""
+        templar = getattr(self, "_templar", None)
+        if templar is not None:
+            try:
+                value = templar.template(value)
+            except Exception:
+                pass
+        return str(value)
+
     def run(
         self,
         terms: list[Any] | None,
@@ -149,8 +163,8 @@ class LookupModule(LookupBase):
     ) -> list[list[dict[str, str]]]:
         vars_ = variables or getattr(self._templar, "available_variables", {}) or {}
 
-        domain_primary = str(vars_.get("DOMAIN_PRIMARY") or "")
-        domain_homepage = str(vars_.get("DOMAIN_HOMEPAGE") or "")
+        domain_primary = self._resolve_str(vars_.get("DOMAIN_PRIMARY"))
+        domain_homepage = self._resolve_str(vars_.get("DOMAIN_HOMEPAGE"))
         auto_build_aliases = bool(vars_.get("AUTO_BUILD_ALIASES", False))
 
         user_mappings = vars_.get("redirect_domain_mappings") or []

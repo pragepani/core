@@ -190,6 +190,67 @@ class CurrentPlayRedirectDomainsLookupTests(unittest.TestCase):
             [{"source": "infinito.example", "target": "infinito.nexus"}],
         )
 
+    def test_jinja_tagged_domain_primary_is_templated(self):
+        class _ResolvingTemplar:
+            def __init__(self, mapping):
+                self._mapping = mapping
+                self.available_variables = {}
+                self.calls = []
+
+            def template(self, value):
+                self.calls.append(value)
+                return self._mapping.get(value, value)
+
+        lm = LookupModule()
+        lm._templar = _ResolvingTemplar(
+            {
+                "{{ lookup('env','INFINITO_DOMAIN') }}": "infinito.example",
+                "{{ lookup('domain','web-app-dashboard') }}": "infinito.nexus",
+            }
+        )
+        lm._loader = None
+        variables = {
+            "DOMAIN_PRIMARY": "{{ lookup('env','INFINITO_DOMAIN') }}",
+            "DOMAIN_HOMEPAGE": "{{ lookup('domain','web-app-dashboard') }}",
+        }
+        with self._patch_lookups(
+            deployed=["web-opt-rdr-domains"], current_play_apps={}
+        ):
+            result = lm.run(terms=[], variables=variables)[0]
+
+        self.assertEqual(
+            result,
+            [{"source": "infinito.example", "target": "infinito.nexus"}],
+        )
+        self.assertIn(
+            "{{ lookup('env','INFINITO_DOMAIN') }}",
+            lm._templar.calls,
+        )
+
+    def test_templar_failure_falls_back_to_raw_value(self):
+        class _FailingTemplar:
+            def __init__(self):
+                self.available_variables = {}
+
+            def template(self, value):
+                raise RuntimeError("templar unavailable")
+
+        lm = LookupModule()
+        lm._templar = _FailingTemplar()
+        lm._loader = None
+        variables = {
+            "DOMAIN_PRIMARY": "infinito.example",
+            "DOMAIN_HOMEPAGE": "infinito.nexus",
+        }
+        with self._patch_lookups(
+            deployed=["web-opt-rdr-domains"], current_play_apps={}
+        ):
+            result = lm.run(terms=[], variables=variables)[0]
+        self.assertEqual(
+            result,
+            [{"source": "infinito.example", "target": "infinito.nexus"}],
+        )
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
