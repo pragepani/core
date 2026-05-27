@@ -1,4 +1,4 @@
-Source: infinito-nexus
+Source: infinito-nexus-core
 Section: admin
 Priority: optional
 Maintainer: Kevin Veen-Birkenbach <info@veen.world>
@@ -7,7 +7,7 @@ Standards-Version: 4.6.2
 Rules-Requires-Root: no
 Homepage: https://github.com/infinito-nexus/core
 
-Package: infinito-nexus
+Package: infinito-nexus-core
 Architecture: all
 Depends:
  ansible-core | ansible,
