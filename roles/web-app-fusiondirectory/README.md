@@ -12,7 +12,7 @@ This role deploys FusionDirectory on Docker Compose against the project's centra
 
 - **LDAP-native administration:** Manage users, groups, and posix attributes directly against `svc-db-openldap`.
 - **Containerized deployment:** Run FusionDirectory through Docker Compose with the project's standard role-meta wiring.
-- **Native OIDC SSO via oauth2-proxy:** Gate the FusionDirectory web UI through the project's oauth2-proxy sidecar for OIDC-authenticated entry.
+- **Native OIDC SSO via SSO-proxy sidecar:** Gate the FusionDirectory web UI through the project's SSO-proxy sidecar (provided by `web-app-keycloak`) for OIDC-authenticated entry.
 - **Front-proxy integration:** Publish the app through `sys-stk-front-proxy` for TLS termination and per-domain routing.
 
 ## Further Resources
