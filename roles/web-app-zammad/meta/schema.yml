@@ -16,7 +16,8 @@ credentials:
     validation: "^[A-Za-z0-9]{16,}$"
     length: 32
   api_token:
-    description: "Long-lived Zammad API token created during bootstrap; used by tasks/main.yml for post-start configuration (OIDC settings, inbound channel, group mapping)."
+    description: "Long-lived Zammad API token created during bootstrap; used by tasks/main.yml for post-start configuration (OIDC settings, inbound channel, group
+      mapping)."
     algorithm: alphanumeric
     validation: "^[A-Za-z0-9]{32,}$"
     length: 64
