@@ -7,7 +7,7 @@
   failed_when: false
   changed_when: false
   args:
-    chdir: "{{ lookup('container', application_id, 'directories.instance') }}"
+    chdir: "{{ MAILU_INSTANCE_DIR }}"
 
 - name: Generate DKIM key
   command: >
@@ -16,7 +16,7 @@
   register: dkim_keygen_output
   when: dkim_key_file_stat.rc != 0
   args:
-    chdir: "{{ lookup('container', application_id, 'directories.instance') }}"
+    chdir: "{{ MAILU_INSTANCE_DIR }}"
   no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
 
 - name: Fetch DKIM private key from antispam container
@@ -24,7 +24,7 @@
     {{ BIN_COMPOSE }} exec -T antispam
     cat {{ MAILU_DKIM_KEY_PATH }}
   args:
-    chdir: "{{ lookup('container', application_id, 'directories.instance') }}"
+    chdir: "{{ MAILU_INSTANCE_DIR }}"
   register: dkim_priv_content
   failed_when: dkim_priv_content.rc != 0
   changed_when: false

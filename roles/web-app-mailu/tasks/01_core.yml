@@ -39,13 +39,15 @@
 - name: "Flush Docker Compose handlers"
   meta: flush_handlers
 
-- name: Wait for Mailu Database
-  include_tasks: 02_wait_for_database.yml
+- name: Wait for Mailu MariaDB
+  include_tasks: 02_wait_for_mariadb.yml
+
+- name: Wait for Mailu Redis
+  include_tasks: 03_wait_for_redis.yml
 
 - name: "Create Mailu accounts"
-  include_tasks: 03_manage_user.yml
+  include_tasks: 04_manage_user.yml
   vars:
-    MAILU_DOCKER_DIR: "{{ lookup('container', application_id, 'directories.instance') }}"
     mailu_action: >-
       {{
         (
@@ -69,10 +71,10 @@
     name: sys-ctl-mtn-cert-deploy
   when: lookup('tls', application_id, 'enabled') | bool
   # Alarm mail setup reaches sys-svc-mail and therefore requires the Mailu
-  # API token that is created in 03_manage_user.yml.
+  # API token that is created in 04_manage_user.yml.
 
 - name: Generate DKIM public key
-  include_tasks: 04_generate-and-read-dkim.yml
+  include_tasks: 05_generate-and-read-dkim.yml
 
 - name: Set Mailu DNS records
-  include_tasks: 05_dns-records.yml
+  include_tasks: 06_dns-records.yml

@@ -5,7 +5,7 @@
       curl -s -X DELETE {{ MAILU_API_SERVICE_BASE_URL }}/token/{{ mailu_user_existing_token.id }} \
         -H "Authorization: Bearer {{ MAILU_API_TOKEN }}"
   args:
-    chdir: "{{ MAILU_DOCKER_DIR }}"
+    chdir: "{{ MAILU_INSTANCE_DIR }}"
   when:
     - mailu_user_existing_token is not none
     - mailu_user_existing_token.id is defined
@@ -42,7 +42,7 @@
           } | to_json
         }}
   args:
-    chdir: "{{ MAILU_DOCKER_DIR }}"
+    chdir: "{{ MAILU_INSTANCE_DIR }}"
   register: mailu_token_creation_request
   failed_when: mailu_token_creation_request.rc != 0
   changed_when: mailu_token_creation_request.rc == 0
@@ -58,7 +58,7 @@
       - cat
       - "/tmp/mailu-token-{{ mailu_user_key }}.json"
   args:
-    chdir: "{{ MAILU_DOCKER_DIR }}"
+    chdir: "{{ MAILU_INSTANCE_DIR }}"
   register: mailu_token_creation_response
   changed_when: false
   failed_when: mailu_token_creation_response.stdout | trim == ""

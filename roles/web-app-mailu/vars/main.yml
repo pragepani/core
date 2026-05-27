@@ -6,6 +6,7 @@ webserver_extra_configuration: "client_max_body_size 31M;"
 # Database Configuration
 database_password: "{{ lookup('config', application_id, 'credentials.database_password') }}"
 # Host Directories
+MAILU_INSTANCE_DIR: "{{ lookup('container', application_id, 'directories.instance') }}"
 MAILU_VOLUMES_DIR: "{{ lookup('container', application_id, 'directories.volumes') }}"
 MAILU_CERT_DIR: "{{ [ MAILU_VOLUMES_DIR, 'certs' ] | path_join }}"
 MAILU_OVERRIDES_DIR: "{{ [ MAILU_VOLUMES_DIR, 'overrides' ] | path_join }}"

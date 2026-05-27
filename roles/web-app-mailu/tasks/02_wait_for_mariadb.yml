@@ -7,7 +7,7 @@
         application_id, 'password') }}
         -e "SHOW TABLES FROM {{ lookup('database', application_id, 'name') }} LIKE 'domain';"
       args:
-        chdir: "{{ lookup('container', application_id, 'directories.instance') }}"
+        chdir: "{{ MAILU_INSTANCE_DIR }}"
       register: mailu_db_schema_check
       retries: 30
       delay: 5
@@ -20,7 +20,7 @@
       ansible.builtin.command: >
         {{ BIN_COMPOSE }} logs --tail=300 admin
       args:
-        chdir: "{{ lookup('container', application_id, 'directories.instance') }}"
+        chdir: "{{ MAILU_INSTANCE_DIR }}"
       register: mailu_admin_logs
       changed_when: false
 
@@ -46,7 +46,7 @@
           - flask
           - routes
       args:
-        chdir: "{{ lookup('container', application_id, 'directories.instance') }}"
+        chdir: "{{ MAILU_INSTANCE_DIR }}"
       register: mailu_admin_cli_check
       retries: 30
       delay: 5
@@ -62,7 +62,7 @@
           - --tail=300
           - admin
       args:
-        chdir: "{{ lookup('container', application_id, 'directories.instance') }}"
+        chdir: "{{ MAILU_INSTANCE_DIR }}"
       register: mailu_admin_cli_logs
       changed_when: false
 
