@@ -1,4 +1,4 @@
-infinito-nexus-core (8.0.0-1) unstable; urgency=medium
+infinito-nexus (8.0.0-1) unstable; urgency=medium
 
   * This release lands the matrix-deploy hardening pass, an interactive console for the CLI, the bundles workflow, a per-consumer Postgres builder, a shared Playwright persona library across every web role, a SPOT env pipeline under the INFINITO_ namespace, and a new education-suite bundle (openwebui + mailu) alongside the KIX Service Management role.
 
