@@ -28,10 +28,6 @@ dev = [
   "ruff",
   "pre-commit",
   "git-maintainer-tools",
-  # kpmx ships pkgmgr.actions.archive consumed by
-  # tests/lint/repository/documentation/test_requirements_completeness.py.
-  # Pinned to the version that introduced the archive subcommand.
-  "kpmx>=1.15.0",
 ]
 
 [project.scripts]
