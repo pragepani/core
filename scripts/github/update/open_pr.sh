@@ -79,9 +79,13 @@ if [[ -n "${DUPLICATE_PR}" ]]; then
 	exit 0
 fi
 
-git config --local --unset-all "http.https://github.com/.extraheader" 2>/dev/null || true # nocheck: url
-git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
-git push --force origin "${BRANCH}"
+git config --local --get-regexp '^includeif\..*\.path$' 2>/dev/null |
+	awk '{print $2}' |
+	sort -u |
+	xargs -r truncate -c -s 0
+git push --force \
+	"https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" \
+	"HEAD:refs/heads/${BRANCH}"
 
 PR_NUMBER="$(
 	gh pr list \

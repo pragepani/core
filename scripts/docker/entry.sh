@@ -16,7 +16,7 @@ run_local_build() {
 	echo "[docker-infinito] Reinstall via 'make install' in ${INFINITO_SRC_DIR}..."
 	make install
 	echo "[docker-infinito] Installed:"
-	infinito --version || true
+	infinito --version
 }
 
 while [[ $# -gt 0 ]]; do

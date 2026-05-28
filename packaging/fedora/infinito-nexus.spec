@@ -1,5 +1,5 @@
 Name:           infinito-nexus
-Version:        8.0.3
+Version:        8.0.5
 Release:        1%{?dist}
 Summary:        Meta package for Infinito.Nexus host dependencies
 
@@ -58,6 +58,12 @@ install -d %{buildroot}%{_docdir}/%{name}
 %doc %{_docdir}/%{name}/DEPENDENCIES
 
 %changelog
+* Thu May 28 2026 Kevin Veen-Birkenbach <kevin@veen.world> - 8.0.5-1
+- Adds --version / -V flag to the infinito CLI, drops a dead Compose-CLI reference link, and fixes the dev-deploy router so per-invocation routing knobs (apps, mode, purge, bundles, disable, full_cycle, variant) no longer leak into the persistent .env and the make-alias / env-var surface is unified 1:1.
+
+* Thu May 28 2026 Kevin Veen-Birkenbach <kevin@veen.world> - 8.0.4-1
+- Repairs the update PR workflow end-to-end: tree-SHA dedup replaces the >300-file-breaking diff API, the GitHub App token is now migrated to `client-id` (with renamed secret + docs) and reaches the push wire by blanking actions/checkout's external credentials file.
+
 * Thu May 28 2026 Kevin Veen-Birkenbach <kevin@veen.world> - 8.0.3-1
 - Loads the project dotenv (`make dotenv` + `set -a; . .env; set +a`) inside the update workflow wrappers so `INFINITO_WORKER_FETCH` resolves on CI runners that skip compose.
 

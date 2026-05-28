@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 import sys
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from cli.core.colors import Fore, Style, color_text
@@ -27,6 +28,7 @@ class Flags:
     help_all: bool = False
     tree: bool = False
     tree_depth: int | None = None  # None = unbounded
+    version: bool = False
 
 
 def _first_non_flag_token(argv: list[str]) -> str | None:
@@ -126,8 +128,18 @@ def parse_flags(argv: list[str]) -> Flags:
     flags.infinite = "--infinite" in argv and (argv.remove("--infinite") or True)
     flags.help_all = "--help-all" in argv and (argv.remove("--help-all") or True)
     flags.tree, flags.tree_depth = _parse_tree_flag(argv)
+    flags.version = any(t in argv for t in ("--version", "-V")) and (
+        [argv.remove(t) for t in ("--version", "-V") if t in argv] or True
+    )
 
     return flags
+
+
+def _resolve_version() -> str:
+    try:
+        return version("infinito-nexus")
+    except PackageNotFoundError:
+        return "unknown"
 
 
 def main() -> None:
@@ -138,6 +150,10 @@ def main() -> None:
     cli_dir = PROJECT_ROOT / "cli"
     # sanity: cli_dir should contain __init__.py and __main__.py of dispatcher
     # but we do not hard-fail here
+
+    if flags.version:
+        print(f"infinito {_resolve_version()}")
+        raise SystemExit(0)
 
     if flags.git_clean:
         git_clean_repo()
