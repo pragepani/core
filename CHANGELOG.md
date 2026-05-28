@@ -1,5 +1,9 @@
 # Changelog
 
+## [8.0.5] - 2026-05-28
+
+* Adds --version / -V flag to the infinito CLI, drops a dead Compose-CLI reference link, and fixes the dev-deploy router so per-invocation routing knobs (apps, mode, purge, bundles, disable, full_cycle, variant) no longer leak into the persistent .env and the make-alias / env-var surface is unified 1:1.
+
 ## [8.0.4] - 2026-05-28
 
 * Repairs the update PR workflow end-to-end: tree-SHA dedup replaces the >300-file-breaking diff API, the GitHub App token is now migrated to `client-id` (with renamed secret + docs) and reaches the push wire by blanking actions/checkout's external credentials file.
