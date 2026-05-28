@@ -41,6 +41,14 @@ For the matrix-variant mechanism (folder layout, round semantics, `--variant` / 
 - For FULL-matrix iteration, omit `INFINITO_VARIANT=`. If any round fails, capture WHICH round was the last successful one so the next redeploy can pin `INFINITO_VARIANT=<that-idx>` to it.
 - When debugging cross-variant interaction (for example "the multisite variant breaks because single-site state was not purged"), reproduce with the FULL matrix once, then pin `INFINITO_VARIANT=<failing-idx>` and iterate the fix. Re-run the FULL matrix only when you believe the fix is complete.
 
+### Full-matrix iteration flow
+
+When the iteration target is the full matrix (cross-variant coverage matters more than focused-debug speed), apply the following recipe instead of cycling all variants on every loop:
+
+1. **Iterate the failing variant with `mode=update`, variant-pinned.** `mode=update` MUST always carry `INFINITO_VARIANT=<idx>`. Never use `mode=update` to cycle the full matrix. Loop `INFINITO_VARIANT=<idx> make compose-deploy mode=update apps=<roles>` until that variant is green.
+2. **Deploy each remaining variant that has NOT yet been re-deployed against the current code** with `INFINITO_VARIANT=<other-idx> make compose-deploy mode=reinstall apps=<roles> full_cycle=true`. This avoids re-doing the fixed variant while validating the others against the current code as a fresh baseline.
+3. **Finally, re-run the FULL matrix one more time** with `make compose-deploy mode=reinstall apps=<roles> full_cycle=true` (no `INFINITO_VARIANT=`). This is the canonical end-of-iteration gate — every variant against the current code, fresh state.
+
 ## Certificate Authority
 
 - If the website uses locally deployed certificates, you MUST run `make network-trust-ca` before you inspect it in a browser. Otherwise the browser will warn about the local CA and the inspection will not be reliable.
@@ -52,5 +60,7 @@ For the matrix-variant mechanism (folder layout, round semantics, `--variant` / 
 - Before you redeploy, you MUST complete all available inspections first. Check the live local output, local logs, and current browser state so the original state stays visible.
 - To inspect files or run commands inside a running container, use `make compose-exec`.
 - To run a one-off sidecar image against the same docker daemon (e.g. a Playwright runner with a patched `.env`), use `make compose-inner-run` (see `make help target=compose-inner-run` for `IMAGE` / `cmd` / `INFINITO_RUN_FLAGS`).
-- When a local deploy fails, you SHOULD first inspect and, where practical, validate a fix inside the running container with `make compose-exec` / `make compose-inner-run` before starting another deploy. Use that live investigation to identify the concrete root cause and save iteration time.
+- When a local deploy fails, you MUST validate the proposed fix inside a sidecar against the same image via `make compose-inner-run` (or `make compose-exec` against the live container) BEFORE starting another deploy, whenever the failure is reproducible there. The reproducible-there set includes: a container that crashes at startup, a misconfigured env var, an image-side bug, an in-container script that fails, or any failure whose root cause was traced to runtime state of the container. The only exception is failures that genuinely depend on multi-container or post-deploy state (network neighbours, persistent volumes, post-deploy Ansible hooks) — call that out explicitly in the iteration narrative.
+- When the failure is in a Playwright spec, "in-container validation" specifically means running `make compose-playwright role=<role>` against the live stack (per [Playwright Spec Loop](playwright.md)).
+- Use the same live investigation to identify the concrete root cause and save iteration time.
 - Once the root cause is understood, you MUST apply the real fix in the repository files and then continue the redeploy loop with the usual commands from this page. In-container fixes are only for diagnosis or short validation and MUST NOT replace the repo change.

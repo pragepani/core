@@ -9,11 +9,9 @@ Two checks:
 
 * :meth:`TestRequirementsCompleteness.test_no_requirement_is_ready_for_archive`
   fails when a requirement file has zero ``- [ ]`` markers anywhere.
-  Such files are eligible for archival via
-  ``python -m cli.contributing.requirements.archive`` and must be moved
-  out of ``docs/requirements/`` so the directory stays a short, current
-  list of open work. Keeping completed requirements around bloats the
-  scope AI agents have to process on every run.
+  Such files are eligible for archival via ``pkgmgr archive
+  docs/requirements`` and must be moved out of ``docs/requirements/``
+  so the directory stays a short, current list of open work.
 
 See [requirements.md](../../docs/contributing/requirements.md).
 """
@@ -25,8 +23,6 @@ import unittest
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from cli.contributing.requirements.archive.discovery import iter_requirement_files
-from cli.contributing.requirements.archive.inspect import count_unchecked_items
 from utils.annotations.message import in_github_actions, warning
 from utils.cache.files import read_text
 
@@ -36,12 +32,38 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 REQUIREMENTS_DIR = PROJECT_ROOT / "docs" / "requirements"
-ARCHIVE_CLI = "python -m cli.contributing.requirements.archive"
+ARCHIVE_CLI = "make requirements-archive"
+TEMPLATE_FILENAME = "000-template.md"
 
+REQUIREMENT_FILENAME_RE = re.compile(r"^\d{3}-[^/]+\.md$")
 ACCEPTANCE_HEADING_RE = re.compile(r"^##\s+Acceptance Criteria\b", re.IGNORECASE)
 SECTION_END_HEADING_RE = re.compile(r"^#{1,2}\s+\S")
+UNCHECKED_TASK_RE = re.compile(r"^\s*[-*+]\s+\[\s\]\s")
 UNCHECKED_ITEM_RE = re.compile(r"^\s*[-*+]\s+\[\s\]\s+(?P<body>\S.*)$")
 WHITESPACE_RE = re.compile(r"\s+")
+
+
+def iter_requirement_files(directory: Path) -> list[Path]:
+    if not directory.is_dir():
+        return []
+    return sorted(
+        p
+        for p in directory.iterdir()
+        if p.is_file()
+        and REQUIREMENT_FILENAME_RE.match(p.name)
+        and p.name != TEMPLATE_FILENAME
+    )
+
+
+def count_unchecked_items(path: Path) -> int:
+    try:
+        return sum(
+            1
+            for line in read_text(str(path)).splitlines()
+            if UNCHECKED_TASK_RE.match(line)
+        )
+    except (OSError, UnicodeDecodeError):
+        return 0
 
 
 @dataclass(frozen=True)
@@ -116,7 +138,7 @@ class TestRequirementsCompleteness(unittest.TestCase):
     def test_requirement_acceptance_criteria_are_complete(self) -> None:
         """Surface every unchecked acceptance criterion as a warning."""
         findings: list[UncheckedCriterion] = []
-        for path in iter_requirement_files(REQUIREMENTS_DIR, include_template=False):
+        for path in iter_requirement_files(REQUIREMENTS_DIR):
             findings.extend(scan_unchecked_criteria(path))
 
         findings.sort(key=lambda f: (f.path.as_posix(), f.line))
@@ -135,14 +157,14 @@ class TestRequirementsCompleteness(unittest.TestCase):
         """Fail when any requirement file is fully checked off.
 
         A file with zero ``- [ ]`` items anywhere is eligible for
-        archival via ``cli.contributing.requirements.archive``. Leaving
-        it in ``docs/requirements/`` inflates the scope that AI agents
-        have to process on every run, so the directory MUST stay a
-        short, current list of open work.
+        archival via ``pkgmgr archive``. Leaving it in
+        ``docs/requirements/`` inflates the scope that AI agents have
+        to process on every run, so the directory MUST stay a short,
+        current list of open work.
         """
         archivable: list[Path] = [
             path
-            for path in iter_requirement_files(REQUIREMENTS_DIR, include_template=False)
+            for path in iter_requirement_files(REQUIREMENTS_DIR)
             if count_unchecked_items(path) == 0
         ]
 
