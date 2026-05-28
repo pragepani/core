@@ -8,10 +8,10 @@ Repository secrets MUST be set under **Settings → Secrets and variables → Ac
 
 | Secret | Workflow | Purpose | Required when |
 |---|---|---|---|
-| `BOT_APP_ID` | [update.yml](../../../../../.github/workflows/update.yml) | GitHub App ID used to mint a short-lived installation token for the update PR. | `CI_ENABLE_AUTO_UPDATES == 'true'` |
+| `BOT_APP_CLIENT_ID` | [update.yml](../../../../../.github/workflows/update.yml) | GitHub App Client ID (OAuth-style `Iv…` identifier shown on the App's General page) used to mint a short-lived installation token for the update PR. | `CI_ENABLE_AUTO_UPDATES == 'true'` |
 | `BOT_APP_PRIVATE_KEY` | [update.yml](../../../../../.github/workflows/update.yml) | PEM-encoded private key of the same GitHub App. Used to sign the JWT that exchanges for the installation token. | `CI_ENABLE_AUTO_UPDATES == 'true'` |
 
-## `BOT_APP_ID` and `BOT_APP_PRIVATE_KEY` 🤖
+## `BOT_APP_CLIENT_ID` and `BOT_APP_PRIVATE_KEY` 🤖
 
 ### Why these secrets exist 🎯
 
@@ -46,7 +46,7 @@ A classic personal access token MAY be used as a fallback for unrelated automati
 1. Open the repository on GitHub.
 2. Go to **Settings → Secrets and variables → Actions**.
 3. Stay on the **Secrets** tab.
-4. Click **New repository secret** and add `BOT_APP_ID` with the numeric App ID.
+4. Click **New repository secret** and add `BOT_APP_CLIENT_ID` with the App's Client ID (shown on the App's General page under **About**, in the `Iv…` format — *not* the numeric App ID).
 5. Click **New repository secret** and add `BOT_APP_PRIVATE_KEY` with the complete PEM content, including the `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` lines.
 
 ### How the workflow consumes the secrets ⚙️
@@ -63,8 +63,8 @@ A missing secret resolves to an empty string in workflow expressions. The workfl
 
 | Stage | Behaviour when both secrets are missing |
 |---|---|
-| Workflow parse | Run starts. GitHub emits the warning `The following secrets are referenced but not defined: BOT_APP_ID, BOT_APP_PRIVATE_KEY`. |
-| `Generate app token` step | `actions/create-github-app-token` declares both inputs as required and fails with `Error: Input required and not supplied: app-id`. |
+| Workflow parse | Run starts. GitHub emits the warning `The following secrets are referenced but not defined: BOT_APP_CLIENT_ID, BOT_APP_PRIVATE_KEY`. |
+| `Generate app token` step | `actions/create-github-app-token` declares both inputs as required and fails with `Error: Input required and not supplied: client-id`. |
 | `Open PR if … changed` step | Skipped. Its implicit `if:` condition is `success() && (steps.diff.outputs.changed == 'true')`, and `success()` is false after the token step failed. |
 | `open_pr.sh` | Not executed. No commit, no push, no PR. |
 | Outcome | The run is marked failed. GitHub notifies repository admins. No PR is created with a wrong identity. |
