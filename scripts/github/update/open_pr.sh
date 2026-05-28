@@ -79,21 +79,10 @@ if [[ -n "${DUPLICATE_PR}" ]]; then
 	exit 0
 fi
 
-echo "--- All git config (scope-tagged) before push: ---"
-git config --list --show-scope 2>/dev/null | grep -iE 'http\.|credential|url\.|extraheader' || echo "(no http/credential/url entries)"
-echo "--- GH_TOKEN identity probe (via /installation/repositories): ---"
-curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
-	-H "Authorization: Bearer ${GH_TOKEN}" \
-	-H "Accept: application/vnd.github+json" \
-	https://api.github.com/installation/repositories || true
-echo "--- Strip every *.extraheader from every config scope ---"
-for scope in --local --global --system --worktree; do
-	git config "${scope}" --name-only --get-regexp '\.extraheader$' 2>/dev/null |
-		xargs -r -I{} git config "${scope}" --unset-all '{}' 2>/dev/null || true
-done
-echo "--- All git config (scope-tagged) after strip: ---"
-git config --list --show-scope 2>/dev/null | grep -iE 'http\.|credential|url\.|extraheader' || echo "(no http/credential/url entries)"
-echo "--- Pushing with App-token-embedded URL ---"
+git config --local --get-regexp '^includeif\..*\.path$' 2>/dev/null |
+	awk '{print $2}' |
+	sort -u |
+	xargs -r truncate -s 0
 git push --force \
 	"https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" \
 	"HEAD:refs/heads/${BRANCH}"
