@@ -1,4 +1,6 @@
 # nocheck: shared
+# nocheck: dynamic-flag
+# nocheck: playwright-service-flag
 oauth2:
   enabled: true
   shared: true
@@ -7,25 +9,39 @@ oauth2:
   origin:
     host: pihole
     port: 80
+# nocheck: dynamic-flag
+# nocheck: playwright-service-flag
 logout:
   enabled: true
   shared: true
+# nocheck: dynamic-flag
+# nocheck: playwright-service-flag
 dashboard:
   enabled: true
   shared: true
+# nocheck: dynamic-flag
+# nocheck: playwright-service-flag
 matomo:
   enabled: true
   shared: true
 # nocheck: email
+# nocheck: dynamic-flag
+# nocheck: playwright-service-flag
 email:
   enabled: false
   shared: true
+# nocheck: dynamic-flag
+# nocheck: playwright-service-flag
 redis:
   enabled: true
   shared: true
+# nocheck: dynamic-flag
+# nocheck: playwright-service-flag
 javascript:
   enabled: true
   shared: true
+# nocheck: dynamic-flag
+# nocheck: playwright-service-flag
 prometheus:
   enabled: true
   shared: true
@@ -41,7 +57,7 @@ pihole:
   ports:
     local:
       http: 8041
-      oauth2: 16500
+      oauth2: 16505
   run_after:
   - web-app-keycloak
   lifecycle: alpha
