@@ -18,7 +18,7 @@ concurrency:
 on:
   workflow_call:
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: '0 0 * * 6'
 
 
 jobs:

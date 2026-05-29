@@ -2,8 +2,7 @@ name: "🧹 Images: Cleanup CI (GHCR)"
 
 on:
   schedule:
-    # GitHub cron is UTC -> Monday 00:00 UTC
-    - cron: "0 0 * * 1"
+    - cron: "0 0 * * 6"
   workflow_dispatch:
     inputs:
       days:
