@@ -36,7 +36,7 @@ async function performOidcLogin(page, username, password) {
 }
 
 // Scenario I: Pi-hole is protected — unauthenticated access redirects to Keycloak
-test("pihole is protected by oauth2 proxy", async ({ page }) => {
+test("guest: is redirected to SSO login", async ({ page }) => {
   const expectedOidcAuthUrl = `${oidcIssuerUrl.replace(/\/$/, "")}/protocol/openid-connect/auth`;
 
   await page.goto(`${piholeBaseUrl.replace(/\/$/, "")}/`);
@@ -50,7 +50,7 @@ test("pihole is protected by oauth2 proxy", async ({ page }) => {
 });
 
 // Scenario II: Admin can log in via SSO and reach Pi-hole (not Keycloak)
-test("admin can log in via sso and access pihole", async ({ page }) => {
+test("administrator: can log in via SSO and access pihole", async ({ page }) => {
   const expectedOidcAuthUrl   = `${oidcIssuerUrl.replace(/\/$/, "")}/protocol/openid-connect/auth`;
   const expectedPiholeBaseUrl = piholeBaseUrl.replace(/\/$/, "");
 
@@ -72,7 +72,7 @@ test("admin can log in via sso and access pihole", async ({ page }) => {
 });
 
 // Scenario III: Biber (non-admin) is denied access
-test("biber is denied access to pihole", async ({ page }) => {
+test("biber: is denied access to pihole admin panel", async ({ page }) => {
   const expectedOidcAuthUrl   = `${oidcIssuerUrl.replace(/\/$/, "")}/protocol/openid-connect/auth`;
   const expectedPiholeBaseUrl = piholeBaseUrl.replace(/\/$/, "");
 
@@ -102,7 +102,7 @@ test("biber is denied access to pihole", async ({ page }) => {
 });
 
 // Scenario IV: Admin can log out via the logout button
-test("admin can log out via logout button", async ({ page }) => {
+test("administrator: can log out via logout button", async ({ page }) => {
   const expectedOidcAuthUrl   = `${oidcIssuerUrl.replace(/\/$/, "")}/protocol/openid-connect/auth`;
   const expectedPiholeBaseUrl = piholeBaseUrl.replace(/\/$/, "");
 
