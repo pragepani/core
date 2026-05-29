@@ -52,6 +52,18 @@
         ) | default("", true)
       }}
 
+- name: Purge stale nixbld users blocking the multi-user installer
+  ansible.builtin.script:
+    cmd: "{{ role_path }}/files/purge_stale_nixbld.sh"
+  register: dev_nix_purge_stale_nixbld_result
+  changed_when: >
+    dev_nix_purge_stale_nixbld_result.stdout is search('\\[CHANGED\\]')
+  failed_when: >
+    dev_nix_purge_stale_nixbld_result.rc != 0 or
+    dev_nix_purge_stale_nixbld_result.stdout is search('\\[FAIL\\]')
+  become: true
+  when: dev_nix_binary_path_before | length == 0
+
 - name: Read existing nixbld group entry before installer run
   ansible.builtin.getent:
     database: group
