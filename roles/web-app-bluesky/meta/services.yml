@@ -22,20 +22,11 @@ sso:
     origin:
       host: bluesky-broker
       port: 8080
-  # ACL — the role serves THREE domains (web/api/view) via the same
-  # front-proxy oauth2 stack. Federation traffic to `api.bluesky.<DOMAIN>`
-  # MUST stay reachable without an OIDC redirect, otherwise other PDS
-  # instances and the AT Protocol relays cannot read account
-  # descriptors. The PDS exposes its public surface under `/xrpc/*`
-  # and `/.well-known/*`; both are whitelisted so they bypass the
-  # gate. The default `/` path is gated and routes through
-  # oauth2-proxy → bluesky-broker → social-app (the user-visible web
-  # UI lives at `web.bluesky.<DOMAIN>`).
     allowed_groups:
       - "{{ lookup('rbac_group_path', application_id='web-app-bluesky', role='administrator') }}"
-# nocheck: shared
-# nocheck: dynamic-flag
-# nocheck: playwright-service-flag — internal sub-component (multi-entity role)
+    # nocheck: shared
+    # nocheck: dynamic-flag
+    # nocheck: playwright-service-flag — internal sub-component (multi-entity role)
     acl:
       whitelist:
         - /xrpc/
