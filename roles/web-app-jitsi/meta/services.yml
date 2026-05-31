@@ -24,12 +24,14 @@ prometheus:
   shared: "{{ 'web-app-prometheus' in group_names }}"
 # nocheck: playwright-service-flag — email not used by Jitsi room flow
 email:
-  enabled: false
-  shared: false
+  enabled: "{{ 'web-app-mailu' in group_names }}"
+  shared: "{{ 'web-app-mailu' in group_names }}"
 # nocheck: playwright-service-flag — css consumer, no Playwright surface (provider: web-svc-css)
 css:
   enabled: "{{ 'web-svc-css' in group_names }}"
   shared: "{{ 'web-svc-css' in group_names }}"
+# nocheck: dynamic-flag — gated on services.sso.enabled, not on group_names
+# nocheck: playwright-service-flag — runtime DOM patch, no probe-able surface flag
 # Inject the role-local logout button (templates/javascript.js.j2) when SSO is on, so
 # Jitsi's React SPA (which has no native sign-out control) still exposes a click target
 # that survives the persona contract's no-direct-URL logout rule.

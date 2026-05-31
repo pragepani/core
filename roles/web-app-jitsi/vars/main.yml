@@ -19,8 +19,6 @@ JITSI_JVB_CONTAINER: "jitsi-jvb"
 JITSI_WEB_HTTP_PORT: "{{ lookup('config', application_id, 'services.jitsi.ports.local.http') }}"
 JITSI_JVB_MEDIA_PORT: "{{ lookup('config', application_id, 'services.jitsi.ports.public.media') }}"
 
-JITSI_HOSTNAME: "{{ lookup('domain', application_id) }}"
-JITSI_WEB_PROTOCOL: "{{ lookup('tls', application_id, 'protocols.web') }}"
 JITSI_PUBLIC_URL: "{{ lookup('tls', application_id, 'url.base') }}"
 
 JITSI_VOLUMES_DIR: "{{ lookup('container', application_id, 'directories.volumes') }}"
@@ -48,7 +46,6 @@ JITSI_JVB_AUTH_PASSWORD: "{{ lookup('config', application_id, 'credentials.jvb_a
 JITSI_JIGASI_XMPP_PASSWORD: "{{ lookup('config', application_id, 'credentials.jigasi_xmpp_password') }}"
 JITSI_JIBRI_RECORDER_PASSWORD: "{{ lookup('config', application_id, 'credentials.jibri_recorder_password') }}"
 JITSI_JIBRI_XMPP_PASSWORD: "{{ lookup('config', application_id, 'credentials.jibri_xmpp_password') }}"
-JITSI_JWT_APP_SECRET: "{{ lookup('config', application_id, 'credentials.jwt_app_secret') }}"
 
 # Auth model — oauth2-proxy gates the entire web frontend when SSO is on, so prosody
 # stays on `internal` (anonymous JIDs) and ENABLE_AUTH=false. When SSO is off and LDAP

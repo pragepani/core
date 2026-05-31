@@ -32,7 +32,7 @@ The `guest` persona is always live (no auth chain assumption) and the canonical-
 
 - [Jitsi Meet Project](https://jitsi.org/)
 - [docker-jitsi-meet (upstream)](https://github.com/jitsi/docker-jitsi-meet)
-- [Jitsi token authentication](https://github.com/jitsi-contrib/prosody-plugins/tree/main/token_lobby)
+- [Jitsi prosody plugins (jitsi-contrib)](https://github.com/jitsi-contrib/prosody-plugins)
 
 ## Credits
 

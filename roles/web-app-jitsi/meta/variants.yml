@@ -11,8 +11,8 @@
       enabled: true
       shared: true
     email:
-      enabled: false
-      shared: false
+      enabled: true
+      shared: true
     ldap:
       enabled: true
       shared: true

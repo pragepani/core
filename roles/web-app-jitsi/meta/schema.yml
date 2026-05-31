@@ -30,9 +30,3 @@ credentials:
     algorithm: alphanumeric
     validation: "^[A-Za-z0-9]{32,}$"
     length: 48
-  jwt_app_secret:
-    description: "Shared secret prosody uses for HS256-signed JWTs when an external IdP issues JWT bearer tokens for Jitsi room moderation. RS256 (Keycloak realm
-      key) is preferred; the HS256 secret is the fallback for non-OIDC LDAP-only variants."
-    algorithm: alphanumeric
-    validation: "^[A-Za-z0-9]{64,}$"
-    length: 96
