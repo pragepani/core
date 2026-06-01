@@ -52,8 +52,8 @@
         ) | default("", true)
       }}
 
-- name: Install Nix when no existing binary was detected
-  ansible.builtin.include_tasks: 02a_nix_install_only.yml
+- name: Install Nix via official installer when no Nix binary is present
+  ansible.builtin.include_tasks: 03_install_official.yml
   when: dev_nix_binary_path_before | length == 0
 
 - name: Probe common nix binary paths after installation
