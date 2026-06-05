@@ -29,11 +29,25 @@ RUN rm -rf /var/lib/apt/lists/* \
       systemd-sysv \
  && rm -rf /var/lib/apt/lists/*
 
+RUN update-alternatives --set iptables /usr/sbin/iptables-legacy \
+ && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+
+RUN systemd-machine-id-setup || true
+
 RUN systemctl mask \
       sys-kernel-debug.mount \
       sys-fs-fuse-connections.mount \
       sys-kernel-config.mount \
       systemd-logind.service \
+      systemd-firstboot.service \
+      systemd-machine-id-commit.service \
+      systemd-udevd.service \
+      systemd-udev-trigger.service \
+      systemd-udev-settle.service \
+      systemd-modules-load.service \
+      systemd-tmpfiles-setup-dev.service \
+      systemd-remount-fs.service \
+      kmod-static-nodes.service \
       console-getty.service \
       getty.target \
       getty@.service
@@ -53,10 +67,11 @@ RUN ansible-galaxy collection install \
       community.general \
       ansible.posix
 
+COPY daemon.json /etc/docker/daemon.json
 COPY bootstrap.sh /usr/local/bin/matrix-mdad-bootstrap
 COPY bootstrap.service /etc/systemd/system/matrix-mdad-bootstrap.service
 RUN chmod 0755 /usr/local/bin/matrix-mdad-bootstrap \
- && systemctl enable docker.service matrix-mdad-bootstrap.service
+ && systemctl enable containerd.service docker.service matrix-mdad-bootstrap.service
 
 WORKDIR /mdad
 STOPSIGNAL SIGRTMIN+3

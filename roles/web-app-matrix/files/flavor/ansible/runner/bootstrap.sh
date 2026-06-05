@@ -4,13 +4,23 @@ set -euo pipefail
 MARKER=/var/lib/matrix-mdad/bootstrap.done
 mkdir -p /var/lib/matrix-mdad
 if [ -f "$MARKER" ]; then
+  echo ">>> matrix-mdad-bootstrap: marker present, skipping"
   exit 0
 fi
 
 export PATH="/opt/ansible/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 cd /mdad
+
+START_GALAXY=$SECONDS
+echo ">>> matrix-mdad-bootstrap: starting ansible-galaxy install"
 /opt/ansible/bin/ansible-galaxy install -r requirements.yml -p roles/galaxy/ --force
+echo "<<< matrix-mdad-bootstrap: galaxy install done in $((SECONDS - START_GALAXY))s"
+
+START_PLAY=$SECONDS
+echo ">>> matrix-mdad-bootstrap: starting ansible-playbook setup.yml --tags=${MATRIX_MDAD_PLAYBOOK_TAGS:-setup-all,start}"
 /opt/ansible/bin/ansible-playbook -i inventory/hosts setup.yml --tags="${MATRIX_MDAD_PLAYBOOK_TAGS:-setup-all,start}"
+echo "<<< matrix-mdad-bootstrap: playbook done in $((SECONDS - START_PLAY))s"
 
 touch "$MARKER"
+echo ">>> matrix-mdad-bootstrap: marker written, total $SECONDS s"

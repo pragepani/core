@@ -1,14 +1,13 @@
 [Unit]
 Description=Bootstrap matrix-docker-ansible-deploy on first boot
-After=docker.service network-online.target
+After=docker.service
 Requires=docker.service
-Wants=network-online.target
 ConditionPathExists=!/var/lib/matrix-mdad/bootstrap.done
 
 [Service]
 Type=oneshot
 Environment=PATH=/opt/ansible/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-EnvironmentFile=-/etc/matrix-mdad/bootstrap.env
+ExecStartPre=/usr/bin/docker info
 ExecStart=/usr/local/bin/matrix-mdad-bootstrap
 RemainAfterExit=yes
 StandardOutput=journal+console

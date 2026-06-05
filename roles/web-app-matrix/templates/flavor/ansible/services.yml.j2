@@ -17,7 +17,7 @@
     volumes:
       - {{ MATRIX_MDAD_DIR }}:/mdad
       - matrix_mdad_docker:/var/lib/docker
-      - matrix_mdad_systemd:/etc/systemd/system
+      - matrix_mdad_state:/var/lib/matrix-mdad
       - matrix_mdad_matrix:/matrix
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
@@ -27,4 +27,4 @@
     ports:
       - "{{ DOCKER_BIND_HOST }}:{{ MATRIX_SYNAPSE_PORT }}:{{ MATRIX_SYNAPSE_PORT }}"
       - "{{ DOCKER_BIND_HOST }}:{{ MATRIX_ELEMENT_PORT }}:{{ MATRIX_ELEMENT_PORT }}"
-      - "0.0.0.0:{{ MATRIX_FEDERATION_PORT }}:{{ MATRIX_FEDERATION_PORT }}"
+      - "{{ DOCKER_BIND_HOST }}:{{ MATRIX_FEDERATION_PORT }}:{{ MATRIX_FEDERATION_PORT }}"

@@ -1,13 +1,36 @@
 ---
-- name: "ansible-flavor: probe Synapse client API on host loopback"
+- name: "ansible-flavor: probe Synapse client API on host loopback (cold MDAD bootstrap ~10-15min)"
   uri_retry:
     url: "http://127.0.0.1:{{ MATRIX_SYNAPSE_PORT }}/_matrix/client/versions"
     status_code: 200
     follow_redirects: none
   register: matrix_synapse_loopback_probe
-  retries: 60
-  delay: 2
+  retries: 180
+  delay: 5
   until: matrix_synapse_loopback_probe.status == 200
+  ignore_errors: true
+
+- name: "ansible-flavor: diagnostics — matrix-mdad container + systemd + bootstrap status (on probe failure)"
+  ansible.builtin.script:
+    cmd: "{{ role_path }}/files/flavor/ansible/diagnostics.sh"
+  register: matrix_mdad_diagnostics
+  changed_when: false
+  failed_when: false
+  when:
+    - matrix_synapse_loopback_probe is failed
+    - MODE_DEBUG | bool
+
+- name: "ansible-flavor: dump matrix-mdad diagnostics"
+  ansible.builtin.debug:
+    var: matrix_mdad_diagnostics
+  when:
+    - matrix_synapse_loopback_probe is failed
+    - MODE_DEBUG | bool
+
+- name: "ansible-flavor: fail after diagnostics if probe never succeeded"
+  ansible.builtin.fail:
+    msg: "Synapse loopback probe never reached 200 — see matrix_mdad_diagnostics above."
+  when: matrix_synapse_loopback_probe is failed
 
 - name: "ansible-flavor: probe Element web client on host loopback"
   uri_retry:
