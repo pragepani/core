@@ -20,23 +20,12 @@
   until: matrix_element_loopback_probe.status == 200
 
 - name: "ansible-flavor: create native admin in Synapse (DiD, idempotent via shared-secret)"
-  ansible.builtin.command:
-    argv:
-      - container
-      - exec
-      - matrix-mdad
-      - docker
-      - exec
-      - matrix-synapse
-      - register_new_matrix_user
-      - -u
-      - "{{ MATRIX_ADMINISTRATOR_USERNAME }}"
-      - -p
-      - "{{ MATRIX_ADMINISTRATOR_PASSWORD }}"
-      - -a
-      - -c
-      - /data/homeserver.yaml
-      - http://localhost:8008
+  ansible.builtin.shell:
+    cmd: >- # nocheck: raw-docker — inner docker CLI talks to the DiD daemon inside matrix-mdad; no host docker involved
+      container exec matrix-mdad docker exec matrix-synapse register_new_matrix_user
+      -u {{ MATRIX_ADMINISTRATOR_USERNAME | quote }}
+      -p {{ MATRIX_ADMINISTRATOR_PASSWORD | quote }}
+      -a -c /data/homeserver.yaml http://localhost:8008
   register: matrix_admin_create
   changed_when: matrix_admin_create.rc == 0 and 'User ID already taken' not in (matrix_admin_create.stdout + matrix_admin_create.stderr)
   failed_when: matrix_admin_create.rc != 0 and 'User ID already taken' not in (matrix_admin_create.stdout + matrix_admin_create.stderr)
