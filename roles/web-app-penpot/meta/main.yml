@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: Kevin Veen-Birkenbach
+  author: Evangelos Tsakoudis
   description: Deploys Penpot, the open-source design and prototyping platform (a self-hostable Figma alternative) for UI/UX design, collaboration, and developer handoff.
   license: Infinito.Nexus Community License (Non-Commercial)
   company: |
