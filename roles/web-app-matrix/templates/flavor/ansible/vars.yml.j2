@@ -25,10 +25,10 @@ matrix_synapse_database_database: "{{ MATRIX_POSTGRES_DATABASE }}"
 matrix_homeserver_container_network: host
 matrix_synapse_container_network: host
 matrix_client_element_container_network: host
-matrix_coturn_docker_network: host
+coturn_container_network: host
 
 {% if MATRIX_COTURN_SHARED %}
-matrix_coturn_enabled: false
+coturn_enabled: false
 matrix_synapse_turn_uris:
   - "turn:{{ MATRIX_COTURN_HOST }}:{{ MATRIX_COTURN_STUN_TURN_PORT }}?transport=udp"
   - "turn:{{ MATRIX_COTURN_HOST }}:{{ MATRIX_COTURN_STUN_TURN_PORT }}?transport=tcp"
