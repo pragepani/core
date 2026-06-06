@@ -23,9 +23,14 @@ matrix_synapse_database_password: "{{ MATRIX_POSTGRES_PASSWORD }}"
 matrix_synapse_database_database: "{{ MATRIX_POSTGRES_DATABASE }}"
 
 matrix_homeserver_container_network: host
+matrix_addons_container_network: host
 matrix_synapse_container_network: host
 matrix_client_element_container_network: host
 coturn_container_network: host
+jitsi_web_container_network: host
+jitsi_jvb_container_network: host
+jitsi_prosody_container_network: host
+jitsi_jicofo_container_network: host
 
 {% if MATRIX_COTURN_SHARED %}
 coturn_enabled: false
