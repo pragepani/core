@@ -71,6 +71,9 @@
     ldap:
       enabled: true
       shared: true
+    seaweedfs:
+      enabled: false
+      shared: false
     sso:
       enabled: false
       shared: false

@@ -74,6 +74,9 @@
 - services:
     matrix:
       flavor: compose
+    seaweedfs:
+      enabled: true
+      shared: true
     coturn:
       enabled: true
       shared: true
