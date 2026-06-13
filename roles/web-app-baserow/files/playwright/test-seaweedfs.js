@@ -1,15 +1,10 @@
 // SeaweedFS object-store scenario for Baserow.
 //
-// Baserow is configured with S3 user-file storage (env.j2:
-// AWS_STORAGE_BUCKET_NAME / AWS_S3_ENDPOINT_URL switch django-storages to the
-// consumer bucket), so a file uploaded into a File-field cell is written to
-// SeaweedFS as a new `user_files/...` object. The action signs the
-// administrator in over OIDC (the same oauth2-proxy + Keycloak chain the
-// suite's playwright.spec.js uses, reusing performKeycloakLoginForm), then
-// builds the minimal surface needed for a real upload: a workspace database,
-// a table, a File field, and a file dropped into that cell through the
-// uploader dialog's hidden file input. The shared check proves the bucket
-// grew via the Filer UI.
+// Baserow stores uploaded user files through django-storages when AWS_* is set.
+// The test uses Baserow's API instead of brittle grid UI selectors: after the
+// OIDC gate provisions a native Baserow JWT, it creates a database, a table, a
+// File field, uploads a document, and stores it in a row. The shared SeaweedFS
+// check proves that the configured bucket gained an object.
 
 const { test, expect } = require("@playwright/test");
 const { skipUnlessServiceEnabled } = require("./service-gating");
@@ -22,150 +17,114 @@ const {
 
 test.use({ ignoreHTTPSErrors: true });
 
+async function readJson(response, label) {
+  const body = await response.text();
+  expect(response.ok(), `${label} failed with ${response.status()}: ${body}`).toBe(true);
+  return body ? JSON.parse(body) : null;
+}
+
+async function getBaserowSession(appPage, baseUrl, adminUsername, adminPassword) {
+  await appPage.context().clearCookies();
+  await appPage.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
+
+  if (/openid-connect\/auth|\/oauth2\//.test(appPage.url())) {
+    await performKeycloakLoginForm(appPage, adminUsername, adminPassword);
+  }
+
+  await expect
+    .poll(() => appPage.url(), { timeout: 90_000, message: `expected redirect back to ${baseUrl}` })
+    .toContain(baseUrl.replace(/^https?:\/\//, ""));
+  await appPage.waitForLoadState("networkidle", { timeout: 60_000 }).catch(() => {});
+
+  const tokenResponse = await appPage.request.get(`${baseUrl}/api/infinito/sso/token/`);
+  const tokenData = await readJson(tokenResponse, "trusted-header token request");
+  expect(tokenData.access_token, "Baserow access token must be present").toBeTruthy();
+  return tokenData;
+}
+
+async function createBaserowFileRow(appPage, baseUrl, accessToken) {
+  const jsonHeaders = {
+    Authorization: `JWT ${accessToken}`,
+    "Content-Type": "application/json",
+  };
+  const authHeaders = { Authorization: `JWT ${accessToken}` };
+  const stamp = Date.now();
+  const marker = `infinito-storage-check-${stamp}.txt`;
+
+  const workspaces = await readJson(
+    await appPage.request.get(`${baseUrl}/api/workspaces/`, { headers: authHeaders }),
+    "workspace list",
+  );
+  expect(workspaces.length, "SSO user must have a workspace").toBeGreaterThan(0);
+  const workspaceId = workspaces[0].id;
+
+  const database = await readJson(
+    await appPage.request.post(`${baseUrl}/api/applications/workspace/${workspaceId}/`, {
+      headers: jsonHeaders,
+      data: { name: `Storage Check ${stamp}`, type: "database" },
+    }),
+    "database creation",
+  );
+
+  const table = await readJson(
+    await appPage.request.post(`${baseUrl}/api/database/tables/database/${database.id}/`, {
+      headers: jsonHeaders,
+      data: { name: "Files", data: null, first_row_header: false },
+    }),
+    "table creation",
+  );
+
+  const fileField = await readJson(
+    await appPage.request.post(`${baseUrl}/api/database/fields/table/${table.id}/`, {
+      headers: jsonHeaders,
+      data: { name: "Attachment", type: "file" },
+    }),
+    "file field creation",
+  );
+
+  const upload = await readJson(
+    await appPage.request.post(`${baseUrl}/api/user-files/upload-file/`, {
+      headers: authHeaders,
+      multipart: {
+        file: {
+          name: marker,
+          mimeType: "text/plain",
+          buffer: Buffer.from(`infinito storage check ${marker}`),
+        },
+      },
+    }),
+    "file upload",
+  );
+  expect(upload.name, "Baserow must return an internal uploaded-file name").toBeTruthy();
+
+  const row = await readJson(
+    await appPage.request.post(`${baseUrl}/api/database/rows/table/${table.id}/?user_field_names=true`, {
+      headers: jsonHeaders,
+      data: { [fileField.name]: [upload] },
+    }),
+    "row creation with file field",
+  );
+  expect(JSON.stringify(row), `row response must reference the uploaded file ${marker}`).toContain(marker);
+}
+
 test("seaweedfs: an uploaded Baserow file-field document is stored in the SeaweedFS bucket", async ({ page, browser }) => {
   skipUnlessServiceEnabled("seaweedfs");
+  skipUnlessServiceEnabled("sso");
   test.setTimeout(180_000);
+
+  const baseUrl = normalizeBaseUrl(process.env.BASEROW_BASE_URL || "");
+  const adminUsername = decodeDotenvQuotedValue(process.env.ADMIN_USERNAME || "");
+  const adminPassword = decodeDotenvQuotedValue(process.env.ADMIN_PASSWORD || "");
 
   await runSeaweedfsStorageCheck(page, browser, {
     label: "a Baserow file-field upload",
     action: async (appPage) => {
-      const baseUrl = normalizeBaseUrl(process.env.BASEROW_BASE_URL || "");
-      const canonicalDomain = decodeDotenvQuotedValue(process.env.CANONICAL_DOMAIN || "");
-      const adminUsername = decodeDotenvQuotedValue(process.env.ADMIN_USERNAME);
-      const adminPassword = decodeDotenvQuotedValue(process.env.ADMIN_PASSWORD);
-      const expectedBase = baseUrl.replace(/\/$/, "");
-
       expect(baseUrl, "BASEROW_BASE_URL must be set").toBeTruthy();
       expect(adminUsername, "ADMIN_USERNAME must be set").toBeTruthy();
       expect(adminPassword, "ADMIN_PASSWORD must be set").toBeTruthy();
 
-      await appPage.context().clearCookies();
-      await appPage.goto(`${expectedBase}/`, { waitUntil: "domcontentloaded" });
-
-      if (!appPage.url().includes("openid-connect/auth")) {
-        const loginLink = appPage
-          .getByRole("link", { name: /log\s*in|sign\s*in|sso/i })
-          .or(appPage.getByRole("button", { name: /log\s*in|sign\s*in|sso/i }))
-          .first();
-        if (await loginLink.isVisible({ timeout: 10_000 }).catch(() => false)) {
-          await loginLink.click().catch(() => {});
-        }
-      }
-
-      if (appPage.url().includes("openid-connect/auth")) {
-        await performKeycloakLoginForm(appPage, adminUsername, adminPassword);
-      }
-
-      await expect
-        .poll(() => appPage.url(), {
-          timeout: 90_000,
-          message: `expected redirect back to Baserow at ${canonicalDomain || expectedBase}`,
-        })
-        .toContain(canonicalDomain || expectedBase);
-
-      await appPage.waitForLoadState("networkidle").catch(() => {});
-
-      const skipOnboarding = appPage
-        .getByRole("button", { name: /skip|later|maybe later|no thanks/i })
-        .first();
-      if (await skipOnboarding.isVisible({ timeout: 5_000 }).catch(() => false)) {
-        await skipOnboarding.click().catch(() => {});
-      }
-
-      const createDatabase = appPage
-        .getByText(/create.*(application|database)|new database|add database/i)
-        .or(appPage.locator("a[href*='database'], .tree__add, .sidebar__new"))
-        .first();
-      if (await createDatabase.isVisible({ timeout: 30_000 }).catch(() => false)) {
-        await createDatabase.click().catch(() => {});
-        const databaseOption = appPage.getByText(/^\s*database\s*$/i).first();
-        if (await databaseOption.isVisible({ timeout: 10_000 }).catch(() => false)) {
-          await databaseOption.click().catch(() => {});
-        }
-        const createButton = appPage
-          .getByRole("button", { name: /^\s*(create|add)\s*$/i })
-          .first();
-        if (await createButton.isVisible({ timeout: 10_000 }).catch(() => false)) {
-          await createButton.click().catch(() => {});
-        }
-      }
-
-      const gridView = appPage
-        .locator(".grid-view, .grid-view__rows, [class*='gridView']")
-        .first();
-      await gridView.waitFor({ state: "visible", timeout: 60_000 }).catch(() => {});
-
-      const addField = appPage
-        .locator(".grid-view__add-column, [class*='addColumn'], button[title*='field' i]")
-        .or(appPage.getByRole("button", { name: /add field|new field/i }))
-        .first();
-      if (await addField.isVisible({ timeout: 30_000 }).catch(() => false)) {
-        await addField.click().catch(() => {});
-
-        const typeDropdown = appPage
-          .getByText(/select.*type|field type|choose a type/i)
-          .or(appPage.locator(".dropdown__selected, [class*='fieldType']"))
-          .first();
-        if (await typeDropdown.isVisible({ timeout: 10_000 }).catch(() => false)) {
-          await typeDropdown.click().catch(() => {});
-        }
-        const fileType = appPage.getByText(/^\s*file\s*$/i).first();
-        if (await fileType.isVisible({ timeout: 10_000 }).catch(() => false)) {
-          await fileType.click().catch(() => {});
-        }
-        const createField = appPage
-          .getByRole("button", { name: /^\s*(create|add|save)\s*$/i })
-          .first();
-        if (await createField.isVisible({ timeout: 10_000 }).catch(() => false)) {
-          await createField.click().catch(() => {});
-        }
-      }
-
-      const fileCell = appPage
-        .locator(".grid-field-file, [class*='fileField'], [class*='gridFieldFile']")
-        .first();
-      if (await fileCell.isVisible({ timeout: 30_000 }).catch(() => false)) {
-        await fileCell.click().catch(() => {});
-        const addFileButton = appPage
-          .getByText(/add a file|add file/i)
-          .or(appPage.locator(".grid-field-file__item-add, [class*='addFile']"))
-          .first();
-        if (await addFileButton.isVisible({ timeout: 10_000 }).catch(() => false)) {
-          await addFileButton.click().catch(() => {});
-        }
-      }
-
-      const markerBase = `infinito-storage-check-${Date.now()}`;
-      const marker = `${markerBase}.txt`;
-      const fileInput = appPage.locator('input[type="file"]').first();
-      await fileInput.waitFor({ state: "attached", timeout: 60_000 });
-      await fileInput.setInputFiles({
-        name: marker,
-        mimeType: "text/plain",
-        buffer: Buffer.from(`infinito storage check ${marker}`),
-      });
-
-      const uploadConfirm = appPage
-        .getByRole("button", { name: /^\s*(upload|add|done|save)\s*$/i })
-        .first();
-      if (await uploadConfirm.isVisible({ timeout: 10_000 }).catch(() => false)) {
-        await uploadConfirm.click().catch(() => {});
-      }
-
-      // Baserow's file list renders the basename and the `.txt` extension as
-      // separate nodes and truncates long names, so match the basename
-      // (one contiguous node), falling back to any file container that holds it.
-      await expect(
-        appPage
-          .getByText(markerBase, { exact: false })
-          .or(
-            appPage
-              .locator(".grid-field-file__item, [class*='fileField'], [class*='gridFieldFile'], [class*='file']")
-              .filter({ hasText: markerBase }),
-          )
-          .first(),
-        `the uploaded file '${marker}' must be acknowledged in the Baserow UI`,
-      ).toBeVisible({ timeout: 60_000 });
+      const session = await getBaserowSession(appPage, baseUrl.replace(/\/$/, ""), adminUsername, adminPassword);
+      await createBaserowFileRow(appPage, baseUrl.replace(/\/$/, ""), session.access_token);
     },
   });
 });
