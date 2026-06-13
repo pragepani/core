@@ -117,4 +117,5 @@ GITLAB_OMNIBUS_OBJSTORE:
   - "gitlab_rails['object_store']['objects']['ci_secure_files']['bucket']={{ (GITLAB_OBJSTORE_BUCKET ~ '/ci-secure-files') | ruby_dq }}"
   - "gitlab_rails['object_store']['objects']['pages']['bucket']={{ (GITLAB_OBJSTORE_BUCKET ~ '/pages') | ruby_dq }}"
 
-GITLAB_OMNIBUS_ALL: "{{ GITLAB_OMNIBUS_BASE + (GITLAB_OMNIBUS_OIDC if GITLAB_OIDC_ENABLED else []) + (GITLAB_OMNIBUS_SMTP if GITLAB_EMAIL_ENABLED else []) + (GITLAB_OMNIBUS_OBJSTORE if GITLAB_OBJSTORE_ENABLED else []) }}"
+GITLAB_OMNIBUS_ALL: "{{ GITLAB_OMNIBUS_BASE + (GITLAB_OMNIBUS_OIDC if GITLAB_OIDC_ENABLED else []) + (GITLAB_OMNIBUS_SMTP if GITLAB_EMAIL_ENABLED else []) + (GITLAB_OMNIBUS_OBJSTORE
+  if GITLAB_OBJSTORE_ENABLED else []) }}"

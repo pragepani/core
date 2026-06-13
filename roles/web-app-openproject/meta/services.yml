@@ -2,6 +2,7 @@
 logout:
   enabled: "{{ 'web-svc-logout' in group_names }}"
   shared: "{{ 'web-svc-logout' in group_names }}"
+# nocheck: playwright-service-flag — identity backend, no Playwright surface (verified by the OIDC bridge specs)
 ldap:
   enabled: "{{ 'svc-db-openldap' in group_names }}"
   shared: "{{ 'svc-db-openldap' in group_names }}"
@@ -14,6 +15,7 @@ matomo:
 email:
   enabled: "{{ 'web-app-mailu' in group_names }}"
   shared: "{{ 'web-app-mailu' in group_names }}"
+# nocheck: playwright-service-flag — DB engine, covered by role-local integration tests
 postgres:
   enabled: true # nocheck: dynamic-flag
   shared: "{{ 'svc-db-postgres' in group_names }}"
@@ -86,6 +88,7 @@ sso:
         - /users/me
         - /api/
         - /oauth/token
+# nocheck: playwright-service-flag — css consumer, no Playwright surface (provider: web-svc-css)
 css:
   enabled: "{{ 'web-svc-css' in group_names }}"
   shared: "{{ 'web-svc-css' in group_names }}"

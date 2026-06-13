@@ -14,7 +14,7 @@ mariadb:
   enabled: true # nocheck: dynamic-flag
   shared: "{{ 'svc-db-mariadb' in group_names }}"
 yourls:
-  version: latest
+  version: 1.10.4-apache
   name: yourls
   image: yourls
   min_storage: 1GB
