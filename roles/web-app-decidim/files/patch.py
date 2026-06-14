@@ -90,9 +90,7 @@ def patch_active_storage_env_rb(content: str) -> str:
     service follows ``STORAGE_PROVIDER`` in every environment.
     """
     target = "config.active_storage.service = :local"
-    replacement = (
-        'config.active_storage.service = Decidim::Env.new("STORAGE_PROVIDER", "local").to_s'
-    )
+    replacement = 'config.active_storage.service = Decidim::Env.new("STORAGE_PROVIDER", "local").to_s'
     if replacement in content or target not in content:
         return content
     return content.replace(target, replacement)
