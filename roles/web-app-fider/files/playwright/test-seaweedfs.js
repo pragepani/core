@@ -19,8 +19,15 @@ const { test, expect } = require("@playwright/test");
 const { skipUnlessServiceEnabled } = require("./service-gating");
 const { runSeaweedfsStorageCheck, performKeycloakLoginForm, decodeDotenvQuotedValue } = require("./personas");
 
-const PNG_1x1 = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+const LOGO_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAIAAAAiOjnJAAABeElEQVR42u3SMQ0AAAgEsVeHMDQhEBMM" +
+    "DE2q4HKpHjgXCTAWxsJYYCyMhbHAWBgLY4GxMBbGAmNhLIwFxsJYGAuMhbEwFhgLY2EsMBbGwlhgLIyF" +
+    "scBYGAtjgbEwFsYCY2EsjAXGwlgYC4yFsTAWGAtjYSwwFsbCWGAsjIWxwFgYC2OBsTAWxgJjYSyMBcbC" +
+    "WBgLjIWxMBYYC2NhLDAWxsJYYCyMhbHAWBgLY4GxMBbGAmNhLIyFsVTAWBgLY4GxMBbGAmNhLIwFxsJY" +
+    "GAuMhbEwFhgLY2EsMBbGwlhgLIyFscBYGAtjgbEwFsYCY2EsjAXGwlgYC4yFsTAWGAtjYSwwFsbCWGAs" +
+    "jIWxwFgYC2OBsTAWxgJjYSyMBcbCWBgLjIWxMBYYC2NhLDAWxsJYYCyMhbHAWBgLY4GxMBbGAmNhLIyF" +
+    "sVTAWBgLY4GxMBbGAmNhLIwFxsJYGAtjqYCxMBbGAmNhLIwFxsJYGAuMhbEwFhgLY2EsMBbGwlhgLIyF" +
+    "scBYGAtjgbH4ZgHTqvyKw+KRzwAAAABJRU5ErkJggg==",
   "base64",
 );
 
@@ -74,7 +81,7 @@ test("seaweedfs: an uploaded Fider tenant logo is stored in the SeaweedFS bucket
       await fileInput.setInputFiles({
         name: marker,
         mimeType: "image/png",
-        buffer: PNG_1x1,
+        buffer: LOGO_PNG,
       });
 
       const saveButton = appPage.getByRole("button", { name: /^save$/i }).first();
@@ -82,7 +89,17 @@ test("seaweedfs: an uploaded Fider tenant logo is stored in the SeaweedFS bucket
         saveButton,
         "the Fider admin General settings page must expose a Save action that persists the logo",
       ).toBeVisible({ timeout: 60_000 });
-      await saveButton.click();
+      const [settingsResp] = await Promise.all([
+        appPage.waitForResponse(
+          (r) => /\/_api\/admin\/settings\/general/.test(r.url()) && r.request().method() === "POST",
+          { timeout: 60_000 },
+        ),
+        saveButton.click(),
+      ]);
+      expect(
+        settingsResp.ok(),
+        `Fider must accept the General-settings save that persists the logo (got HTTP ${settingsResp.status()})`,
+      ).toBeTruthy();
     },
   });
 });
