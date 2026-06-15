@@ -44,22 +44,37 @@ test("seaweedfs: an uploaded Akaunting company logo is stored in the SeaweedFS b
         await expect.poll(() => appPage.url(), { timeout: 90_000 }).toContain(expectedBase);
       }
 
-      const nativeEmail = appPage.locator('input[name="email"]').first();
-      if (await nativeEmail.isVisible({ timeout: 15_000 }).catch(() => false)) {
-        await nativeEmail.fill(akauntingAdminEmail);
-        await appPage.locator('input[name="password"]').first().fill(akauntingAdminPassword);
-        await appPage
-          .getByRole("button", { name: /login|sign in|enter/i })
-          .or(appPage.locator('button[type="submit"]'))
-          .first()
-          .click();
-        await expect
-          .poll(() => appPage.url(), {
-            timeout: 90_000,
-            message: "expected Akaunting native login to leave the /auth/login form",
-          })
-          .not.toContain("/auth/login");
-      }
+      await appPage.goto(`${expectedBase}/auth/login`, { waitUntil: "domcontentloaded" });
+      await appPage.waitForSelector('#app input[name="email"]', { state: "visible", timeout: 60_000 });
+      await appPage
+        .waitForFunction(
+          () => {
+            const el = document.querySelector("#app");
+            const f = document.querySelector("#app form, form#auth");
+            return Boolean((f && f.__vue__) || window.Vue || (el && el.__vue__));
+          },
+          { timeout: 30_000 },
+        )
+        .catch(() => {});
+      await appPage.locator('#app input[name="email"]').first().fill(akauntingAdminEmail);
+      await appPage.locator('#app input[name="password"]').first().fill(akauntingAdminPassword);
+      const loginResp = appPage.waitForResponse(
+        (r) => /\/auth\/login$/.test(r.url()) && r.request().method() === "POST",
+        { timeout: 60_000 },
+      );
+      await appPage
+        .getByRole("button", { name: /login|sign in|enter/i })
+        .or(appPage.locator('#app button[type="submit"]'))
+        .first()
+        .click();
+      await loginResp.catch(() => {});
+      await expect
+        .poll(() => appPage.url(), {
+          timeout: 90_000,
+          message: "expected Akaunting native login to authenticate and leave /auth/login",
+        })
+        .not.toContain("/auth/login");
+      await appPage.waitForLoadState("networkidle", { timeout: 30_000 }).catch(() => {});
 
       await appPage.goto(`${expectedBase}/1/settings/company`, { waitUntil: "domcontentloaded" });
       await expect
