@@ -39,11 +39,11 @@
     if (!document.body) return;
 
     const anchor = findIconGroupAnchor();
-    if (!anchor) return;
-
-    const sibling = anchor.querySelector(
-      ":scope > button, :scope > a, :scope > li > button, :scope > li > a",
-    );
+    const sibling = anchor
+      ? anchor.querySelector(
+          ":scope > button, :scope > a, :scope > li > button, :scope > li > a",
+        )
+      : null;
 
     const btn = document.createElement(
       sibling && sibling.tagName === "BUTTON" ? "button" : "a",
@@ -72,6 +72,10 @@
       ].join(";");
     } else {
       btn.style.cssText = [
+        anchor ? "" : "position:fixed",
+        anchor ? "" : "bottom:8px",
+        anchor ? "" : "left:8px",
+        anchor ? "" : "z-index:2147483647",
         "display:inline-flex",
         "align-items:center",
         "justify-content:center",
@@ -84,7 +88,9 @@
         "border-radius:6px",
         "cursor:pointer",
         "text-decoration:none",
-      ].join(";");
+      ]
+        .filter(Boolean)
+        .join(";");
     }
     btn.innerHTML = LOGOUT_SVG;
     btn.addEventListener(
@@ -95,7 +101,7 @@
       },
       { capture: true },
     );
-    anchor.appendChild(btn);
+    (anchor || document.body).appendChild(btn);
   }
 
   function start() {
