@@ -85,7 +85,7 @@ prometheus:
 matrix:
   flavor: ansible
   upstream:
-    repo: https://github.com/kevinveenbirkenbach/matrix-docker-ansible-deploy
+    repo: https://github.com/spantaleev/matrix-docker-ansible-deploy
     ref: master
     migration_validated_version: v2026.05.18.0
   runner:
