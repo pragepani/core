@@ -5,6 +5,7 @@
       {{
         playbook_dir
         | discover_cli_roles(
+            group_names=group_names,
             only_roles=TEST_E2E_CLI_ONLY_ROLES,
             skip_roles=TEST_E2E_CLI_SKIP_ROLES
           )

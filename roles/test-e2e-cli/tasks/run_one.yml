@@ -1,7 +1,7 @@
 - name: Define per-role paths for {{ application_id }}
   ansible.builtin.set_fact:
     _cli_env_template: "{{ playbook_dir }}/roles/{{ application_id }}/templates/test.env.j2"
-    _cli_test_script: "{{ playbook_dir }}/roles/{{ application_id }}/files/test.sh"
+    _cli_test_script: "{{ playbook_dir }}/roles/{{ application_id }}/files/test/test.sh"
     _cli_stage_dir: "{{ TEST_E2E_CLI_STAGE_BASE_DIR }}/{{ application_id }}"
 
 - name: Assert CLI test env template exists for {{ application_id }}

@@ -26,6 +26,7 @@ def _to_role_set(raw: Iterable[str] | str | None, var_name: str) -> set[str]:
 
 def discover_cli_roles(
     playbook_dir: str,
+    group_names: Iterable[str] | str | None = None,
     only_roles: Iterable[str] | str | None = None,
     skip_roles: Iterable[str] | str | None = None,
 ) -> list[str]:
@@ -33,6 +34,7 @@ def discover_cli_roles(
     if not base.exists():
         raise AnsibleFilterError(f"roles dir not found: {base}")
 
+    groups = _to_role_set(group_names, "group_names")
     only = _to_role_set(only_roles, "only_roles")
     skip = _to_role_set(skip_roles, "skip_roles")
 
@@ -49,6 +51,9 @@ def discover_cli_roles(
 
     uniq = sorted(set(found))
 
+    # Mirror application_allowed: only test roles deployed on this host
+    if groups:
+        uniq = [role for role in uniq if role in groups]
     if only:
         uniq = [role for role in uniq if role in only]
     if skip:
