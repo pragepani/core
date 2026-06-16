@@ -14,5 +14,6 @@ if user.new_record? || !user.check_password?(pw)
   user.password_confirmation = pw
 end
 user.force_password_change = false if user.respond_to?(:force_password_change)
+user.status = User::STATUSES[:active] if defined?(User::STATUSES) && User::STATUSES.key?(:active)
 user.save!
 puts "Administrator #{login} ensured and set as admin."
