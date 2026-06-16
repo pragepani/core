@@ -141,13 +141,17 @@ async function runAdminFlow(page, opts = {}) {
         await usernameField.fill(adminUsername).catch(() => {});
       }
       await passwordField.fill(adminNativePassword || adminPassword).catch(() => {});
-      await page
-        .getByRole("button", { name: /log\s*in|sign\s*in|login|submit/i })
-        .or(page.locator("button[type='submit'], input[type='submit']"))
-        .first()
-        .click()
-        .catch(() => {});
+      await passwordField.press("Enter").catch(() => {});
       await page.waitForLoadState("networkidle").catch(() => {});
+      if (await passwordField.isVisible({ timeout: 2_000 }).catch(() => false)) {
+        await page
+          .getByRole("button", { name: /log\s*in|sign\s*in|login|submit/i })
+          .or(page.locator("button[type='submit'], input[type='submit']"))
+          .first()
+          .click()
+          .catch(() => {});
+        await page.waitForLoadState("networkidle").catch(() => {});
+      }
       return true;
     };
 
@@ -172,8 +176,8 @@ async function runAdminFlow(page, opts = {}) {
       .getByRole("button", { name: /log\s*out|sign\s*out|sign-out|abmelden/i })
       .or(surface.getByRole("link", { name: /log\s*out|sign\s*out|sign-out|abmelden/i }))
       .or(surface.getByRole("menuitem", { name: /log\s*out|sign\s*out|sign-out|abmelden/i }))
-      .or(surface.getByRole("button", { name: /(account|profile|user.?menu|^menu$|signed\s*in)/i }))
-      .or(surface.getByRole("link", { name: /(account|profile|user.?menu|^menu$|signed\s*in)/i }))
+      .or(surface.getByRole("button", { name: /(profile|user.?menu|^menu$|signed\s*in)/i }))
+      .or(surface.getByRole("link", { name: /(profile|user.?menu|^menu$|signed\s*in)/i }))
       .or(
         surface.locator(
           "[data-region='user-menu-toggle'], .user-menu-toggle, .usermenu, [aria-label*='user menu' i], [aria-label*='account' i], [data-testid*='user' i], a[href*='logout' i], a[href*='end_session' i], a[href*='end-session' i]",
