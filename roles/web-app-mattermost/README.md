@@ -38,6 +38,10 @@ Key settings in `meta/services.yml` and `meta/server.yml`:
 | `services.mattermost.version` | `latest` | Docker image tag |
 | `server.domains.canonical` | `mattermost.{{ DOMAIN_PRIMARY }}` | Public domain |
 
+## Addons
+
+This role declares no addons (it ships no `meta/addons/` directory). Mattermost **Team Edition** manages plugin install and enablement at runtime; there is no declarative per-plugin install path in this role. Plugins are operator-managed and persisted through the named plugin volumes (`plugins`, `client-plugins`) declared in `meta/volumes.yml`. No addon bridges any in-repo service.
+
 ## References
 
 - [Mattermost Docker Install](https://docs.mattermost.com/install/install-docker.html)
