@@ -1,4 +1,12 @@
 ---
-enabled: "{{ 'web-app-openproject' in group_names | lower }}"
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.openproject.enabled') | bool }}"
+required: true
 mechanism: plugin
 source: upstream
+bridges:
+  - openproject
+config:
+  plugin_configuration:
+    - appid: "integration_openproject"
+      configkey: "openproject_instance_url"
+      configvalue: "{{ lookup('tls', 'web-app-openproject', 'url.base') }}"

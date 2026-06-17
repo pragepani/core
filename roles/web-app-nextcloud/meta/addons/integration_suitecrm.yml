@@ -1,0 +1,12 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.suitecrm.enabled') | bool }}"
+required: true
+mechanism: plugin
+source: upstream
+bridges:
+  - suitecrm
+config:
+  plugin_configuration:
+    - appid: "integration_suitecrm"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-suitecrm', 'url.base') }}"

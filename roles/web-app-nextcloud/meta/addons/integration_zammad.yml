@@ -1,0 +1,12 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.zammad.enabled') | bool }}"
+required: true
+mechanism: plugin
+source: upstream
+bridges:
+  - zammad
+config:
+  plugin_configuration:
+    - appid: "integration_zammad"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-zammad', 'url.base') }}"

@@ -1,4 +1,12 @@
 ---
-enabled: "{{ 'web-app-peertube' in group_names | lower }}"
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.peertube.enabled') | bool }}"
+required: true
 mechanism: plugin
 source: upstream
+bridges:
+  - peertube
+config:
+  plugin_configuration:
+    - appid: "integration_peertube"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-peertube', 'url.base') }}"

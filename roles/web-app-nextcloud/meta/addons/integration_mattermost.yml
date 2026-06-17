@@ -1,0 +1,12 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.mattermost.enabled') | bool }}"
+required: true
+mechanism: plugin
+source: upstream
+bridges:
+  - mattermost
+config:
+  plugin_configuration:
+    - appid: "integration_mattermost"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-mattermost', 'url.base') }}"

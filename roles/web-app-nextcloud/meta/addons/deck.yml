@@ -1,4 +1,5 @@
 ---
 enabled: "{{ 'web-app-taiga' not in group_names | lower }}"
+required: true
 mechanism: plugin
 source: upstream

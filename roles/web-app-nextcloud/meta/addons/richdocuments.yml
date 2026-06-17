@@ -1,6 +1,6 @@
 ---
 enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.collabora.enabled') | bool }}"
-required: false
+required: true
 mechanism: plugin
 source: upstream
 bridges:

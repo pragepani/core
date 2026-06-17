@@ -1,4 +1,12 @@
 ---
-enabled: false
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.discourse.enabled') | bool }}"
+required: true
 mechanism: plugin
 source: upstream
+bridges:
+  - discourse
+config:
+  plugin_configuration:
+    - appid: "integration_discourse"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-discourse', 'url.base') }}"

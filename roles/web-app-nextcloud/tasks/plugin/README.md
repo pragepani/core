@@ -1,6 +1,6 @@
 # Nextcloud plugin pipeline
 
-This directory holds the per-plugin install + enable + configure pipeline that runs once for every entry under `services.nextcloud.plugins` in `roles/web-app-nextcloud/meta/services.yml`.
+This directory holds the per-plugin install + enable + configure pipeline that runs once for every addon declared under `meta/addons/`.
 
 ## Scope
 
@@ -45,23 +45,23 @@ The OIDC login entry points (`oidc_login`, `sociallogin`, `user_oidc`) are manda
 
 ## Adding configuration for a plugin
 
-Per-plugin configuration is keyed by the plugin name and rendered by [03_configure.yml](./03_configure.yml).
-A new plugin requires no changes here when the plugin's vars and hook files are present at the conventional paths.
+Per-plugin configuration is keyed by the addon id and rendered by [03_configure.yml](./03_configure.yml).
+A new plugin requires no changes here when its addon spec and optional hook file are present at the conventional paths.
 
 - **Configuration keys (optional).**
-  Create `vars/plugins/<plugin_key>.yml` and define a `plugin_configuration` list.
+  Add a `config.plugin_configuration` list to `meta/addons/<addon_id>.yml`.
   Each list item MUST contain `appid`, `configkey`, and `configvalue`.
-  `03_configure.yml` invokes `occ config:app:set` for every entry.
+  `03_configure.yml` loads the addon spec and invokes `occ config:app:set` for every entry.
 - **Custom logic (optional).**
-  Create `tasks/plugin/hooks/<plugin_key>.yml`.
+  Create `tasks/addons/<addon_id>.yml`.
   The hook runs after `config:app:set` and MAY perform plugin-specific provisioning such as LDAP wiring or REST calls against the live container.
 
-Both files are looked up via the path constants `NEXTCLOUD_CNODE_PLUGIN_VARS_PATH` and `NEXTCLOUD_CNODE_PLUGIN_TASKS_PATH` defined in [vars/main.yml](../../vars/main.yml).
+The hook is looked up via the path constant `NEXTCLOUD_CNODE_PLUGIN_TASKS_PATH` defined in [vars/main.yml](../../vars/main.yml).
 Missing files MUST be tolerated; the corresponding step skips cleanly.
 
 ## Mutually exclusive plugins
 
-A plugin entry under `services.nextcloud.plugins` MAY declare an `incompatible_plugins` list.
+An addon under `meta/addons/` MAY declare an `incompatible_plugins` list in its `config:`.
 [01_install.yml](./01_install.yml) runs `occ app:disable` for every listed plugin before the install attempt.
 This guarantees that mutually exclusive integrations such as the OIDC entry points (`oidc_login`, `sociallogin`, `user_oidc`) and the document-editing surfaces (`onlyoffice`, `richdocuments`, `fileslibreofficeedit`) cannot accidentally coexist on the same instance.
 

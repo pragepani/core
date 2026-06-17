@@ -1,5 +1,6 @@
 ---
 enabled: "{{ lookup('sso_oidc_plugin') == 'oidc_login' }}"
+required: true
 mechanism: plugin
 source: upstream
 config:

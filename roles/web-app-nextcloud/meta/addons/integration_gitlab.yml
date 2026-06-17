@@ -1,4 +1,12 @@
 ---
-enabled: "{{ 'web-app-gitlab' in group_names | lower }}"
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.gitlab.enabled') | bool }}"
+required: true
 mechanism: plugin
 source: upstream
+bridges:
+  - gitlab
+config:
+  plugin_configuration:
+    - appid: "integration_gitlab"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-gitlab', 'url.base') }}"

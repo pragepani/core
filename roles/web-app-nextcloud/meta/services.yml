@@ -171,3 +171,51 @@ hcaptcha:
 prometheus:
   enabled: "{{ 'web-app-prometheus' in group_names }}"
   shared: "{{ 'web-app-prometheus' in group_names }}"
+# nocheck: playwright-service-flag: bridged openproject partner, covered by partner role spec
+openproject:
+  enabled: "{{ 'web-app-openproject' in group_names }}"
+  shared: "{{ 'web-app-openproject' in group_names }}"
+# nocheck: playwright-service-flag: bridged gitlab partner, covered by partner role spec
+gitlab:
+  enabled: "{{ 'web-app-gitlab' in group_names }}"
+  shared: "{{ 'web-app-gitlab' in group_names }}"
+# nocheck: playwright-service-flag: bridged discourse partner, covered by partner role spec
+discourse:
+  enabled: "{{ 'web-app-discourse' in group_names }}"
+  shared: "{{ 'web-app-discourse' in group_names }}"
+# nocheck: playwright-service-flag: bridged mattermost partner, covered by partner role spec
+mattermost:
+  enabled: "{{ 'web-app-mattermost' in group_names }}"
+  shared: "{{ 'web-app-mattermost' in group_names }}"
+# nocheck: playwright-service-flag: bridged matrix partner, covered by partner role spec
+matrix:
+  enabled: "{{ 'web-app-matrix' in group_names }}"
+  shared: "{{ 'web-app-matrix' in group_names }}"
+# nocheck: playwright-service-flag: bridged zammad partner, covered by partner role spec
+zammad:
+  enabled: "{{ 'web-app-zammad' in group_names }}"
+  shared: "{{ 'web-app-zammad' in group_names }}"
+# nocheck: playwright-service-flag: bridged openwebui partner, covered by partner role spec
+openwebui:
+  enabled: "{{ 'web-app-openwebui' in group_names }}"
+  shared: "{{ 'web-app-openwebui' in group_names }}"
+# nocheck: playwright-service-flag: bridged flowise partner, covered by partner role spec
+flowise:
+  enabled: "{{ 'web-app-flowise' in group_names }}"
+  shared: "{{ 'web-app-flowise' in group_names }}"
+# nocheck: playwright-service-flag: bridged mastodon partner, covered by partner role spec
+mastodon:
+  enabled: "{{ 'web-app-mastodon' in group_names }}"
+  shared: "{{ 'web-app-mastodon' in group_names }}"
+# nocheck: playwright-service-flag: bridged peertube partner, covered by partner role spec
+peertube:
+  enabled: "{{ 'web-app-peertube' in group_names }}"
+  shared: "{{ 'web-app-peertube' in group_names }}"
+# nocheck: playwright-service-flag: bridged moodle partner, covered by partner role spec
+moodle:
+  enabled: "{{ 'web-app-moodle' in group_names }}"
+  shared: "{{ 'web-app-moodle' in group_names }}"
+# nocheck: playwright-service-flag: bridged suitecrm partner, covered by partner role spec
+suitecrm:
+  enabled: "{{ 'web-app-suitecrm' in group_names }}"
+  shared: "{{ 'web-app-suitecrm' in group_names }}"

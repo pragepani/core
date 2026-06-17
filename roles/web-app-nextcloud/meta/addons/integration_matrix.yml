@@ -1,0 +1,12 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.matrix.enabled') | bool }}"
+required: true
+mechanism: plugin
+source: upstream
+bridges:
+  - matrix
+config:
+  plugin_configuration:
+    - appid: "integration_matrix"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-matrix', 'url.base') }}"

@@ -1,0 +1,12 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.moodle.enabled') | bool }}"
+required: true
+mechanism: plugin
+source: upstream
+bridges:
+  - moodle
+config:
+  plugin_configuration:
+    - appid: "integration_moodle"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-moodle', 'url.base') }}"

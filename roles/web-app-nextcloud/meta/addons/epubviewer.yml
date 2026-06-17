@@ -1,4 +1,5 @@
 ---
 enabled: true
+required: true
 mechanism: plugin
 source: upstream

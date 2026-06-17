@@ -1,6 +1,6 @@
 ---
 enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.talk.enabled') }}"
-required: false
+required: true
 mechanism: plugin
 source: upstream
 bridges:

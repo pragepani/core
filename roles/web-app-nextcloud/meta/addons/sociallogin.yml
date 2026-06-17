@@ -1,6 +1,6 @@
 ---
 enabled: "{{ lookup('sso_oidc_plugin') == 'sociallogin' }}"
-required: false
+required: true
 mechanism: plugin
 source: upstream
 bridges:

@@ -52,6 +52,42 @@
     talk:
       enabled: true
       shared: true
+    openproject:
+      enabled: true
+      shared: true
+    gitlab:
+      enabled: true
+      shared: true
+    discourse:
+      enabled: true
+      shared: true
+    mattermost:
+      enabled: true
+      shared: true
+    matrix:
+      enabled: true
+      shared: true
+    zammad:
+      enabled: true
+      shared: true
+    openwebui:
+      enabled: true
+      shared: true
+    flowise:
+      enabled: true
+      shared: true
+    mastodon:
+      enabled: true
+      shared: true
+    peertube:
+      enabled: true
+      shared: true
+    moodle:
+      enabled: true
+      shared: true
+    suitecrm:
+      enabled: true
+      shared: true
 - services:
     collabora:
       enabled: false
@@ -100,6 +136,42 @@
     talk:
       enabled: false
       shared: false
+    openproject:
+      enabled: false
+      shared: false
+    gitlab:
+      enabled: false
+      shared: false
+    discourse:
+      enabled: false
+      shared: false
+    mattermost:
+      enabled: false
+      shared: false
+    matrix:
+      enabled: false
+      shared: false
+    zammad:
+      enabled: false
+      shared: false
+    openwebui:
+      enabled: false
+      shared: false
+    flowise:
+      enabled: false
+      shared: false
+    mastodon:
+      enabled: false
+      shared: false
+    peertube:
+      enabled: false
+      shared: false
+    moodle:
+      enabled: false
+      shared: false
+    suitecrm:
+      enabled: false
+      shared: false
 - services:
     ldap:
       enabled: true
@@ -144,5 +216,41 @@
       enabled: false
       shared: false
     talk:
+      enabled: false
+      shared: false
+    openproject:
+      enabled: false
+      shared: false
+    gitlab:
+      enabled: false
+      shared: false
+    discourse:
+      enabled: false
+      shared: false
+    mattermost:
+      enabled: false
+      shared: false
+    matrix:
+      enabled: false
+      shared: false
+    zammad:
+      enabled: false
+      shared: false
+    openwebui:
+      enabled: false
+      shared: false
+    flowise:
+      enabled: false
+      shared: false
+    mastodon:
+      enabled: false
+      shared: false
+    peertube:
+      enabled: false
+      shared: false
+    moodle:
+      enabled: false
+      shared: false
+    suitecrm:
       enabled: false
       shared: false

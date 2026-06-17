@@ -1,4 +1,14 @@
 ---
-enabled: false
+enabled: "{{ (lookup('config', 'web-app-nextcloud', 'services.openwebui.enabled') | bool) or (lookup('config', 'web-app-nextcloud', 'services.flowise.enabled') |
+  bool) }}"
+required: true
 mechanism: plugin
 source: upstream
+bridges:
+  - openwebui
+  - flowise
+config:
+  plugin_configuration:
+    - appid: "integration_openai"
+      configkey: "url"
+      configvalue: "{{ lookup('tls', 'web-app-openwebui', 'url.base') if ('web-app-openwebui' in group_names) else lookup('tls', 'web-app-flowise', 'url.base') }}"
