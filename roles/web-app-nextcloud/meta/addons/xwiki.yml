@@ -1,0 +1,18 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.xwiki.enabled') | bool }}"
+required: false
+mechanism: plugin
+source: upstream
+bridges:
+  - xwiki
+update:
+  monitored: true
+  catalog: nextcloud-appstore
+  upstream_id: xwiki
+config:
+  plugin_configuration:
+    - appid: "xwiki"
+      configkey: "instances"
+      configvalue:
+        - name: "XWiki"
+          url: "{{ lookup('tls', 'web-app-xwiki', 'url.base') }}"

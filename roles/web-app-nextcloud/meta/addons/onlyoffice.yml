@@ -1,0 +1,34 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.onlyoffice.enabled') | bool }}"
+required: false
+mechanism: plugin
+source: upstream
+bridges:
+  - onlyoffice
+update:
+  monitored: true
+  catalog: nextcloud-appstore
+  upstream_id: onlyoffice
+config:
+  incompatible_plugins:
+    - richdocuments
+    - fileslibreofficeedit
+  plugin_configuration:
+    - appid: "onlyoffice"
+      configkey: "DocumentServerUrl"
+      configvalue: "{{ NEXTCLOUD_ONLYOFFICE_URL }}/"
+    - appid: "onlyoffice"
+      configkey: "DocumentServerInternalUrl"
+      configvalue: "{{ NEXTCLOUD_ONLYOFFICE_URL }}/"
+    - appid: "onlyoffice"
+      configkey: "StorageUrl"
+      configvalue: "{{ NEXTCLOUD_URL }}/"
+    - appid: "onlyoffice"
+      configkey: "jwt_secret"
+      configvalue: "{{ lookup('config','web-svc-onlyoffice', 'credentials.onlyoffice_jwt_secret', '') }}"
+    - appid: "onlyoffice"
+      configkey: "jwt_header"
+      configvalue: "Authorization"
+    - appid: "onlyoffice"
+      configkey: "verify_peer_off"
+      configvalue: "false"

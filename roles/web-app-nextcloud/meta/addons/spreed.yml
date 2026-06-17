@@ -1,0 +1,59 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.talk.enabled') }}"
+required: false
+mechanism: plugin
+source: upstream
+bridges:
+  - talk
+  - coturn
+update:
+  monitored: true
+  catalog: nextcloud-appstore
+  upstream_id: spreed
+config:
+  plugin_configuration:
+    - appid: "spreed"
+      configkey: "signaling_servers"
+      configvalue: "{{ { 'servers': [ { 'server': NEXTCLOUD_HPB_SIGNALING_URL, 'verify': True, 'alias': 'primary' } ], 'secret':  NEXTCLOUD_HPB_SIGNALING_SECRET } | to_json }}"
+    - appid: "spreed"
+      configkey: "stun_servers"
+      configvalue: >-
+        {{
+          [
+            NEXTCLOUD_HPB_STUN_ONBOARD_CONFIG     if NEXTCLOUD_HPB_TURN_ONBOARD_ENABLED    else none,
+            NEXTCLOUD_HPB_STUN_STANDALONE_CONFIG  if NEXTCLOUD_HPB_TURN_STANDALONE_ENABLED else none
+          ]
+          | select
+          | list
+          | to_json
+        }}
+    - appid: "spreed"
+      configkey: "turn_servers"
+      configvalue: >-
+        {{
+          [
+            NEXTCLOUD_HPB_TURN_ONBOARD_CONFIG     if NEXTCLOUD_HPB_TURN_ONBOARD_ENABLED    else none,
+            NEXTCLOUD_HPB_TURN_STANDALONE_CONFIG  if NEXTCLOUD_HPB_TURN_STANDALONE_ENABLED else none
+          ]
+          | select
+          | list
+          | to_json
+        }}
+    - appid: "spreed"
+      configkey: "internal_secret"
+      configvalue: "{{ NEXTCLOUD_HPB_INTERNAL_SECRET }}"
+    - appid: "spreed"
+      configkey: "recording_servers"
+      configvalue: >-
+        {{
+          {
+            'servers': [
+              {
+                'server': 'http://' ~ NEXTCLOUD_RECORDING_SERVICE ~ ':' ~ NEXTCLOUD_RECORDING_PORT ~ '/',
+                'verify': false
+              }
+            ],
+            'secret': NEXTCLOUD_RECORDING_SECRET
+          }
+          | to_json
+        }}

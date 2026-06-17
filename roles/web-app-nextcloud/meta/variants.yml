@@ -8,6 +8,12 @@
     collabora:
       enabled: true
       shared: true
+    bigbluebutton:
+      enabled: true
+      shared: true
+    xwiki:
+      enabled: true
+      shared: true
     coturn:
       enabled: true
       shared: true
@@ -45,10 +51,17 @@
       shared: true
     talk:
       enabled: true
+      shared: true
 - services:
     collabora:
       enabled: false
       shared: false
+    bigbluebutton:
+      enabled: false
+      shared: false
+    xwiki:
+      enabled: false
+      shared: false
     coturn:
       enabled: false
       shared: false
@@ -92,6 +105,12 @@
       enabled: true
       shared: true
     sso:
+      enabled: false
+      shared: false
+    bigbluebutton:
+      enabled: false
+      shared: false
+    xwiki:
       enabled: false
       shared: false
     collabora:

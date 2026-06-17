@@ -1,15 +1,21 @@
 ---
+# Install-behaviour flags sit at the top level for plugins entries, but under `config:` for addons entries.
+- name: "Normalise install flags for {{ plugin_key }}"
+  ansible.builtin.set_fact:
+    plugin_incompatible: "{{ plugin_value.config.incompatible_plugins | default(plugin_value.incompatible_plugins | default([])) }}"
+    plugin_mandatory: "{{ plugin_value.config.mandatory | default(plugin_value.mandatory | default(false)) }}"
+  changed_when: false
+
 - name: "Disable incompatible plugins for {{ plugin_key }} (batched shell, no async)"
   ansible.builtin.shell: |
     # do not set -e here; allow per-line fallbacks
-    {% for incompatible_plugin in (plugin_value.incompatible_plugins | default([])) %}
+    {% for incompatible_plugin in (plugin_incompatible | default([])) %}
     {{ NEXTCLOUD_DOCKER_EXEC_OCC }} app:disable {{ incompatible_plugin }} || true
     {% endfor %}
   args:
     executable: /bin/bash
   when:
-    - plugin_value.incompatible_plugins is defined
-    - plugin_value.incompatible_plugins | length > 0
+    - plugin_incompatible | length > 0
   register: disable_incompat
   changed_when: >
     (((disable_incompat.stdout | default('')) ~ (disable_incompat.stderr | default('')))
@@ -48,7 +54,7 @@
       the pinned Nextcloud server version. This plugin gates SSO login, so the
       deployment is aborted instead of provisioning a login-broken instance.
   when:
-    - plugin_value.mandatory | default(false) | bool
+    - plugin_mandatory | bool
     - not (install_result | nextcloud_install_status).runnable
 
 - name: "warn: {{ plugin_key }} cannot be installed on this Nextcloud version — skipping"
@@ -64,4 +70,3 @@
   when: (install_result | nextcloud_install_status).runnable
   vars:
     plugin_task_path: "{{ NEXTCLOUD_CNODE_PLUGIN_TASKS_PATH }}{{ plugin_key }}.yml"
-    plugin_vars_path: "{{ NEXTCLOUD_CNODE_PLUGIN_VARS_PATH }}{{ plugin_key }}.yml"

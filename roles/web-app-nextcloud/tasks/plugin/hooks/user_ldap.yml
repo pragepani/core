@@ -1,20 +1,8 @@
 ---
 # @See https://docs.nextcloud.com/server/latest/admin_manual/configuration_user/user_auth_ldap.html
-# @See 
-- name: Resolve desired Nextcloud LDAP config ID from plugin configuration
+- name: Resolve desired Nextcloud LDAP config ID
   set_fact:
-    nextcloud_ldap_config_id: >-
-      {{
-        (
-          plugin_configuration | default([])
-          | selectattr('appid', 'equalto', 'user_ldap')
-          | selectattr('configkey', 'equalto', 'background_sync_prefix')
-          | map(attribute='configvalue')
-          | list
-          | first
-          | default(NEXTCLOUD_LDAP_CONFIG_PREFIX | default('s01'))
-        ) | string | trim
-      }}
+    nextcloud_ldap_config_id: "{{ (NEXTCLOUD_LDAP_CONFIG_PREFIX | default('s01')) | string | trim }}"
   changed_when: false
 - name: Check if desired Nextcloud LDAP config ID exists
   command: >

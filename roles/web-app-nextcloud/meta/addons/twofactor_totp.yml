@@ -1,0 +1,4 @@
+---
+enabled: "{{ not (lookup('config', 'web-app-nextcloud', 'services.sso.enabled')) }}"
+mechanism: plugin
+source: upstream

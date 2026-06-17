@@ -17,9 +17,28 @@ This role provisions a complete Nextcloud deployment using Docker Compose. It au
 - **Integrated Backup & Recovery:** Provides built-in support for backup and restoration operations to safeguard your data.
 - **Extensible Plugin Framework:** Easily manage and configure hundreds of Nextcloud plugins using the OCC command line tool.
 
+## Addons
+
+The config-bearing Nextcloud apps are declared in [`meta/addons/`](./meta/addons/) under the unified addon contract (requirement 026).
+Each declaration carries its full `occ config:app:set` payload under `config:`.
+The enable-only appstore apps stay under `nextcloud.plugins` in [`meta/services.yml`](./meta/services.yml).
+
+| Addon | Mechanism | Default state | Bridges |
+|-------|-----------|---------------|---------|
+| `sociallogin` | `plugin` | enabled when the SSO OIDC plugin selector picks it | `sso` → `web-app-keycloak` |
+| `user_ldap` | `plugin` | enabled with the `ldap` service | `ldap` → `svc-db-openldap` |
+| `bbb` | `plugin` | enabled with the `bigbluebutton` partner | `bigbluebutton` → `web-app-bigbluebutton` |
+| `onlyoffice` | `plugin` | enabled with the `onlyoffice` partner | `onlyoffice` → `web-svc-onlyoffice` |
+| `richdocuments` | `plugin` | enabled with the `collabora` partner | `collabora` → `web-svc-collabora` |
+| `spreed` | `plugin` | enabled with the `talk` service | `talk`, `coturn` |
+| `whiteboard` | `plugin` | `required` (always installed) | none (self-hosted backend) |
+| `xwiki` | `plugin` | enabled with the `xwiki` partner | `xwiki` → `web-app-xwiki` |
+
+The SSO (`sociallogin`) and LDAP (`user_ldap`) login surfaces are covered by the OIDC/LDAP Playwright specs (requirements 017/018).
+
 ## Documentation
 
-A detailled documentation for the use and administration of Nextcloud on Infinito.Nexus you will find [here](docs/README.md)
+A detailed documentation for the use and administration of Nextcloud on Infinito.Nexus you will find [here](docs/README.md).
 
 ## Further Resources
 

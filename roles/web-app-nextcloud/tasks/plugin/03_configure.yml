@@ -1,20 +1,14 @@
 ---
-- name: Check if {{ plugin_vars_path }} exists
-  stat:
-    path: "{{ plugin_vars_path }}"
-  delegate_to: localhost
-  become: false
-  register: plugin_vars_file
-
-- name: "Load {{ plugin_key }} configuration variables"
-  include_vars:
-    file: "{{ plugin_vars_path }}"
-  when: plugin_vars_file.stat.exists
+# Loaded via include_vars (not config lookup or lookup('file')) so the role-scoped vars referenced inside the payload render lazily in this task's scope.
+- name: "Load {{ plugin_key }} addon spec from meta/addons/{{ plugin_key }}.yml"
+  ansible.builtin.include_vars:
+    file: "{{ [role_path, 'meta/addons', plugin_key ~ '.yml'] | path_join }}"
+    name: addon_spec
 
 - name: "Set plugin configuration (batched shell, no async)"
   ansible.builtin.shell: |
     set -euo pipefail
-    {% for item in (plugin_configuration | default([])) %}
+    {% for item in (addon_spec.config.plugin_configuration | default([])) %}
     {{ NEXTCLOUD_DOCKER_EXEC_OCC }} \
       config:app:set {{ item.appid }} {{ item.configkey }} \
       --value '{{ ( (item.configvalue | to_json) if (item.configvalue is mapping) else (item.configvalue | string) )
@@ -22,7 +16,7 @@
     {% endfor %}
   args:
     executable: /bin/bash
-  when: plugin_vars_file.stat.exists
+  when: (addon_spec.config.plugin_configuration | default([])) | length > 0
   register: config_set_shell
   changed_when: >
     not ASYNC_ENABLED and

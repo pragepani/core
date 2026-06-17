@@ -1,0 +1,16 @@
+---
+required: true
+mechanism: plugin
+source: upstream
+update:
+  monitored: true
+  catalog: nextcloud-appstore
+  upstream_id: whiteboard
+config:
+  plugin_configuration:
+    - appid: "whiteboard"
+      configkey: "collabBackendUrl"
+      configvalue: "{{ NEXTCLOUD_WHITEBOARD_URL }}"
+    - appid: "whiteboard"
+      configkey: "jwt_secret_key"
+      configvalue: "{{ NEXTCLOUD_WHITEBOARD_JWT }}"

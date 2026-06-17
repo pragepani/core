@@ -17,26 +17,26 @@ NEXTCLOUD_PROTOCOL: "{{ lookup('tls', application_id, 'protocols.web') }}"
 NEXTCLOUD_TRUSTED_PROXIES: "{{ networks.internet.values() | select }}"
 
 ## Plugins
-NEXTCLOUD_PLUGIN_ITEMS: "{{ lookup('config', application_id, 'services.nextcloud.plugins') | dict2items }}"
+NEXTCLOUD_PLUGIN_ITEMS: "{{ lookup('config', application_id, 'addons') | dict2items }}"
 NEXTCLOUD_PLUGINS_ENABLED: "{{ lookup('config', application_id, 'services.nextcloud.plugins_enabled') }}"
+NEXTCLOUD_LDAP_CONFIG_PREFIX: "s01"
 
 ## Paths
 
 ### Host
-NEXTCLOUD_HOST_CONF_ADD_PATH: "{{ [ lookup('container', application_id, 'directories.volumes'), 'infinito' ] | path_join }}" # This folder is the path to which the additive configurations will be copied
-NEXTCLOUD_HOST_INCL_PATH: "{{ [ lookup('container', application_id, 'directories.volumes'), 'includes.php' ] | path_join }}" # Path to the instruction file on the host. Responsible for loading the additional configurations
-NEXTCLOUD_HOST_NGINX_PATH: "{{ [ lookup('container', application_id, 'directories.volumes'), 'nginx.conf' ] | path_join }}" # Path where the internal Nextcloud NGinx config on the host server is stored
+NEXTCLOUD_HOST_CONF_ADD_PATH: "{{ [ lookup('container', application_id, 'directories.volumes'), 'infinito' ] | path_join }}"
+NEXTCLOUD_HOST_INCL_PATH: "{{ [ lookup('container', application_id, 'directories.volumes'), 'includes.php' ] | path_join }}" # Loads the additional configurations into config.php
+NEXTCLOUD_HOST_NGINX_PATH: "{{ [ lookup('container', application_id, 'directories.volumes'), 'nginx.conf' ] | path_join }}"
 
 ## Control Node
-NEXTCLOUD_CNODE_PLUGIN_VARS_PATH: "{{ [role_path, 'vars/plugins/'] | path_join }}" # Folder in which the files for the plugin configuration are stored
-NEXTCLOUD_CNODE_PLUGIN_TASKS_PATH: "{{ [role_path, 'tasks/plugin/hooks/'] | path_join }}" # Folder which contains the files for extra plugin configuration tasks
+NEXTCLOUD_CNODE_PLUGIN_TASKS_PATH: "{{ [role_path, 'tasks/plugin/hooks/'] | path_join }}"
 
 ## Internal Paths
-NEXTCLOUD_DOCKER_WORK_DIRECTORY: "/var/www/html/" # Name of the workdir in which the application is stored
-NEXTCLOUD_DOCKER_CONF_DIRECTORY: "{{ [ NEXTCLOUD_DOCKER_WORK_DIRECTORY, 'config/'] | path_join }}" # Folder in which the Nextcloud configurations are stored
-NEXTCLOUD_DOCKER_CONFIG_FILE: "{{ [ NEXTCLOUD_DOCKER_CONF_DIRECTORY, 'config.php'] | path_join }}" # Path to the Nextcloud configuration file
-NEXTCLOUD_DOCKER_CONF_ADD_PATH: "{{ [ NEXTCLOUD_DOCKER_CONF_DIRECTORY, 'infinito/'] | path_join }}" # Path to the folder which contains additional configurations
-NEXTCLOUD_DOCKER_INCL_PATH: "/tmp/includes.php" # Path to the temporary file which will be included to the config.php to load the additional configurations
+NEXTCLOUD_DOCKER_WORK_DIRECTORY: "/var/www/html/"
+NEXTCLOUD_DOCKER_CONF_DIRECTORY: "{{ [ NEXTCLOUD_DOCKER_WORK_DIRECTORY, 'config/'] | path_join }}"
+NEXTCLOUD_DOCKER_CONFIG_FILE: "{{ [ NEXTCLOUD_DOCKER_CONF_DIRECTORY, 'config.php'] | path_join }}"
+NEXTCLOUD_DOCKER_CONF_ADD_PATH: "{{ [ NEXTCLOUD_DOCKER_CONF_DIRECTORY, 'infinito/'] | path_join }}"
+NEXTCLOUD_DOCKER_INCL_PATH: "/tmp/includes.php" # Temp file included into config.php to load the additional configurations
 
 ## Administrator
 NEXTCLOUD_ADMINISTRATOR_PASSWORD: "{{ lookup('config', application_id, 'credentials.administrator_password') }}"
@@ -71,7 +71,7 @@ NEXTCLOUD_HPB_CONTAINER: "{{ lookup('config', application_id, 'services.' ~ NEXT
 NEXTCLOUD_HPB_IMAGE: "{{ lookup('config', application_id, 'services.' ~ NEXTCLOUD_HPB_SERVICE ~ '.image') }}"
 NEXTCLOUD_HPB_VERSION: "{{ lookup('config', application_id, 'services.' ~ NEXTCLOUD_HPB_SERVICE ~ '.version') }}"
 NEXTCLOUD_HPB_NETWORK_MODE: "{{ lookup('config', application_id, 'services.' ~ NEXTCLOUD_HPB_SERVICE ~ '.network_mode') }}"
-NEXTCLOUD_HPB_PLUGIN_ENABLED: "{{ lookup('config', application_id, 'services.nextcloud.plugins.spreed.enabled') }}"
+NEXTCLOUD_HPB_PLUGIN_ENABLED: "{{ lookup('config', application_id, 'addons.spreed.enabled') }}"
 NEXTCLOUD_HPB_INTERNAL_SECRET: "{{ lookup('config', application_id, 'credentials.talk_internal_secret') }}"
 NEXTCLOUD_HPB_DOMAIN: "{{ NEXTCLOUD_DOMAIN }}"
 
@@ -148,7 +148,7 @@ NEXTCLOUD_WHITEBOARD_CONTAINER: "{{ lookup('config', application_id, 'services.'
 NEXTCLOUD_WHITEBOARD_IMAGE: "{{ lookup('config', application_id, 'services.' ~ NEXTCLOUD_WHITEBOARD_SERVICE ~'.image') }}"
 NEXTCLOUD_WHITEBOARD_IMAGE_CUSTOM: "{{ NEXTCLOUD_WHITEBOARD_CONTAINER }}_custom"
 NEXTCLOUD_WHITEBOARD_VERSION: "{{ lookup('config', application_id, 'services.' ~ NEXTCLOUD_WHITEBOARD_SERVICE ~'.version') }}"
-NEXTCLOUD_WHITEBOARD_ENABLED: "{{ lookup('config', application_id, 'services.nextcloud.plugins.' ~ NEXTCLOUD_WHITEBOARD_SERVICE ~'.enabled') }}"
+NEXTCLOUD_WHITEBOARD_ENABLED: "{{ lookup('config', application_id, 'addons.' ~ NEXTCLOUD_WHITEBOARD_SERVICE ~'.enabled') }}"
 NEXTCLOUD_WHITEBOARD_PORT_INTERNAL: "3002"
 NEXTCLOUD_WHITEBOARD_JWT: "{{ lookup('config', application_id, 'credentials.' ~ NEXTCLOUD_WHITEBOARD_SERVICE ~'_jwt_secret') }}"
 NEXTCLOUD_WHITEBOARD_LOCATION: "/whiteboard/"
@@ -174,16 +174,16 @@ NEXTCLOUD_COLLABORA_URL: "{{ lookup('tls', 'web-svc-collabora', 'url.base') }}"
 
 ### OnlyOffice
 NEXTCLOUD_ONLYOFFICE_URL: "{{ lookup('tls', 'web-svc-onlyoffice', 'url.base') }}"
-NEXTCLOUD_ONLYOFFICE_ENABLED: "{{ lookup('config', application_id, 'services.nextcloud.plugins.onlyoffice.enabled') }}"
+NEXTCLOUD_ONLYOFFICE_ENABLED: "{{ lookup('config', application_id, 'addons.onlyoffice.enabled') }}"
 
 ## User Configuration
-NEXTCLOUD_DOCKER_USER_ID: 82 # UID of the www-data user
-NEXTCLOUD_DOCKER_USER: "www-data" # Name of the www-data user (Set here to easy change it in the future)
+NEXTCLOUD_DOCKER_USER_ID: 82
+NEXTCLOUD_DOCKER_USER: "www-data"
 
 ## Execution
 NEXTCLOUD_INTERNAL_OCC_COMMAND: "{{ [ NEXTCLOUD_DOCKER_WORK_DIRECTORY, 'occ'] | path_join }}"
-NEXTCLOUD_DOCKER_EXEC: "container exec -u {{ NEXTCLOUD_DOCKER_USER }} {{ NEXTCLOUD_CONTAINER }}" # General execute composition
-NEXTCLOUD_DOCKER_EXEC_OCC: "{{ NEXTCLOUD_DOCKER_EXEC }} {{ NEXTCLOUD_INTERNAL_OCC_COMMAND }}" # Execute docker occ command
+NEXTCLOUD_DOCKER_EXEC: "container exec -u {{ NEXTCLOUD_DOCKER_USER }} {{ NEXTCLOUD_CONTAINER }}"
+NEXTCLOUD_DOCKER_EXEC_OCC: "{{ NEXTCLOUD_DOCKER_EXEC }} {{ NEXTCLOUD_INTERNAL_OCC_COMMAND }}"
 
 ## Redis
 NEXTCLOUD_REDIS_CONTAINER: "{{ entity_name }}-redis"

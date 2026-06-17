@@ -1,0 +1,22 @@
+---
+enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.collabora.enabled') | bool }}"
+required: false
+mechanism: plugin
+source: upstream
+bridges:
+  - collabora
+update:
+  monitored: true
+  catalog: nextcloud-appstore
+  upstream_id: richdocuments
+config:
+  plugin_configuration:
+    - appid: "richdocuments"
+      configkey: "wopi_url"
+      configvalue: "{{ NEXTCLOUD_COLLABORA_URL }}"
+    - appid: "richdocuments"
+      configkey: "public_wopi_url"
+      configvalue: "{{ NEXTCLOUD_COLLABORA_URL }}"
+    - appid: "richdocuments"
+      configkey: "disable_certificate_verification"
+      configvalue: 0

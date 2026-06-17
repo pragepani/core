@@ -5,7 +5,7 @@ sso:
   flavor: oidc
   oidc:
     plugin: ""
-# nocheck: playwright-service-flag — infrastructural sub-component (TURN/STUN)
+# nocheck: playwright-service-flag: infrastructural sub-component (TURN/STUN)
 coturn:
   enabled: "{{ 'web-svc-coturn' in group_names }}"
   shared: "{{ 'web-svc-coturn' in group_names }}"
@@ -26,7 +26,7 @@ email:
   shared: "{{ 'web-app-mailu' in group_names }}"
 # nocheck: shared
 # nocheck: dynamic-flag
-# nocheck: playwright-service-flag — DB engine, covered by role-local integration tests
+# nocheck: playwright-service-flag: DB engine, covered by role-local integration tests
 redis:
   backup:
     disabled: true
@@ -35,7 +35,7 @@ redis:
   mem_reservation: 1g
   mem_limit: 8g
   pids_limit: 512
-# nocheck: playwright-service-flag — DB engine, covered by role-local integration tests
+# nocheck: playwright-service-flag: DB engine, covered by role-local integration tests
 mariadb:
   enabled: true # nocheck: dynamic-flag
   shared: "{{ 'svc-db-mariadb' in group_names }}"
@@ -63,112 +63,7 @@ nextcloud:
       upload_limit: 5G
       opcache_memory_consumption: "{{ ((ansible_facts['memtotal_mb'] | int) / 30) | int }}M"
   plugins_enabled: true
-  plugins:
-    appointments:
-      enabled: true
-    bbb:
-      enabled: "{{ 'web-app-bigbluebutton' in group_names | lower }}"
-    calendar:
-      enabled: true
-    collectives:
-      enabled: true
-    contacts:
-      enabled: true
-    cospend:
-      enabled: true
-    deck:
-      enabled: "{{ 'web-app-taiga' not in group_names | lower }}"
-    drawio:
-      enabled: true
-    event_update_notification:
-      enabled: true
-    epubviewer:
-      enabled: true
-    external:
-      enabled: true
-    files_bpm:
-      enabled: true
-    files_linkeditor:
-      enabled: true
-    fileslibreofficeedit:
-      enabled: false
-    forms:
-      enabled: true
-    groupfolders:
-      enabled: true
-    gpxpod:
-      enabled: true
-    integration_discourse:
-      enabled: false
-    integration_gitlab:
-      enabled: "{{ 'web-app-gitlab' in group_names | lower }}"
-    integration_github:
-      enabled: false
-    integration_google:
-      enabled: true
-    integration_mastodon:
-      enabled: "{{ 'web-app-mastodon' in group_names | lower }}"
-    integration_openai:
-      enabled: false
-    integration_openproject:
-      enabled: "{{ 'web-app-openproject' in group_names | lower }}"
-    integration_peertube:
-      enabled: "{{ 'web-app-peertube' in group_names | lower }}"
-    mail:
-      enabled: true
-    metadata:
-      enabled: true
-    news:
-      enabled: true
-    oidc_login:
-      enabled: "{{ lookup('sso_oidc_plugin') == 'oidc_login' }}"
-      mandatory: true
-      incompatible_plugins:
-        - user_oidc
-        - sociallogin
-    phonetrack:
-      enabled: true
-    polls:
-      enabled: true
-    quota_warning:
-      enabled: true
-    recognize:
-      enabled: false
-    richdocuments:
-      enabled: false
-    onlyoffice:
-      enabled: true
-      incompatible_plugins:
-        - richdocuments
-        - fileslibreofficeedit
-    sociallogin:
-      enabled: "{{ lookup('sso_oidc_plugin') == 'sociallogin' }}"
-      mandatory: true
-      incompatible_plugins:
-        - user_oidc
-        - oidc_login
-    spreed:
-      enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.talk.enabled') }}"
-    tables:
-      enabled: true
-    tasks:
-      enabled: true
-    twofactor_nextcloud_notification:
-      enabled: "{{ not (lookup('config', 'web-app-nextcloud', 'services.sso.enabled')) }}"
-    twofactor_totp:
-      enabled: "{{ not (lookup('config', 'web-app-nextcloud', 'services.sso.enabled')) }}"
-    user_ldap:
-      enabled: "{{ lookup('config', 'web-app-nextcloud', 'services.ldap.enabled') }}"
-      user_directory:
-        enabled: true
-    user_oidc:
-      enabled: "{{ lookup('sso_oidc_plugin') == 'user_oidc' }}"
-      mandatory: true
-      incompatible_plugins:
-        - oidc_login
-        - sociallogin
-    whiteboard:
-      enabled: true
+  # All Nextcloud apps are declared in meta/addons/.
   ports:
     local:
       http: 8001
@@ -201,9 +96,10 @@ cron:
   pids_limit: 256
   min_storage: 1GB
 # nocheck: dynamic-flag
-# nocheck: playwright-service-flag — infrastructural sub-component (real-time communication)
+# nocheck: playwright-service-flag: infrastructural sub-component (real-time communication)
 talk:
   enabled: "{{ 'web-svc-coturn' in group_names }}"
+  shared: "{{ 'web-svc-coturn' in group_names }}"
   name: nextcloud-talk
   image: nextcloud/aio-talk
   version: latest
@@ -229,15 +125,24 @@ whiteboard:
   mem_limit: 1g
   pids_limit: 1024
   min_storage: 1GB
-# nocheck: playwright-service-flag — infrastructural sub-component (collaborative editing)
+# nocheck: playwright-service-flag: infrastructural sub-component (collaborative editing)
 onlyoffice:
   enabled: "{{ 'web-svc-onlyoffice' in group_names }}"
   shared: "{{ 'web-svc-onlyoffice' in group_names }}"
-# nocheck: playwright-service-flag — infrastructural sub-component (collaborative editing)
+# nocheck: playwright-service-flag: infrastructural sub-component (collaborative editing)
 collabora:
   enabled: "{{ 'web-svc-collabora' in group_names }}"
   shared: "{{ 'web-svc-collabora' in group_names }}"
-# nocheck: playwright-service-flag — object store, no Playwright surface
+# Auto-enables the `bbb` addon when the partner role web-app-bigbluebutton is co-deployed.
+# nocheck: playwright-service-flag: bridged web-conferencing partner, covered by partner role spec
+bigbluebutton:
+  enabled: "{{ 'web-app-bigbluebutton' in group_names }}"
+  shared: "{{ 'web-app-bigbluebutton' in group_names }}"
+# nocheck: playwright-service-flag: bridged wiki partner, covered by partner role spec
+xwiki:
+  enabled: "{{ 'web-app-xwiki' in group_names }}"
+  shared: "{{ 'web-app-xwiki' in group_names }}"
+# nocheck: playwright-service-flag: object store, no Playwright surface
 minio:
   enabled: false # nocheck: dynamic-flag
   shared: false # nocheck: dynamic-flag
@@ -255,12 +160,12 @@ talk_recording:
   mem_limit: 6g
   pids_limit: 1024
   min_storage: 1GB
-# nocheck: playwright-service-flag — verified by web-svc-css provider spec
+# nocheck: playwright-service-flag: verified by web-svc-css provider spec
 css:
   enabled: "{{ 'web-svc-css' in group_names }}"
   shared: "{{ 'web-svc-css' in group_names }}"
 # nocheck: dynamic-flag
-# nocheck: playwright-service-flag — captcha backend, infrastructural
+# nocheck: playwright-service-flag: captcha backend, infrastructural
 hcaptcha:
   enabled: "{{ HCAPTCHA_ENABLED | bool }}"
 prometheus:
