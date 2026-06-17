@@ -1,0 +1,5 @@
+---
+required: true
+mechanism: module
+source: upstream
+group: core

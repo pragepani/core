@@ -36,16 +36,6 @@ odoo:
     no_stop_required: true
   email:
     from_name: ERP ({{ DOMAIN_PRIMARY }})
-  modules:
-    core:
-      - crm
-      - contacts
-      - sale_management
-      - account
-      - website
-      - project
-      - stock
-    optional: []
   ports:
     local:
       websocket: 4003
