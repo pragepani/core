@@ -36,9 +36,6 @@ pretix:
   mem_reservation: 1.5g
   mem_limit: 2g
   pids_limit: 1024
-  plugins:
-    oidc:
-      version: 2.3.1
   ports:
     local:
       http: 8046

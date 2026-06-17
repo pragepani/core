@@ -1,0 +1,8 @@
+---
+enabled: "{{ lookup('config', 'web-app-pretix', 'services.sso.enabled') | bool }}"
+required: false
+mechanism: plugin
+source: built
+version: "2.3.1"
+bridges:
+  - sso

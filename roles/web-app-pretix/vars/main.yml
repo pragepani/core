@@ -24,7 +24,7 @@ PRETIX_OIDC_JWKS_URL: "{{ OIDC.CLIENT.CERTS }}"
 PRETIX_OIDC_SCOPES: "openid,email,profile"
 # Use Keycloak username claim by default (plugin default is 'sub')
 PRETIX_OIDC_UNIQUE_ATTRIBUTE: "{{ OIDC.ATTRIBUTES.USERNAME }}"
-PRETIX_OIDC_PLUGIN_VERSION: "{{ lookup('config', application_id, 'services.pretix.plugins.oidc.version') }}"
+PRETIX_OIDC_PLUGIN_VERSION: "{{ lookup('config', application_id, 'addons.pretix-oidc.version') }}"
 
 ## Redis
 PRETIX_REDIS_ENABLED: "{{ lookup('config', application_id, 'services.redis.enabled') }}"

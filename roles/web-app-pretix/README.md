@@ -18,6 +18,16 @@ This role deploys Pretix using Docker, automating the installation, configuratio
 - **Centralized Logout:** Unified logout across applications in the ecosystem.  
 - **Matomo Analytics & Global CSS:** Built-in support for analytics and unified styling.  
 
+## Addons
+
+Role-level extensions are declared in [`meta/addons/`](meta/addons/) following the unified addon contract (requirement 026).
+
+| Addon | Mechanism | Default state | Bridges |
+|---|---|---|---|
+| `pretix-oidc` | plugin | enabled when `sso` is wired (`services.sso.enabled`) | `sso` |
+
+The `oidc` plugin (`pretix-oidc`, pinned to `2.3.1`) is pip-installed at image build time and delivers Keycloak/OIDC login. It auto-enables whenever the SSO partner role (`web-app-keycloak`) is co-deployed and stays off otherwise.
+
 ## Further Resources
 
 - [Pretix Official Website](https://pretix.eu/)  
