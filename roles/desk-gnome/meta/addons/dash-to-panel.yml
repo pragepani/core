@@ -1,0 +1,7 @@
+---
+required: true
+mechanism: extension
+source: upstream
+config:
+  uuid: "dash-to-panel@jderose9.github.com"
+  url: ""

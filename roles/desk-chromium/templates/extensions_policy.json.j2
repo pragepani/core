@@ -1,18 +1,18 @@
 {
   "ExtensionInstallForcelist": [
-    {% for plugin in lookup('config', application_id, 'services.chromium.plugins') -%}
-    "{{ plugin.id }};{{ plugin.update_url }}"{% if not loop.last %},{% endif %}
+    {% for addon in lookup('config', application_id, 'addons').values() -%}
+    "{{ addon.config.crx_id }};{{ addon.config.update_url }}"{% if not loop.last %},{% endif %}
     {% endfor %}
   ],
   "ExtensionSettings": {
     "*": {
       "installation_mode": "{{ lookup('config', application_id, 'services.chromium.default_installation_mode') }}"
     }
-    {% for plugin in lookup('config', application_id, 'services.chromium.plugins') -%},
-    "{{ plugin.id }}": {
-      "installation_mode": "{{ plugin.installation_mode }}",
-      "update_url": "{{ plugin.update_url }}",
-      "incognito_mode": "{{ 'enabled' if plugin.incognito else 'disabled' }}"
+    {% for addon in lookup('config', application_id, 'addons').values() -%},
+    "{{ addon.config.crx_id }}": {
+      "installation_mode": "{{ addon.config.installation_mode }}",
+      "update_url": "{{ addon.config.update_url }}",
+      "incognito_mode": "{{ 'enabled' if addon.config.incognito else 'disabled' }}"
     }
     {% endfor %}
   },

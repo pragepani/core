@@ -19,6 +19,20 @@ The role automates the provisioning of a secure Firefox environment, reducing ma
 - **Streamlined Configuration:** Automatically creates necessary directories and applies correct file permissions.
 - **Seamless Integration:** Easily integrates with other automation roles for a complete system setup.
 
+## Addons
+
+Role-level extensions are declared in [`meta/addons/`](./meta/addons/) (unified addon contract, requirement 026):
+
+| Addon | Mechanism | Default state | Bridges |
+|-------|-----------|---------------|---------|
+| `ublock-origin` | `extension` | always installed (`required: true`) | none |
+| `keepassxc-browser` | `extension` | always installed (`required: true`) | none |
+
+Both extensions are force-installed through Firefox Enterprise Policies; each addon's `config.xpi_url` is read by [`templates/policies.json.j2`](./templates/policies.json.j2) into `policies.Extensions.Install[]`.
+They carry no cross-role dependency, so no `bridges:` key is present.
+
+**Playwright exemption:** these are desktop browser extensions with no in-app web surface to drive, so they are exempt from the per-addon Playwright spec (requirement 026, Decision 11).
+
 ## Credits
 
 Developed and maintained by **Kevin Veen-Birkenbach**.

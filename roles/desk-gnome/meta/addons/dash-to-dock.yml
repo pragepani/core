@@ -1,0 +1,8 @@
+---
+enabled: false
+required: false
+mechanism: extension
+source: upstream
+config:
+  uuid: "dash-to-dock@micxgx.gmail.com"
+  url: ""

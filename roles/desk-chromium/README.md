@@ -20,6 +20,18 @@ The purpose of this role is to automate the provisioning of a secure Chromium en
 - **Cross-Platform Support:** Handles package variations for multiple Linux distributions.
 - **Seamless Integration:** Provides a stable and secure browsing setup as part of broader system automation workflows.
 
+## Addons
+
+This role force-installs the following Chromium browser extensions via managed Enterprise Policies. They are declared in [meta/addons/](meta/addons/) and rendered into the CRX install list.
+
+| Addon | Mechanism | Default state | Bridges |
+|---|---|---|---|
+| ublock-origin | extension | enabled (required) | none |
+| keepassxc-browser | extension | enabled (required) | none |
+| privacy-badger | extension | enabled (required) | none |
+
+Playwright exemption: these are desktop browser extensions with no in-app web surface to drive, so no Playwright spec is required (requirement 026, Decision 11).
+
 ## Credits
 
 Developed and maintained by **Kevin Veen-Birkenbach**.

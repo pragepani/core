@@ -24,6 +24,19 @@ The purpose of this role is to provide a complete GNOME desktop experience by or
 - Installs GNOME Terminal for a robust command-line interface.
 - Ensures a seamless and uniform GNOME environment on Arch Linux.
 
+## Addons
+
+Role-level GNOME Shell extensions are declared in [`meta/addons/`](./meta/addons/) (unified addon contract, requirement 026).
+They are installed through `cli-gnome-extension-manager`, which receives the `action`, `uuid`, and `url` from each addon's `config` payload:
+
+| Addon | Mechanism | Default state | Bridges |
+|-------|-----------|---------------|---------|
+| `nasa-apod` | `extension` | required (always enabled) | none |
+| `dash-to-dock` | `extension` | optional, disabled by default | none |
+| `dash-to-panel` | `extension` | required (always enabled) | none |
+
+These are desktop GNOME Shell extensions with no in-app web surface to drive, so they are exempt from the Playwright requirement (requirement 026, Decision 11).
+
 ## Credits
 
 Developed and maintained by **Kevin Veen-Birkenbach**.

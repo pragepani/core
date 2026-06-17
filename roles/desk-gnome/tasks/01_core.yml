@@ -42,4 +42,6 @@
   loop_control:
     loop_var: dependency_role
 
+- include_tasks: 02_extensions.yml
+
 - include_tasks: utils/once/flag.yml

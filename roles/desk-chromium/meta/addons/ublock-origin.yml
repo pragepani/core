@@ -1,0 +1,9 @@
+---
+required: true
+mechanism: extension
+source: upstream
+config:
+  crx_id: cjpalhdlnbpafiamejdnhcphjbkeiagm
+  update_url: "https://clients2.google.com/service/update2/crx"
+  installation_mode: force_installed
+  incognito: true

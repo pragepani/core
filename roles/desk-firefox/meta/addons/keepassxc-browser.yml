@@ -1,0 +1,6 @@
+---
+required: true
+mechanism: extension
+source: upstream
+config:
+  xpi_url: "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser/latest.xpi"
