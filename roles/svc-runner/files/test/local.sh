@@ -58,7 +58,19 @@ if [[ "${DOCKER_IN_CONTAINER}" == "true" ]]; then
         # DooD routes Docker commands to the DinD daemon, so the infinito
         # container and web-app-dashboard containers are created inside DinD —
         # the same topology as production, one Docker level down.
+        #
+        # Override COMPOSE_PROJECT_NAME / INFINITO_RUNNER_PREFIX: runner-1's
+        # own env_file sets both to "runner-1". Without overriding, the nested
+        # infinito stack would inherit that project name and try to reuse the
+        # pre-existing "runner-1_default" network (auto-subnet, created by the
+        # runner's own compose project) — its subnet does not contain the
+        # 172.30.0.0/24 static IPs the infinito stack assigns, so attach fails
+        # with "no configured subnet contains IP address". Pinning to
+        # "infinito" makes the nested stack create its own isolated,
+        # correctly-subnetted "infinito_default" network, matching normal CI.
         container exec \
+            -e "COMPOSE_PROJECT_NAME=infinito" \
+            -e "INFINITO_RUNNER_PREFIX=infinito" \
             -e "apps=web-app-dashboard" \
             -e "disable=matomo" \
             -e "INFINITO_DEPLOY_TYPE=server" \
