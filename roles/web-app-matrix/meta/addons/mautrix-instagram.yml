@@ -1,0 +1,14 @@
+---
+enabled: false
+required: false
+mechanism: bridge
+source: upstream
+update:
+  monitored: true
+  catalog: mautrix
+  upstream_id: mautrix-instagram
+config:
+  bridge_name: "instagram"
+  database_username: "mautrix_instagram_bridge"
+  database_name: "mautrix_instagram_bridge"
+  database_password: "{{ lookup('config', 'web-app-matrix', 'credentials.mautrix_instagram_bridge_database_password') }}"

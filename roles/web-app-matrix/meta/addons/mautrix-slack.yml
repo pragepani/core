@@ -1,0 +1,14 @@
+---
+enabled: false
+required: false
+mechanism: bridge
+source: upstream
+update:
+  monitored: true
+  catalog: mautrix
+  upstream_id: mautrix-slack
+config:
+  bridge_name: "slack"
+  database_username: "mautrix_slack_bridge"
+  database_name: "mautrix_slack_bridge"
+  database_password: "{{ lookup('config', 'web-app-matrix', 'credentials.mautrix_slack_bridge_database_password') }}"

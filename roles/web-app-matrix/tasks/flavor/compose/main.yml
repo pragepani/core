@@ -1,11 +1,13 @@
 ---
-- name: Load bridges configuration
-  include_vars:
-    file: "bridges.yml"
-
-- name: Filter enabled bridges and register as fact
+- name: Build enabled bridge list from meta/addons/
   set_fact:
-    MATRIX_BRIDGES: "{{ bridges_configuration | filter_enabled_bridges(lookup('config', application_id, 'services.matrix.plugins')) }}"
+    MATRIX_BRIDGES: >-
+      {{ lookup('config', application_id, 'addons')
+         | dict2items
+         | selectattr('value.mechanism', 'equalto', 'bridge')
+         | selectattr('value.enabled', 'equalto', true)
+         | map(attribute='value.config')
+         | list }}
   changed_when: false
 
 - name: "compose-flavor: docker stack for '{{ application_id }}'"

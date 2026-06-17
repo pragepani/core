@@ -9,7 +9,7 @@ Step into the future of communication with Matrix, a dynamic and decentralized p
 This role deploys a Matrix homeserver and the Element web client. Two deployment flavors are supported, selected via `services.matrix.flavor`:
 
 - `ansible` (default) wraps [matrix-docker-ansible-deploy](https://github.com/spantaleev/matrix-docker-ansible-deploy) (MDAD). MDAD runs ~70 upstream sub-roles to deliver Synapse, Element, every supported bridge, Element Call, and Jitsi. Infinito.Nexus pins MDAD by commit, renders an MDAD inventory from `services.matrix.*` knobs, and disables MDAD's bundled Traefik / Postgres / Redis so the central Infinito services back the stack.
-- `compose` is the legacy in-repo Docker Compose stack. It remains installable for existing deployments but receives no new features.
+- `compose` is the in-repo Docker Compose stack. It remains installable but receives no new features.
 
 The compose flavor is **deprecated**. New deployments should use the ansible flavor.
 
@@ -33,26 +33,48 @@ Pinned MDAD upstream lives at `services.matrix.upstream.{repo,ref}`. To bump:
 
 MDAD knobs are rendered from `templates/flavor/ansible/vars.yml.j2`. Central-service consumers (postgres, redis, mailu, keycloak, openldap) are wired automatically when their `services.<name>.enabled` toggles are true.
 
-**Runner-container encapsulation.** MDAD's `ansible-playbook setup.yml` invocation runs inside a dedicated sub-container (image: `services.matrix.runner.image`, built from `files/flavor/ansible/runner/Dockerfile`). This isolates MDAD's Ansible runtime from the Infinito-Nexus deploy container's Ansible — MDAD can pin its own `ansible-core` / `community.docker` / `community.general` versions without colliding with Infinito's. The runner mounts:
+**Runner-container encapsulation.** MDAD's `ansible-playbook setup.yml` invocation runs inside a dedicated sub-container (image: `services.matrix.runner.image`, built from `files/flavor/ansible/runner/Dockerfile`). This isolates MDAD's Ansible runtime from the Infinito-Nexus deploy container's Ansible, so MDAD can pin its own `ansible-core` / `community.docker` / `community.general` versions without colliding with Infinito's. The runner mounts:
 
-- `/var/run/docker.sock` — so MDAD-launched containers land in the same Docker daemon as the rest of the stack
-- `/etc/systemd/system`, `/run/systemd` — so MDAD's `systemctl` calls target the deploy container's systemd
-- `/matrix` — MDAD's data and config root
-- the MDAD checkout at `{{ MATRIX_MDAD_DIR }}` — read-write working copy
+- `/var/run/docker.sock`, so MDAD-launched containers land in the same Docker daemon as the rest of the stack
+- `/etc/systemd/system`, `/run/systemd`, so MDAD's `systemctl` calls target the deploy container's systemd
+- `/matrix`, MDAD's data and config root
+- the MDAD checkout at `{{ MATRIX_MDAD_DIR }}`, a read-write working copy
 
 `/usr/local/bin` is NOT bind-mounted, even though MDAD writes a few helper scripts there. The runner's `ansible-core` lives at `/opt/ansible/bin/` (out of the way) to keep the option open, but mounting the deploy container's `/usr/local/bin` over the runner causes a Python ABI mismatch segfault (host Python is built differently from `python:3.13-slim`). MDAD's host-side helper scripts are not invoked by the deploy flow.
 
-A `mount --make-rshared /` runs once in the deploy container before the runner starts, because MDAD's systemd units bind-mount `/matrix/synapse/storage` with `bind-propagation=slave` and that requires shared/slave propagation on the source.
+A `mount --make-rshared /` runs once in the deploy container before the runner starts, because MDAD's systemd units bind-mount `/matrix/synapse/storage` with `bind-propagation=slave`, which requires shared/slave propagation on the source.
 
 ### `compose` (deprecated)
 
-Set `services.matrix.flavor: compose` to opt in. Tasks live under `tasks/flavor/compose/`, templates under `templates/flavor/compose/`. Existing volumes and credentials are reused — no migration needed for in-place deploys.
+Set `services.matrix.flavor: compose` to opt in. Tasks live under `tasks/flavor/compose/`, templates under `templates/flavor/compose/`. Existing volumes and credentials are reused, so in-place deploys need no migration.
 
 ## Bridge matrix
 
 Set per-bridge flags under `services.matrix.plugins.<bridge>: true|false` in `meta/services.yml`. Conservative defaults: `mautrix_{signal,telegram,twitter,slack}`, `appservice_irc`, `heisenbridge`, `discord`, `gitter`, `hookshot` ON; `whatsapp`/`facebook`/`instagram`/`googlechat`/`sms` OFF.
 
-The ansible flavor maps each true flag to the matching `matrix_<bridge>_enabled` MDAD var; the compose flavor uses the legacy `MATRIX_BRIDGES` loop.
+The ansible flavor maps each true flag to the matching `matrix_<bridge>_enabled` MDAD var; the compose flavor builds the `MATRIX_BRIDGES` loop from the enabled `mechanism: bridge` addons (see Addons below).
+
+## Addons
+
+The mautrix network bridges are declared in
+[`meta/addons/`](./meta/addons/) as `mechanism: bridge` addons
+(requirement 026, Decision 13). Each is `required: false` and **disabled by default**; its
+per-network DB password is referenced from
+[`meta/schema.yml`](./meta/schema.yml) `credentials:`, never inlined.
+
+| Addon | Mechanism | Default state | Bridges |
+|-------|-----------|---------------|---------|
+| `mautrix-whatsapp` | `bridge` | disabled | external network |
+| `mautrix-telegram` | `bridge` | disabled | external network |
+| `mautrix-signal` | `bridge` | disabled | external network |
+| `mautrix-slack` | `bridge` | disabled | external network |
+| `mautrix-facebook` | `bridge` | disabled | external network |
+| `mautrix-instagram` | `bridge` | disabled | external network |
+
+The compose flavor derives `MATRIX_BRIDGES` from the enabled bridge addons'
+`config:` blocks; the enabled/disabled split is exercised by the compose
+variant in [`meta/variants.yml`](./meta/variants.yml). Coverage is via
+`test-bridge-roster.js`.
 
 ## Conferencing
 
