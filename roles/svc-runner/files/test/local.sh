@@ -44,7 +44,7 @@ if [[ "${DOCKER_IN_CONTAINER}" == "true" ]]; then
         # wrong IP). Same-path dir keeps DooD bind-mounts valid.
         _iso_src="${RUNNER_INSTALL_DIR}/1/nested-src"
         container exec --user root "${RUNNER_PROJECT_PREFIX}-1" \
-            bash -c "rm -rf ${_iso_src} && mkdir -p ${_iso_src} && tar -C /opt/src/infinito --exclude='./.venvs' --exclude='./venv' --exclude='*/node_modules' --exclude='*/__pycache__' -cf - . | tar -C ${_iso_src} -xf - && chown -R github-runner:github-runner ${_iso_src}"
+            bash -c "rm -rf ${_iso_src} && mkdir -p ${_iso_src} && tar -C /opt/src/infinito --exclude='./.env' --exclude='./compose/coredns/Corefile' --exclude='./.venvs' --exclude='./venv' --exclude='*/node_modules' --exclude='*/__pycache__' -cf - . | tar -C ${_iso_src} -xf - && chown -R github-runner:github-runner ${_iso_src}"
 
         # Authenticate to GHCR so runner-1 can pull the infinito CI image via DooD.
         # docker login runs INSIDE runner-1 (no container wrapper there); <<< avoids
