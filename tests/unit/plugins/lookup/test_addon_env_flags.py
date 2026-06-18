@@ -93,11 +93,16 @@ class TestAddonEnvFlagsLookup(unittest.TestCase):
 class TestNoAddons(unittest.TestCase):
     def test_empty_addons_yields_empty_string(self):
         lookup = LookupModule()
-        with patch(
-            "plugins.lookup.addon_env_flags.get_merged_applications", return_value={}
-        ), patch("plugins.lookup.addon_env_flags.get", return_value={}), patch(
-            "plugins.lookup.addon_env_flags._render_with_templar",
-            side_effect=lambda v, **k: v,
+        with (
+            patch(
+                "plugins.lookup.addon_env_flags.get_merged_applications",
+                return_value={},
+            ),
+            patch("plugins.lookup.addon_env_flags.get", return_value={}),
+            patch(
+                "plugins.lookup.addon_env_flags._render_with_templar",
+                side_effect=lambda v, **k: v,
+            ),
         ):
             self.assertEqual(lookup.run(["web-app-x"], variables={}), [""])
 

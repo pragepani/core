@@ -14,7 +14,8 @@ config:
   plugin_configuration:
     - appid: "spreed"
       configkey: "signaling_servers"
-      configvalue: "{{ { 'servers': [ { 'server': NEXTCLOUD_HPB_SIGNALING_URL, 'verify': True, 'alias': 'primary' } ], 'secret':  NEXTCLOUD_HPB_SIGNALING_SECRET } | to_json }}"
+      configvalue: "{{ { 'servers': [ { 'server': NEXTCLOUD_HPB_SIGNALING_URL, 'verify': True, 'alias': 'primary' } ], 'secret':  NEXTCLOUD_HPB_SIGNALING_SECRET }
+        | to_json }}"
     - appid: "spreed"
       configkey: "stun_servers"
       configvalue: >-

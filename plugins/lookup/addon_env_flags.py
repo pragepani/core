@@ -77,7 +77,9 @@ class LookupModule(LookupBase):
 
         lines = []
         for addon_id in sorted(addons, key=env_key):
-            spec = addons.get(addon_id) if isinstance(addons.get(addon_id), dict) else {}
+            spec = (
+                addons.get(addon_id) if isinstance(addons.get(addon_id), dict) else {}
+            )
             active = _is_enabled(spec.get("enabled", False)) and _is_enabled(
                 spec.get("required", False)
             )

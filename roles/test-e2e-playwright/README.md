@@ -23,7 +23,7 @@ Playwright inside a Docker image derived from the central Playwright package ver
 This role:
 
 - Discovers Playwright-enabled roles by scanning `roles/*/templates/playwright.env.j2`
-- Supports allow-/deny-lists via `TEST_E2E_PLAYWRIGHT_ONLY_ROLES` and `TEST_E2E_PLAYWRIGHT_SKIP_ROLES`
+- Supports allow-/deny-lists via `test_e2e_playwright_only_roles` and `test_e2e_playwright_skip_roles`
 - Stages each Playwright project into `TEST_E2E_PLAYWRIGHT_STAGE_BASE_DIR/<application_id>`
 - Renders the central `package.json` template into each staged project and injects the central `playwright.config.js`
 - Copies every role-specific `files/playwright/*.js` (the `playwright.spec.js` aggregator plus its `test-*.js` scenario modules) into the staged `tests/` directory, and stages `files/playwright/fixtures/` (binary assets such as sample images/videos) alongside them
@@ -87,14 +87,14 @@ Both are used as central defaults for every app role.
 
 ### Readiness wait
 
-- `TEST_E2E_PLAYWRIGHT_WAIT_ENABLED` (default: `true`)
-- `TEST_E2E_PLAYWRIGHT_WAIT_RETRIES` (default: `30`)
-- `TEST_E2E_PLAYWRIGHT_WAIT_DELAY` (default: `5`)
+- `test_e2e_playwright_wait_enabled` (default: `true`)
+- `test_e2e_playwright_wait_retries` (default: `30`)
+- `test_e2e_playwright_wait_delay` (default: `5`)
 
 ### Discovery filters
 
-- `TEST_E2E_PLAYWRIGHT_ONLY_ROLES` (default: `allowed_applications`)
-- `TEST_E2E_PLAYWRIGHT_SKIP_ROLES` (default: `[]`)
+- `test_e2e_playwright_only_roles` (default: `allowed_applications`)
+- `test_e2e_playwright_skip_roles` (default: `[]`)
 
 ## Design notes
 

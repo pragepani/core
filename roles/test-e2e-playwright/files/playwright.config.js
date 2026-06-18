@@ -7,9 +7,10 @@ const keepAll = (process.env.INFINITO_PLAYWRIGHT_KEEP || "").toLowerCase() === "
 module.exports = defineConfig({
   testDir: "./tests",
   testMatch: "**/*.@(spec|test).js",
-  timeout: 300_000,
+  timeout: Number(process.env.PLAYWRIGHT_TEST_TIMEOUT) || 300_000,
   retries: 2,
-  workers: 1,
+  workers: Number(process.env.PLAYWRIGHT_WORKERS) || 1,
+  fullyParallel: (process.env.PLAYWRIGHT_FULLY_PARALLEL || "").toLowerCase() === "true",
   outputDir: "/reports/test-results",
   reporter: [
     ["list"],
