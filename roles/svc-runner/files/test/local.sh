@@ -70,9 +70,13 @@ if [[ "${DOCKER_IN_CONTAINER}" == "true" ]]; then
         # with "no configured subnet contains IP address". Pinning to
         # "infinito" makes the nested stack create its own isolated,
         # correctly-subnetted "infinito_default" network, matching normal CI.
+        # RUNTIME=github runs the E2E roles (test-e2e-cli + test-e2e-playwright)
+        # like a real CI deploy; the required_by guard expects test-e2e-cli to
+        # execute. Confined to this nested deploy.
         container exec \
             -e "COMPOSE_PROJECT_NAME=infinito" \
             -e "INFINITO_RUNNER_PREFIX=infinito" \
+            -e "RUNTIME=github" \
             -e "apps=web-app-dashboard" \
             -e "disable=matomo" \
             -e "INFINITO_DEPLOY_TYPE=server" \
