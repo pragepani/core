@@ -35,25 +35,44 @@ async function clickOdooSsoButton(locator) {
 
 async function loginToOdoo(page) {
   const expectedBaseUrl = baseUrl();
-  await page.goto(`${expectedBaseUrl}/web/login`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  const notLoginUrl = new RegExp(
+    `^${expectedBaseUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!/web/login)`
+  );
+  const webClient = page.locator(".o_web_client, .o_main_navbar, .o_action_manager").first();
 
-  await clickOdooSsoButton(page);
+  // The OAuth (implicit token) round-trip can land back on Odoo without a fully
+  // established session, so a URL check alone is a false positive. Also, when a
+  // realm session already exists, the SSO click bounces straight back to an
+  // authenticated Odoo without showing the Keycloak form. Handle both: fill the
+  // Keycloak form only when it appears, then confirm an authenticated web client.
+  const issuer = env.oidcIssuerUrl.replace(/\/$/, "");
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    await page.goto(`${expectedBaseUrl}/web/login`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await clickOdooSsoButton(page);
 
-  await expect
-    .poll(() => page.url(), {
-      timeout: 60_000,
-      message: "Expected page to navigate to Keycloak for authentication",
-    })
-    .toContain(env.oidcIssuerUrl.replace(/\/$/, ""));
+    await Promise.race([
+      page.waitForURL((u) => u.toString().startsWith(issuer), { timeout: 60_000 }).catch(() => {}),
+      webClient.waitFor({ state: "visible", timeout: 60_000 }).catch(() => {}),
+    ]);
+    if (page.url().startsWith(issuer)) {
+      await performKeycloakLoginForm(page, env.adminUsername, env.adminPassword);
+      await expect
+        .poll(() => page.url(), { timeout: 60_000, message: "Expected page to navigate back from Keycloak to Odoo" })
+        .toMatch(notLoginUrl);
+    }
 
-  await performKeycloakLoginForm(page, env.adminUsername, env.adminPassword);
-
-  await expect
-    .poll(() => page.url(), {
-      timeout: 60_000,
-      message: "Expected page to navigate back to authenticated Odoo (not login page)",
-    })
-    .toMatch(new RegExp(`^${expectedBaseUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!/web/login)`));
+    await page.goto(`${expectedBaseUrl}/odoo`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    const rendered = await webClient
+      .waitFor({ state: "visible", timeout: 60_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (rendered) {
+      return;
+    }
+  }
+  throw new Error(
+    "Odoo SSO login did not establish an authenticated session: the web client did not render after the Keycloak OAuth round-trip"
+  );
 }
 
 async function openModule(page, modulePath) {
