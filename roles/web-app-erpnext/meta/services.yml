@@ -39,6 +39,8 @@ redis:
   enabled: true
   shared: "{{ 'svc-db-redis' in group_names }}"
 erpnext:
+  enabled: true
+  shared: true
   image: frappe/erpnext
   version: "v16.22.0"
   name: erpnext
@@ -48,7 +50,6 @@ erpnext:
       http: 8079
       websocket: 4004
   run_after:
-    - svc-db-mariadb
     - web-app-keycloak
     - web-app-mailu
   lifecycle: beta
