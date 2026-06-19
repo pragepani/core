@@ -8,7 +8,7 @@
       - -e
       - "NC_REDIRECT_URI={{ nextcloud_gl_redirect_uri }}"
       - -e
-      - "NC_HAS_SECRET={{ nextcloud_gl_client_secret_current.stdout | default('') | trim }}"
+      - "NC_HAS_SECRET={{ nextcloud_gl_client_secret_current.stdout | trim }}"
       - "{{ nextcloud_gl_container }}"
       - gitlab-rails
       - runner
@@ -30,7 +30,7 @@
 
 - name: Pick the effective GitLab OAuth client secret
   set_fact:
-    nextcloud_gl_client_secret: "{{ nextcloud_gl_fresh_secret if (nextcloud_gl_fresh_secret | length > 0) else (nextcloud_gl_client_secret_current.stdout | default('') | trim) }}"
+    nextcloud_gl_client_secret: "{{ nextcloud_gl_fresh_secret if (nextcloud_gl_fresh_secret | length > 0) else (nextcloud_gl_client_secret_current.stdout | trim) }}"
   no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
 
 - name: Fail when no usable GitLab OAuth client secret is available

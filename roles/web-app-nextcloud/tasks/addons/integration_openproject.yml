@@ -44,6 +44,6 @@
   when: >-
     integration_openproject_partner_running.rc == 0
     and (
-      (nextcloud_op_client_id_current.stdout | default('') | trim) | length == 0
-      or (nextcloud_op_nc_client_current.stdout | default('') | trim) | length == 0
+      (nextcloud_op_client_id_current.stdout | trim) | length == 0
+      or (nextcloud_op_nc_client_current.stdout | trim) | length == 0
     )
