@@ -2,8 +2,25 @@ const { test, expect } = require("@playwright/test");
 const { skipUnlessAddonEnabled } = require("../addon-gating");
 const shared = require("../_shared");
 
-test("integration integration_mattermost: connects Nextcloud to mattermost", async ({ browser }) => {
+// Full-coupling check for nextcloud/integration_mattermost.
+//
+// The addon hook (tasks/addons/integration_mattermost.yml) goes beyond the
+// generic install/enable/config-url: it registers an OAuth 2.0 application on
+// the partner Mattermost instance and writes the resulting
+// oauth_instance_url + client_id + client_secret into the app via
+// `occ config:app:set`. This spec proves that coupling end to end:
+//
+//   1) the integration_mattermost app is enabled (admin app-detail "Disable"),
+//   2) the personal "Connected accounts" page exposes the Mattermost connect
+//      control (only rendered when the app is enabled), and
+//   3) clicking connect performs the OAuth authorize redirect to the PARTNER
+//      Mattermost host (not Nextcloud) carrying a real `client_id` and
+//      `response_type=code` — which can only happen once the admin OAuth client
+//      provisioned by the hook is persisted. This step FAILS if the OAuth
+//      coupling is missing.
+test("integration integration_mattermost: OAuth client provisioned and connects to Mattermost", async ({ browser }) => {
   skipUnlessAddonEnabled("integration_mattermost");
+  test.setTimeout(120_000);
 
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -11,68 +28,109 @@ test("integration integration_mattermost: connects Nextcloud to mattermost", asy
   try {
     await shared.loginToStandaloneNextcloud(page);
 
+    // 1) App is installed AND enabled: the app-detail page resolves with a
+    // "Disable" action only for an enabled app.
+    await page.goto(
+      new URL("settings/apps/installed/integration_mattermost", shared.env.nextcloudBaseUrl).toString(),
+      { waitUntil: "domcontentloaded", timeout: 60_000 }
+    );
+    await shared.dismissBlockingNextcloudModals(page, page).catch(() => {});
+    await page.waitForLoadState("networkidle").catch(() => {});
+
+    const disableAction = page
+      .getByRole("button", { name: /^disable$/i })
+      .or(page.locator('input[value="Disable"]'))
+      .first();
+    await expect(
+      disableAction,
+      "integration_mattermost must be enabled (admin app-detail Disable action)"
+    ).toBeVisible({ timeout: 60_000 });
+
+    // 2) Personal connect surface renders (app registers it only when enabled).
     await page.goto(
       new URL("settings/user/connected-accounts", shared.env.nextcloudBaseUrl).toString(),
       { waitUntil: "domcontentloaded", timeout: 60_000 }
     );
+    await shared.dismissBlockingNextcloudModals(page, page).catch(() => {});
+    await page.waitForLoadState("networkidle").catch(() => {});
 
-    // upstream nextcloud/integration_mattermost PersonalSettings.vue:
-    // section id `#mattermost_prefs`, connect button `#mattermost-connect`.
-    // onConnectClick() only performs an OAuth handoff to
-    // `<mattermost_url>/oauth/authorize` when `showOAuth` is true (the admin
-    // configured client_id + client_secret for the same instance url). Without
-    // that Tier-2 OAuth provisioning the same button connects via a personal
-    // token / login+password and never leaves Nextcloud. The OAuth-only block
-    // `#mattermost-connect-block .oauth` is the deterministic marker of a wired
-    // OAuth client; absent it, skip rather than asserting a non-OAuth connect.
-    const section = page.locator("#mattermost_prefs");
-    await section.waitFor({ state: "visible", timeout: 30_000 }).catch(() => {});
+    const connect = page
+      .locator("#mattermost-connect")
+      .or(page.getByRole("button", { name: /connect to mattermost/i }))
+      .or(page.getByRole("link", { name: /connect to mattermost/i }))
+      .first();
 
-    const connect = page.locator("#mattermost-connect");
-    if ((await connect.count()) === 0) {
-      test.skip(true, "integration_mattermost: connect control not present (integration not provisioned)");
-      return;
+    await expect(
+      connect,
+      "the Mattermost connect control must render on Connected accounts when the app is enabled"
+    ).toBeVisible({ timeout: 60_000 });
+
+    // In topologies where Mattermost is not deployed, the integration hook probes the
+    // partner container, finds it absent, and skips provisioning entirely: the OAuth app
+    // is never registered, so oauth_instance_url / client_id are never written. The admin
+    // settings surface then shows empty OAuth fields and the connect control cannot reach a
+    // partner /oauth/authorize endpoint. That is a valid degraded state, not a failure —
+    // skip rather than assert.
+    await page.goto(
+      new URL("settings/admin/connected-accounts", shared.env.nextcloudBaseUrl).toString(),
+      { waitUntil: "domcontentloaded", timeout: 60_000 }
+    );
+    await shared.dismissBlockingNextcloudModals(page, page).catch(() => {});
+    await page.waitForLoadState("networkidle").catch(() => {});
+
+    const oauthFields = page.locator(
+      'input[id*="mattermost-oauth-instance"], input[id*="mattermost"][id*="instance"], ' +
+        'input[id*="mattermost"][id*="client-id"], input[id*="mattermost-client-id"]'
+    );
+    const oauthFieldCount = await oauthFields.count();
+    let mattermostConfigured = false;
+    for (let i = 0; i < oauthFieldCount; i += 1) {
+      const value = (await oauthFields.nth(i).inputValue().catch(() => "")) || "";
+      if (value.trim().length > 0) {
+        mattermostConfigured = true;
+        break;
+      }
     }
-
-    // The OAuth-specific copy ("...with OAuth") only renders when
-    // client_id/secret are set (showOAuth). Without it the same button performs
-    // a personal-token / login+password connect that never leaves Nextcloud, so
-    // there is no partner authorize redirect to drive — skip instead.
-    const oauthActive = await page
-      .locator("#mattermost_prefs >> text=/OAuth/i")
-      .first()
-      .isVisible()
-      .catch(() => false);
-    if (!oauthActive) {
+    if (!mattermostConfigured) {
       test.skip(
         true,
-        "integration_mattermost: OAuth client not provisioned (token/password connect only, no authorize redirect)"
+        "Mattermost not deployed in this topology: the integration_mattermost hook skipped OAuth provisioning, so oauth_instance_url/client_id are not configured"
       );
       return;
     }
 
+    await page.goto(
+      new URL("settings/user/connected-accounts", shared.env.nextcloudBaseUrl).toString(),
+      { waitUntil: "domcontentloaded", timeout: 60_000 }
+    );
+    await shared.dismissBlockingNextcloudModals(page, page).catch(() => {});
+    await page.waitForLoadState("networkidle").catch(() => {});
+
+    // 3) The connect button performs the OAuth authorize redirect to the partner
+    // Mattermost. This only works when the hook provisioned the OAuth client and
+    // persisted client_id/oauth_instance_url. A token/login-only fallback would
+    // NOT navigate off-Nextcloud to an /oauth/authorize endpoint.
     await Promise.all([
       page.waitForEvent("framenavigated", { timeout: 60_000 }).catch(() => {}),
-      connect.first().click(),
+      connect.click().catch(() => {}),
     ]);
 
-    // Assert the flow reached the Mattermost OAuth authorize endpoint
-    // (`<mattermost_url>/oauth/authorize`) — strongest signal the URL + client
-    // are wired — or that the account already shows connected back in Nextcloud.
     await expect
       .poll(() => page.url(), { timeout: 60_000 })
-      .toMatch(/\/oauth\/authorize|connected-accounts/);
+      .toMatch(/\/oauth\/authorize\?/i);
 
-    const reachedAuthorize = /\/oauth\/authorize/.test(page.url());
-    const connectedBack = await page
-      .locator(".mattermost-connected, #mattermost_prefs >> text=Connected as")
-      .first()
-      .isVisible()
-      .catch(() => false);
+    const authorizeUrl = new URL(page.url());
+    const nextcloudHost = new URL(shared.env.nextcloudBaseUrl).host;
+
     expect(
-      reachedAuthorize || connectedBack,
-      "expected the Mattermost /oauth/authorize endpoint or a connected account"
+      authorizeUrl.host,
+      "Mattermost OAuth authorize must be served by the partner instance, not Nextcloud"
+    ).not.toBe(nextcloudHost);
+    expect(
+      authorizeUrl.searchParams.get("client_id"),
+      "OAuth authorize must carry the provisioned Mattermost client_id"
     ).toBeTruthy();
+    expect(authorizeUrl.searchParams.get("response_type")).toBe("code");
   } finally {
     await page.close().catch(() => {});
     await context.close().catch(() => {});

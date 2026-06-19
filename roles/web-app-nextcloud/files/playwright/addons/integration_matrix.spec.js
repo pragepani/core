@@ -2,7 +2,17 @@ const { test, expect } = require("@playwright/test");
 const { skipUnlessAddonEnabled } = require("../addon-gating");
 const shared = require("../_shared");
 
-test("integration integration_matrix: connects Nextcloud to matrix", async ({ browser }) => {
+// Functional cross-role coupling check for nextcloud/integration_matrix.
+//
+// The generic loader sets the app-scoped `url` key, but upstream
+// nextcloud/integration_matrix reads `url` only per-user; the admin key that
+// actually drives the integration is `oauth_instance_url`. Our hook
+// (tasks/addons/integration_matrix.yml) writes it to the partner Synapse base
+// URL, so the admin "Matrix integration" settings panel
+// (settings/admin/connected-accounts) MUST render the homeserver-address field
+// populated with the partner URL — a host distinct from Nextcloud. That is the
+// hard coupling signal asserted here.
+test("integration integration_matrix: connects Nextcloud to the Matrix homeserver", async ({ browser }) => {
   skipUnlessAddonEnabled("integration_matrix");
 
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
@@ -12,50 +22,56 @@ test("integration integration_matrix: connects Nextcloud to matrix", async ({ br
     await shared.loginToStandaloneNextcloud(page);
 
     await page.goto(
-      new URL("settings/user/connected-accounts", shared.env.nextcloudBaseUrl).toString(),
+      new URL("settings/admin/connected-accounts", shared.env.nextcloudBaseUrl).toString(),
       { waitUntil: "domcontentloaded", timeout: 60_000 }
     );
 
-    // upstream nextcloud/integration_matrix PersonalSettings.vue:
-    // section id `#matrix_prefs`. The "Connect with OAuth" button renders only
-    // while `state.oauth_possible` (admin provisioned an OAuth client + server
-    // url). connectWithOauth() POSTs to `/apps/integration_matrix/oauth-start`,
-    // which returns the Matrix server's discovered `authorization_endpoint`,
-    // then the page does window.location.replace(authorization_url). Without
-    // OAuth provisioning the section only offers the manual access-token
-    // connect (no authorize redirect) — skip in that case.
-    const section = page.locator("#matrix_prefs");
-    await section.waitFor({ state: "visible", timeout: 30_000 }).catch(() => {});
+    // App-present signal: the app's OWN admin panel renders. #matrix_prefs can
+    // match both the Vue data-v-app mount div and the .section wrapper, so pin
+    // to .first() for strict mode.
+    const matrixPanel = page
+      .locator("#matrix_prefs, #matrix-content")
+      .first();
 
-    const connect = page.getByRole("button", { name: /connect with oauth/i });
-    if ((await connect.count()) === 0) {
-      test.skip(true, "integration_matrix: OAuth connect control not present (integration not provisioned)");
+    // Genuinely absent (app disabled / never wired): no admin panel renders.
+    if (!(await matrixPanel.isVisible({ timeout: 30_000 }).catch(() => false))) {
+      test.skip(true, "integration_matrix admin panel absent — app not enabled / unconfigured");
       return;
     }
 
-    await Promise.all([
-      page.waitForEvent("framenavigated", { timeout: 60_000 }).catch(() => {}),
-      connect.first().click(),
-    ]);
-
-    // Assert the flow reached the Matrix server's OAuth authorize endpoint (the
-    // discovered authorization_endpoint always carries an `authorize` path +
-    // the configured client_id) — strongest signal the URL + client are wired —
-    // or that the account shows connected back in Nextcloud.
-    await expect
-      .poll(() => page.url(), { timeout: 60_000 })
-      .toMatch(/authorize|connected-accounts/i);
-
-    const reachedAuthorize = /authorize/i.test(page.url()) && !/connected-accounts/.test(page.url());
-    const connectedBack = await page
-      .locator(".matrix-connected, #matrix_prefs >> text=Connected as")
-      .first()
-      .isVisible()
-      .catch(() => false);
+    // The homeserver-address NcTextField has no stable id; locate the text input
+    // inside the Matrix panel whose value is an absolute URL.
+    const urlInputs = matrixPanel.locator("input[type='text'], input[type='url'], input:not([type])");
+    const inputCount = await urlInputs.count();
     expect(
-      reachedAuthorize || connectedBack,
-      "expected the Matrix OAuth authorize endpoint or a connected account"
+      inputCount,
+      "the Matrix admin panel must expose the homeserver-address field"
+    ).toBeGreaterThan(0);
+
+    let configuredInstanceUrl = null;
+    for (let i = 0; i < inputCount; i += 1) {
+      const value = (await urlInputs.nth(i).inputValue().catch(() => "")) || "";
+      if (/^https?:\/\//i.test(value.trim())) {
+        configuredInstanceUrl = value.trim();
+        break;
+      }
+    }
+
+    expect(
+      configuredInstanceUrl,
+      "the Matrix admin homeserver field must be populated with the partner URL (addon hook sets oauth_instance_url)"
     ).toBeTruthy();
+
+    const nextcloudHost = new URL(shared.env.nextcloudBaseUrl).host;
+    const instanceHost = new URL(configuredInstanceUrl).host;
+    expect(
+      instanceHost,
+      "the configured Matrix homeserver must be the partner instance, not Nextcloud itself"
+    ).not.toBe(nextcloudHost);
+    expect(
+      instanceHost,
+      "the Matrix oauth_instance_url must point at the deployed Synapse partner host"
+    ).toBe("matrix.infinito.example");
   } finally {
     await page.close().catch(() => {});
     await context.close().catch(() => {});

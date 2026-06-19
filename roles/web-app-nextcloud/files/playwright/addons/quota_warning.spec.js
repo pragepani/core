@@ -4,11 +4,13 @@ const shared = require("../_shared");
 
 test.use({ ignoreHTTPSErrors: true });
 
-// quota_warning emails/notifies users approaching their storage quota and is
-// configured under its admin settings section; it has no per-user app route.
-// Log in as administrator and assert the admin quota-warning settings page
-// renders as its observable surface.
-test("quota_warning addon: admin quota-warning settings page renders", async ({ browser }) => {
+// quota_warning emails/notifies users approaching their storage quota. It has
+// no per-user app route; it registers a declarative ADMIN settings form (id
+// "quota_warning", title "Quota warning") under section_id "additional", so its
+// observable surface is the admin "Additional settings" page at
+// settings/admin/additional — NOT settings/admin/quota_warning (no such admin
+// section exists). Log in as administrator and assert that form renders there.
+test("quota_warning addon: admin quota-warning settings form renders", async ({ browser }) => {
   skipUnlessAddonEnabled("quota_warning");
   test.setTimeout(120_000);
 
@@ -18,13 +20,18 @@ test("quota_warning addon: admin quota-warning settings page renders", async ({ 
   try {
     await shared.loginToStandaloneNextcloud(page);
 
-    const settingsUrl = new URL("settings/admin/quota_warning", shared.env.nextcloudBaseUrl).toString();
+    const settingsUrl = new URL("settings/admin/additional", shared.env.nextcloudBaseUrl).toString();
     await page.goto(settingsUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
     await shared.dismissBlockingNextcloudModals(page, page);
 
     await expect(
       page.locator("#app-content, #app-content-vue, #content, #content-vue").first(),
-      "the Nextcloud admin quota-warning settings page must be visible (quota_warning has no per-user route)",
+      "the Nextcloud admin Additional settings page must render (quota_warning declares its form there)",
+    ).toBeVisible({ timeout: 60_000 });
+
+    await expect(
+      page.getByText("Quota warning", { exact: true }).first(),
+      "the quota_warning declarative admin settings form (section_id 'additional', title 'Quota warning') must render on settings/admin/additional",
     ).toBeVisible({ timeout: 60_000 });
   } finally {
     await page.close().catch(() => {});

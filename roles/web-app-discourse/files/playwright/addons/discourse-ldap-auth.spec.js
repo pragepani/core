@@ -43,7 +43,11 @@ async function signInViaOidc(page) {
     .toContain(discourseBaseUrl);
 }
 
-test("discourse-ldap-auth: LDAP auth plugin is active behind an authenticated session", async ({ page }) => {
+function findSetting(settings, name) {
+  return settings.find((s) => s && s.setting === name);
+}
+
+test("discourse-ldap-auth: LDAP auth plugin is installed and bound to the LDAP partner", async ({ page }) => {
   skipUnlessAddonEnabled("discourse-ldap-auth");
   skipUnlessServiceEnabled("ldap");
 
@@ -60,6 +64,71 @@ test("discourse-ldap-auth: LDAP auth plugin is active behind an authenticated se
       /topic|category|welcome|latest|discourse/i,
       { timeout: 60_000 },
     );
+
+    const siteSettings = await page.evaluate(async (base) => {
+      const res = await fetch(`${base}/admin/site_settings.json`, {
+        headers: { Accept: "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) return { ok: false, status: res.status };
+      const body = await res.json();
+      return { ok: true, settings: (body && body.site_settings) || [] };
+    }, discourseBaseUrl);
+
+    expect(
+      siteSettings.ok,
+      `expected /admin/site_settings.json to be reachable as admin (status ${siteSettings.status})`,
+    ).toBe(true);
+
+    const ldapEnabled = findSetting(siteSettings.settings, "ldap_auth_enabled");
+    expect(
+      ldapEnabled,
+      "ldap_auth_enabled site setting must exist (LDAP auth plugin installed)",
+    ).toBeTruthy();
+    expect(
+      String(ldapEnabled.value).toLowerCase(),
+      "ldap_auth_enabled must be active",
+    ).toBe("true");
+
+    const ldapSync = findSetting(siteSettings.settings, "ldap_sync_enabled");
+    expect(
+      ldapSync,
+      "ldap_sync_enabled site setting must exist (LDAP sync coupling)",
+    ).toBeTruthy();
+    expect(
+      String(ldapSync.value).toLowerCase(),
+      "ldap_sync_enabled must be active (Discourse must sync against the LDAP partner)",
+    ).toBe("true");
+
+    const ldapHost = findSetting(siteSettings.settings, "ldap_sync_host");
+    expect(
+      ldapHost,
+      "ldap_sync_host site setting must exist",
+    ).toBeTruthy();
+    expect(
+      String(ldapHost.value).trim().length,
+      "ldap_sync_host must point at the LDAP partner server (non-empty)",
+    ).toBeGreaterThan(0);
+
+    const ldapBaseDn = findSetting(siteSettings.settings, "ldap_base_dn");
+    expect(
+      ldapBaseDn,
+      "ldap_base_dn site setting must exist",
+    ).toBeTruthy();
+    expect(
+      String(ldapBaseDn.value).trim(),
+      "ldap_base_dn must be a real LDAP directory root (e.g. dc=...)",
+    ).toMatch(/dc=/i);
+
+    const ldapBindDn = findSetting(siteSettings.settings, "ldap_bind_dn");
+    expect(
+      ldapBindDn,
+      "ldap_bind_dn site setting must exist",
+    ).toBeTruthy();
+    expect(
+      String(ldapBindDn.value).trim().length,
+      "ldap_bind_dn must be set so Discourse can bind to the LDAP partner",
+    ).toBeGreaterThan(0);
   } finally {
     await page.context().clearCookies().catch(() => {});
   }
