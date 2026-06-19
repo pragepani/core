@@ -1,4 +1,37 @@
 ---
-# No exception logic required: the admin key the app actually reads (oauth_instance_url) is
-# set generically by the config SPOT (meta/addons/integration_gitlab.yml plugin_configuration
-# + tasks/plugin); per-user OAuth is authorised at runtime. Coupling is verified by the Playwright spec.
+- name: Resolve GitLab integration provisioning facts
+  set_fact:
+    nextcloud_gl_container: "{{ lookup('config', 'web-app-gitlab', 'services.gitlab.name') }}"
+    nextcloud_gl_redirect_uri: "{{ lookup('tls', 'web-app-nextcloud', 'url.base') | regex_replace('/$', '') }}/index.php/apps/integration_gitlab/oauth-redirect"
+  changed_when: false
+
+- name: Probe whether the GitLab partner container is running
+  command: >
+    container exec {{ nextcloud_gl_container }} true
+  register: integration_gitlab_partner_running
+  changed_when: false
+  failed_when: false
+
+- name: Read persisted integration_gitlab OAuth client id
+  command: >
+    {{ NEXTCLOUD_DOCKER_EXEC_OCC }} config:app:get integration_gitlab client_id
+  register: nextcloud_gl_client_id_current
+  changed_when: false
+  failed_when: false
+
+- name: Read persisted integration_gitlab OAuth client secret
+  command: >
+    {{ NEXTCLOUD_DOCKER_EXEC_OCC }} config:app:get integration_gitlab client_secret
+  register: nextcloud_gl_client_secret_current
+  changed_when: false
+  failed_when: false
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Provision the GitLab <-> Nextcloud OAuth coupling
+  include_tasks: "{{ [role_path, 'tasks/addons/integration_gitlab_provision.yml'] | path_join }}"
+  when: >-
+    integration_gitlab_partner_running.rc == 0
+    and (
+      (nextcloud_gl_client_id_current.stdout | default('') | trim) | length == 0
+      or (nextcloud_gl_client_secret_current.stdout | default('') | trim) | length == 0
+    )

@@ -1,0 +1,60 @@
+---
+- name: Provision the GitLab OAuth application for Nextcloud and capture credentials
+  ansible.builtin.command:
+    argv:
+      - container
+      - exec
+      - -i
+      - -e
+      - "NC_REDIRECT_URI={{ nextcloud_gl_redirect_uri }}"
+      - -e
+      - "NC_HAS_SECRET={{ nextcloud_gl_client_secret_current.stdout | default('') | trim }}"
+      - "{{ nextcloud_gl_container }}"
+      - gitlab-rails
+      - runner
+      - "-"
+    stdin: "{{ lookup('file', 'gitlab/provision_oauth_app.rb') }}"
+  register: nextcloud_gl_provision
+  changed_when: "'CLIENT_ID=' in nextcloud_gl_provision.stdout"
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Parse the GitLab OAuth client id
+  set_fact:
+    nextcloud_gl_client_id: "{{ nextcloud_gl_provision.stdout | regex_search('CLIENT_ID=(.+)', '\\1') | first }}"
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Resolve the GitLab OAuth client secret (freshly emitted or persisted)
+  set_fact:
+    nextcloud_gl_fresh_secret: "{{ (nextcloud_gl_provision.stdout | regex_search('CLIENT_SECRET=(.+)', '\\1') | default([], true) | first | default('', true)) | trim }}"
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Pick the effective GitLab OAuth client secret
+  set_fact:
+    nextcloud_gl_client_secret: "{{ nextcloud_gl_fresh_secret if (nextcloud_gl_fresh_secret | length > 0) else (nextcloud_gl_client_secret_current.stdout | default('') | trim) }}"
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Fail when no usable GitLab OAuth client secret is available
+  assert:
+    that:
+      - (nextcloud_gl_client_id | default('') | trim) | length > 0
+      - (nextcloud_gl_client_secret | default('') | trim) | length > 0
+    fail_msg: >-
+      GitLab did not return a usable OAuth application. The plaintext client secret is only
+      retrievable when the app is first created or its secret is renewed; reset the
+      integration_gitlab client_id/client_secret app config to re-provision.
+
+- name: Set integration_gitlab OAuth client_id
+  command: >
+    {{ NEXTCLOUD_DOCKER_EXEC_OCC }} config:app:set integration_gitlab client_id
+    --value '{{ nextcloud_gl_client_id }}' --sensitive
+  register: nextcloud_gl_client_id_set
+  changed_when: "' set to ' in nextcloud_gl_client_id_set.stdout"
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Set integration_gitlab OAuth client_secret
+  command: >
+    {{ NEXTCLOUD_DOCKER_EXEC_OCC }} config:app:set integration_gitlab client_secret
+    --value '{{ nextcloud_gl_client_secret }}' --sensitive
+  register: nextcloud_gl_client_secret_set
+  changed_when: "' set to ' in nextcloud_gl_client_secret_set.stdout"
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
