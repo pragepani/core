@@ -58,11 +58,13 @@ async function loginToOdoo(page) {
 
 async function openModule(page, modulePath) {
   const url = `${baseUrl()}/${String(modulePath).replace(/^\//, "")}`;
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 });
   const appShell = page.locator(
     ".o_web_client, .o_action_manager, .o_main_navbar, .o_content, .o_list_view, .o_kanban_view"
   );
-  await expect(appShell.first()).toBeVisible({ timeout: 60_000 });
+  // Odoo bootstraps a heavy web-client asset bundle per module; under serial test
+  // load the first render can take well over a minute, so allow generous time.
+  await expect(appShell.first()).toBeVisible({ timeout: 120_000 });
 }
 
 module.exports = { env, baseUrl, clickOdooSsoButton, loginToOdoo, openModule };
