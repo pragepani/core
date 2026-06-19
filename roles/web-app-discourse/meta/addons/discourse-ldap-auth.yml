@@ -7,7 +7,7 @@ bridges:
   - ldap
 version: "master"
 config:
-  repository: https://github.com/jonmbake/discourse-ldap-auth.git  # nocheck: repository-declared
+  repository: https://github.com/jonmbake/discourse-ldap-auth.git # nocheck: repository-declared
   ref: master
   site_settings:
     ldap_auth_enabled: true
