@@ -22,10 +22,12 @@ email:
   enabled: "{{ 'web-app-mailu' in group_names }}"
   shared: "{{ 'web-app-mailu' in group_names }}"
 # nocheck: dynamic-flag
+# nocheck: playwright-service-flag — Redis cache, no Playwright surface
 redis:
   enabled: false
   backup:
     disabled: true
+# nocheck: playwright-service-flag — DB engine, no Playwright surface (role-local integration tests)
 postgres:
   enabled: true # nocheck: dynamic-flag
   shared: "{{ 'svc-db-postgres' in group_names }}"
@@ -48,6 +50,7 @@ xwiki:
     - web-app-keycloak
     - web-app-mailu
   lifecycle: beta
+# nocheck: playwright-service-flag — CSS consumer, no Playwright surface (provider: web-svc-css)
 css:
   enabled: "{{ 'web-svc-css' in group_names }}"
   shared: "{{ 'web-svc-css' in group_names }}"
