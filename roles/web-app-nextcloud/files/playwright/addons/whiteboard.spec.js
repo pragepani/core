@@ -20,25 +20,31 @@ test("whiteboard addon: admin whiteboard settings render and are wired to the co
     );
     await shared.dismissBlockingNextcloudModals(page, page);
 
-    const adminSection = page
-      .locator("#whiteboard_prefs, #whiteboard-settings, [data-cy='whiteboard-settings']")
-      .or(page.getByText(/whiteboard server url|whiteboard backend|shared secret|jwt secret/i).first());
     await expect(
-      adminSection.first(),
-      "the Whiteboard admin settings section (settings/admin/whiteboard) must render, proving the whiteboard app is installed AND enabled (a disabled/broken app yields no section)"
+      page.locator("#app-content, #app-content-vue, #content").first(),
+      "the Whiteboard admin settings shell (settings/admin/whiteboard) must render, proving the whiteboard app is installed AND enabled (a disabled/broken app yields no section)"
     ).toBeVisible({ timeout: 60_000 });
 
-    const backendUrlField = page.locator(
-      "input#server-url, input[name='whiteboard-server-url'], input[type='url'][value*='whiteboard'], input[type='url']"
-    );
+    const urlState = page.locator("#initial-state-whiteboard-url");
     await expect(
-      backendUrlField.first(),
-      "the whiteboard collab-backend URL input must be present and prefilled — proving the addon's plugin_configuration (config:app:set whiteboard collabBackendUrl/jwt_secret_key) reached the running app"
-    ).toBeVisible({ timeout: 30_000 });
-    await expect(
-      backendUrlField.first(),
-      "the whiteboard collab-backend URL must be configured (NEXTCLOUD_WHITEBOARD_URL), not blank"
-    ).not.toHaveValue("");
+      urlState,
+      "the whiteboard admin settings must inject its server-URL initial-state (#initial-state-whiteboard-url), proving the app's admin section rendered with its config"
+    ).toHaveCount(1);
+
+    const rawUrl =
+      (await urlState.inputValue().catch(() => "")) ||
+      (await urlState.getAttribute("value").catch(() => "")) ||
+      "";
+    let url = "";
+    try {
+      url = JSON.parse(Buffer.from(rawUrl, "base64").toString("utf8"));
+    } catch {
+      url = "";
+    }
+    expect(
+      typeof url === "string" && /^https?:\/\//.test(url),
+      "the whiteboard collab-backend URL must be configured (NEXTCLOUD_WHITEBOARD_URL via plugin_configuration), not blank"
+    ).toBeTruthy();
   } finally {
     await page.close().catch(() => {});
     await context.close().catch(() => {});

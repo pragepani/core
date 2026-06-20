@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 const { skipUnlessAddonEnabled } = require("../addon-gating");
 const shared = require("../_shared");
 
-test("addon drawio: nextcloud app route renders its own drawio editor surface", async ({ browser }) => {
+test("addon drawio: app installed + enabled (registered in OC.appswebroots)", async ({ browser }) => {
   skipUnlessAddonEnabled("drawio");
   test.setTimeout(120_000);
 
@@ -12,27 +12,26 @@ test("addon drawio: nextcloud app route renders its own drawio editor surface", 
   try {
     await shared.loginToStandaloneNextcloudWithRetry(page);
 
-    const appUrl = new URL("apps/drawio/", shared.env.nextcloudBaseUrl).toString();
-    const response = await page.goto(appUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
-
-    expect(
-      response,
-      "navigating to the drawio app route must yield an HTTP response",
-    ).not.toBeNull();
-    expect(
-      response.status(),
-      "the drawio app route must resolve (app installed + enabled), not 404",
-    ).toBeLessThan(400);
-
+    await page.goto(new URL("apps/files/", shared.env.nextcloudBaseUrl).toString(), {
+      waitUntil: "domcontentloaded",
+      timeout: 60_000,
+    });
     await shared.dismissBlockingNextcloudModals(page, page);
 
-    const appContainer = page.locator(
-      ".app-drawio, #drawio, #drawioframe, #app-content .drawio, #app-content-vue .drawio",
-    );
+    const enabled = await page.evaluate(() => {
+      const oc = window.OC || {};
+      const webroots = oc.appswebroots || (oc.appConfig && oc.appConfig.appswebroots) || {};
+      return Object.prototype.hasOwnProperty.call(webroots, "drawio");
+    });
+    expect(
+      enabled,
+      "drawio must be installed + enabled (registered in OC.appswebroots); it integrates the .drawio editor into Files via a file action and exposes no standalone app route",
+    ).toBe(true);
+
     await expect(
-      appContainer.first(),
-      "the drawio Nextcloud app route must render its own drawio editor surface (disabled/broken app never mounts it)",
-    ).toBeVisible({ timeout: 60_000 });
+      page.locator('script[src*="/apps/drawio/"], link[href*="/apps/drawio/"]'),
+      "the enabled drawio app must inject its own frontend bundle into the Files UI (proves the app is loaded, not merely listed)",
+    ).not.toHaveCount(0);
   } finally {
     await page.close().catch(() => {});
     await context.close().catch(() => {});

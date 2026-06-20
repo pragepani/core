@@ -24,13 +24,13 @@ test("external addon: admin External-sites settings panel renders", async ({ bro
     ).toBeVisible({ timeout: 60_000 });
 
     await expect(
-      page.getByText("Add external sites to your Nextcloud navigation", { exact: true }).first(),
-      "the external app's own admin panel description must render (proves the 'external' section + template are served by the enabled app)",
+      page.locator("#external").first(),
+      "the external app's own admin section (#external) must render (proves the 'external' section + template are served by the enabled app)",
     ).toBeVisible({ timeout: 60_000 });
 
     await expect(
-      page.getByRole("button", { name: /^New site$/ }).first(),
-      "the external app's 'New site' admin action must render (proves the External-sites configuration UI is live)",
+      page.locator("#add_external_site").first(),
+      "the external app's add-site admin control (#add_external_site) must render (proves the External-sites configuration UI is live)",
     ).toBeVisible({ timeout: 60_000 });
   } finally {
     await page.close().catch(() => {});

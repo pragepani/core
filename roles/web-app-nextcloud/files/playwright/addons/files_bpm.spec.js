@@ -23,8 +23,8 @@ test("files_bpm addon: BPMN editor route renders the modeler canvas", async ({ b
     await shared.dismissBlockingNextcloudModals(page, page);
 
     await expect(
-      page.locator("#canvas.bpmn-canvas").first(),
-      "the files_bpm app must render its own BPMN editor modeler canvas",
+      page.locator("#bpmn-app").first(),
+      "the files_bpm app must render its own BPMN modeler surface (#bpmn-app)",
     ).toBeVisible({ timeout: 60_000 });
   } finally {
     await page.close().catch(() => {});
