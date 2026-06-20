@@ -1,3 +1,5 @@
 ---
-# Template-only role: ships the Redis Docker Compose snippet under templates/
-# for consumer roles to render into their own compose stack. No runtime tasks.
+- include_tasks: 01_core.yml
+  when: run_once_svc_db_redis is not defined
+  vars:
+    application_id: svc-db-redis

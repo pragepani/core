@@ -1,11 +1,12 @@
 ---
+- include_tasks: utils/once/flag.yml
+
 - name: "include _create-domains.yml for peertube"
   include_tasks: _create-domains.yml
   loop: "{{ lookup('domains', application_id) }}"
   loop_control:
     loop_var: domain
   vars:
-    # Websockt and http listen to the same port
     http_port: "{{ lookup('config', application_id, 'services.peertube.ports.local.http') }}"
     websocket_port: "{{ lookup('config', application_id, 'services.peertube.ports.local.http') }}"
 
@@ -25,5 +26,3 @@
 - name: "Deinstall and disable auth-openid-connect plugin if OIDC is enabled"
   include_tasks: oidc/disable.yml
   when: not PEERTUBE_OIDC_ENABLED | bool
-
-- include_tasks: utils/once/flag.yml

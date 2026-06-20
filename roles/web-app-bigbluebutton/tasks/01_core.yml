@@ -1,4 +1,6 @@
 ---
+- include_tasks: utils/once/flag.yml
+
 - name: "load docker, proxy for '{{ application_id }}'"
   include_role:
     name: sys-stk-full
@@ -67,5 +69,3 @@
 
 - name: "Setup administrator"
   include_tasks: "03_administrator.yml"
-
-- include_tasks: utils/once/flag.yml

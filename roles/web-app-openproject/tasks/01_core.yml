@@ -1,4 +1,6 @@
 ---
+- include_tasks: utils/once/flag.yml
+
 - name: "load docker, db and proxy for {{ application_id }}"
   include_role:
     name: sys-stk-full
@@ -42,5 +44,3 @@
 
 - name: Create OpenProject Administrator
   include_tasks: 03_admin.yml
-
-- include_tasks: utils/once/flag.yml

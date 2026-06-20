@@ -1,4 +1,6 @@
 ---
+- include_tasks: utils/once/flag.yml
+
 - name: "load docker, db and proxy for {{ application_id }}"
   include_role:
     name: sys-stk-full
@@ -89,5 +91,3 @@
 - name: "Configure auth_ldap (sync-only in variant 0, primary login in variant 1)"
   include_tasks: 04_ldap_sync.yml
   when: MOODLE_LDAP_ENABLED | bool
-
-- include_tasks: utils/once/flag.yml

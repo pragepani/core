@@ -1,4 +1,6 @@
 ---
+- include_tasks: utils/once/flag.yml
+
 - name: Validate XWiki variables
   include_tasks: 02_validation.yml
 
@@ -83,5 +85,3 @@
   vars:
     xwiki_oidc_enabled_switch: "{{ XWIKI_OIDC_ENABLED | bool }}"
     xwiki_ldap_enabled_switch: "{{ XWIKI_LDAP_ENABLED | bool }}"
-
-- include_tasks: utils/once/flag.yml
