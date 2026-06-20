@@ -1,8 +1,8 @@
 name: "🏃 Test: Runner smoke (self-hosted)"
 
-# Smoke test for self-hosted runners. Dispatched by roles/svc-runner/files/test.sh
-# after a runner deploy to verify end-to-end that the runner can pick up a real CI
-# job, access Docker via DooD, and run a full Ansible deploy.
+# Dispatched by roles/svc-runner/files/test.sh after a runner deploy: verifies a
+# self-hosted runner picks up a CI job and has Docker (DooD) access. Full deploy
+# capability is covered by the svc-runner DinD test (test-e2e-cli).
 
 on:
   workflow_dispatch:
@@ -20,8 +20,6 @@ on:
         default: ""
         type: string
 
-# A new pipeline run on the same ref cancels an in-progress smoke run,
-# freeing the self-hosted runner instead of queueing behind a ~2h deploy.
 concurrency:
   group: runner-smoke-${{ github.ref }}
   cancel-in-progress: true
@@ -30,17 +28,9 @@ permissions:
   contents: read
   packages: read
 
-env:
-  INFINITO_DEPLOY_TYPE: server
-  INFINITO_DISTROS: debian
-  NIX_CONFIG: |
-    access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-  INFINITO_IMAGE_TAG: ci-${{ github.sha }}
-  INFINITO_GHCR_MIRROR_PREFIX: mirror
-
 jobs:
   smoke:
-    name: 🏃 Runner smoke
+    name: 🏃 Runner pickup + DooD
     runs-on: [self-hosted, linux]
     timeout-minutes: 360
 
@@ -53,25 +43,14 @@ jobs:
         with:
           ref: ${{ inputs.ref || github.sha }}
 
-      - name: Resolve repository owner
+      - name: Verify runner pickup + Docker (DooD) access
         shell: bash
         run: |
           set -euo pipefail
-          echo "GITHUB_REPOSITORY_OWNER=$(scripts/meta/resolve/repository/owner.sh)" >> "$GITHUB_ENV"
-
-      - name: Smoke deploy (dashboard, matomo disabled)
-        shell: bash
-        env:
-          apps: web-app-dashboard
-          disable: matomo
-          INFINITO_TIMEOUT_MULTIPLIER: ${{ vars.INFINITO_TIMEOUT_MULTIPLIER || '1' }}
-          ANSIBLE_LOG_PATH: /tmp/ansible-runner-smoke.log
-        run: ./scripts/tests/deploy/ci/all.sh
-
-      - name: Role runtimes
-        if: always()
-        shell: bash
-        run: python3 utils/github/profile/role_summary.py /tmp/ansible-runner-smoke.log
+          echo ">>> Job picked up on self-hosted runner: $(hostname)"
+          docker version
+          docker info >/dev/null
+          docker run --rm hello-world
 
       - name: Dump runner state (on failure)
         if: failure()
