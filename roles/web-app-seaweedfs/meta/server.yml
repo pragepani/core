@@ -1,4 +1,5 @@
 ---
+client_max_body_size: 0
 status_codes:
   api:
     - 403
