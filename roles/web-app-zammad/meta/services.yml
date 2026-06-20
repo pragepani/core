@@ -55,6 +55,7 @@ memcached:
   bond: 1
   enabled: true
   shared: "{{ 'svc-db-memcached' in group_names }}"
+# nocheck: playwright-service-flag: shared provider entity; the app itself is covered by this role's own Playwright spec
 zammad:
   bond: 1
   enabled: true

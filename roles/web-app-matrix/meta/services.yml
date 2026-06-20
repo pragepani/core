@@ -93,6 +93,7 @@ prometheus:
     service_key: synapse
   communication:
     channel: true
+# nocheck: playwright-service-flag: shared provider entity; the app itself is covered by this role's own Playwright spec
 matrix:
   bond: 1
   enabled: true

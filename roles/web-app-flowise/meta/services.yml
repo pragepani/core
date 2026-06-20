@@ -48,6 +48,7 @@ qdrant:
   mem_limit: 4g
   pids_limit: 2048
   min_storage: 1GB
+# nocheck: playwright-service-flag: shared provider entity; the app itself is covered by this role's own Playwright spec
 flowise:
   bond: 1
   enabled: true
