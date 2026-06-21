@@ -34,7 +34,6 @@
       enabled: true
       shared: true
     mariadb:
-      enabled: true
       shared: true
     talk:
       enabled: true
@@ -113,7 +112,6 @@
       enabled: false
       shared: false
     mariadb:
-      enabled: false
       shared: false
     talk:
       enabled: false
@@ -155,11 +153,11 @@
       enabled: false
       shared: false
     zammad:
-      enabled: true
-      shared: true
-    openwebui:
       enabled: false
       shared: false
+    openwebui:
+      enabled: true
+      shared: true
     flowise:
       enabled: true
       shared: true
@@ -192,7 +190,6 @@
       enabled: false
       shared: false
     mariadb:
-      enabled: false
       shared: false
     talk:
       enabled: false
@@ -271,7 +268,6 @@
       enabled: false
       shared: false
     mariadb:
-      enabled: false
       shared: false
     talk:
       enabled: false
@@ -304,8 +300,8 @@
       enabled: true
       shared: true
     discourse:
-      enabled: false
-      shared: false
+      enabled: true
+      shared: true
     mattermost:
       enabled: false
       shared: false
@@ -350,86 +346,6 @@
       enabled: false
       shared: false
     mariadb:
-      enabled: false
-      shared: false
-    talk:
-      enabled: false
-      shared: false
-    onlyoffice:
-      enabled: false
-      shared: false
-    collabora:
-      enabled: false
-      shared: false
-    bigbluebutton:
-      enabled: false
-      shared: false
-    xwiki:
-      enabled: false
-      shared: false
-    seaweedfs:
-      enabled: false
-      shared: false
-    css:
-      enabled: false
-      shared: false
-    prometheus:
-      enabled: false
-      shared: false
-    openproject:
-      enabled: false
-      shared: false
-    gitlab:
-      enabled: false
-      shared: false
-    discourse:
-      enabled: true
-      shared: true
-    mattermost:
-      enabled: false
-      shared: false
-    matrix:
-      enabled: false
-      shared: false
-    zammad:
-      enabled: false
-      shared: false
-    openwebui:
-      enabled: true
-      shared: true
-    flowise:
-      enabled: false
-      shared: false
-    mastodon:
-      enabled: false
-      shared: false
-    peertube:
-      enabled: false
-      shared: false
-- services:
-    sso:
-      enabled: false
-      shared: false
-    coturn:
-      enabled: false
-      shared: false
-    logout:
-      enabled: false
-      shared: false
-    ldap:
-      enabled: false
-      shared: false
-    dashboard:
-      enabled: false
-      shared: false
-    matomo:
-      enabled: false
-      shared: false
-    email:
-      enabled: false
-      shared: false
-    mariadb:
-      enabled: false
       shared: false
     talk:
       enabled: false
@@ -471,8 +387,8 @@
       enabled: false
       shared: false
     zammad:
-      enabled: false
-      shared: false
+      enabled: true
+      shared: true
     openwebui:
       enabled: false
       shared: false
