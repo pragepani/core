@@ -1,182 +1,127 @@
 ---
 # Matrix-deploy variant overrides for web-app-nextcloud.
 # See docs/contributing/artefact/files/role/variants.md for the file format.
+#
+# nocheck: variant-limit: the loosely-coupled (bond<1) bridge partners are too heavy
+# to co-host, so each budget-bin of them needs its own variant.
+#
+# enabled and shared stay coupled (both true or both false). v0 enables every
+# tightly-coupled (bond>=1, same-host) service - the host baseline test_order pins.
+# Each later variant adds one budget-bin of loosely-coupled (bond<1, separate-host)
+# partners; those are excluded from the closure (bond-aware test_order) so they need
+# not appear in v0 and can be distributed to keep every host under budget.
 
-# variant pinning every dynamic services.yml flag to true so the
-# matrix exercises the in-group_names branch of web-app-nextcloud.
 - services:
-    collabora:
-      enabled: true
-      shared: true
-    bigbluebutton:
-      enabled: true
-      shared: true
-    xwiki:
+    sso:
       enabled: true
       shared: true
     coturn:
       enabled: true
       shared: true
-    css:
+    logout:
+      enabled: true
+      shared: true
+    ldap:
       enabled: true
       shared: true
     dashboard:
       enabled: true
       shared: true
+    matomo:
+      enabled: true
+      shared: true
     email:
-      enabled: true
-      shared: true
-    ldap:
-      shared: true
-      enabled: true
-    logout:
       enabled: true
       shared: true
     mariadb:
-      shared: true
-    matomo:
-      enabled: true
-      shared: true
-    sso:
-      enabled: true
-      shared: true
-    onlyoffice:
-      enabled: true
-      shared: true
-    prometheus:
-      enabled: true
-      shared: true
-    seaweedfs:
       enabled: true
       shared: true
     talk:
       enabled: true
       shared: true
-    openproject:
+    onlyoffice:
       enabled: true
       shared: true
-    gitlab:
-      enabled: true
-      shared: true
-    discourse:
-      enabled: true
-      shared: true
-    mattermost:
-      enabled: true
-      shared: true
-    matrix:
-      enabled: true
-      shared: true
-    zammad:
-      enabled: true
-      shared: true
-    openwebui:
-      enabled: true
-      shared: true
-    flowise:
-      enabled: true
-      shared: true
-    mastodon:
-      enabled: true
-      shared: true
-    peertube:
-      enabled: true
-      shared: true
-    moodle:
-      enabled: true
-      shared: true
-    suitecrm:
-      enabled: true
-      shared: true
-- services:
     collabora:
-      enabled: false
-      shared: false
+      enabled: true
+      shared: true
     bigbluebutton:
+      enabled: true
+      shared: true
+    xwiki:
+      enabled: true
+      shared: true
+    seaweedfs:
+      enabled: true
+      shared: true
+    css:
+      enabled: true
+      shared: true
+    prometheus:
+      enabled: true
+      shared: true
+    openproject:
       enabled: false
       shared: false
-    xwiki:
+    gitlab:
+      enabled: false
+      shared: false
+    discourse:
+      enabled: false
+      shared: false
+    mattermost:
+      enabled: false
+      shared: false
+    matrix:
+      enabled: false
+      shared: false
+    zammad:
+      enabled: false
+      shared: false
+    openwebui:
+      enabled: false
+      shared: false
+    flowise:
+      enabled: false
+      shared: false
+    mastodon:
+      enabled: false
+      shared: false
+    peertube:
+      enabled: false
+      shared: false
+- services:
+    sso:
       enabled: false
       shared: false
     coturn:
       enabled: false
       shared: false
-    css:
+    logout:
+      enabled: false
+      shared: false
+    ldap:
       enabled: false
       shared: false
     dashboard:
       enabled: false
       shared: false
+    matomo:
+      enabled: false
+      shared: false
     email:
-      enabled: false
-      shared: false
-    ldap:
-      shared: false
-      enabled: false
-    logout:
       enabled: false
       shared: false
     mariadb:
-      shared: false
-    matomo:
-      enabled: false
-      shared: false
-    sso:
-      enabled: false
-      shared: false
-    onlyoffice:
-      enabled: false
-      shared: false
-    prometheus:
-      enabled: false
-      shared: false
-    seaweedfs:
       enabled: false
       shared: false
     talk:
       enabled: false
       shared: false
-    openproject:
+    onlyoffice:
       enabled: false
       shared: false
-    gitlab:
-      enabled: false
-      shared: false
-    discourse:
-      enabled: false
-      shared: false
-    mattermost:
-      enabled: false
-      shared: false
-    matrix:
-      enabled: false
-      shared: false
-    zammad:
-      enabled: false
-      shared: false
-    openwebui:
-      enabled: false
-      shared: false
-    flowise:
-      enabled: false
-      shared: false
-    mastodon:
-      enabled: false
-      shared: false
-    peertube:
-      enabled: false
-      shared: false
-    moodle:
-      enabled: false
-      shared: false
-    suitecrm:
-      enabled: false
-      shared: false
-- services:
-    ldap:
-      enabled: true
-      shared: true
-    sso:
+    collabora:
       enabled: false
       shared: false
     bigbluebutton:
@@ -185,37 +130,329 @@
     xwiki:
       enabled: false
       shared: false
-    collabora:
-      enabled: false
-      shared: false
-    coturn:
+    seaweedfs:
       enabled: false
       shared: false
     css:
       enabled: false
       shared: false
-    dashboard:
+    prometheus:
       enabled: false
       shared: false
-    email:
+    openproject:
+      enabled: false
+      shared: false
+    gitlab:
+      enabled: false
+      shared: false
+    discourse:
+      enabled: false
+      shared: false
+    mattermost:
+      enabled: false
+      shared: false
+    matrix:
+      enabled: false
+      shared: false
+    zammad:
+      enabled: true
+      shared: true
+    openwebui:
+      enabled: false
+      shared: false
+    flowise:
+      enabled: true
+      shared: true
+    mastodon:
+      enabled: false
+      shared: false
+    peertube:
+      enabled: false
+      shared: false
+- services:
+    sso:
+      enabled: false
+      shared: false
+    coturn:
       enabled: false
       shared: false
     logout:
       enabled: false
       shared: false
+    ldap:
+      enabled: false
+      shared: false
+    dashboard:
+      enabled: false
+      shared: false
     matomo:
+      enabled: false
+      shared: false
+    email:
+      enabled: false
+      shared: false
+    mariadb:
+      enabled: false
+      shared: false
+    talk:
       enabled: false
       shared: false
     onlyoffice:
       enabled: false
       shared: false
-    prometheus:
+    collabora:
+      enabled: false
+      shared: false
+    bigbluebutton:
+      enabled: false
+      shared: false
+    xwiki:
       enabled: false
       shared: false
     seaweedfs:
       enabled: false
       shared: false
+    css:
+      enabled: false
+      shared: false
+    prometheus:
+      enabled: false
+      shared: false
+    openproject:
+      enabled: true
+      shared: true
+    gitlab:
+      enabled: false
+      shared: false
+    discourse:
+      enabled: false
+      shared: false
+    mattermost:
+      enabled: true
+      shared: true
+    matrix:
+      enabled: true
+      shared: true
+    zammad:
+      enabled: false
+      shared: false
+    openwebui:
+      enabled: false
+      shared: false
+    flowise:
+      enabled: false
+      shared: false
+    mastodon:
+      enabled: false
+      shared: false
+    peertube:
+      enabled: false
+      shared: false
+- services:
+    sso:
+      enabled: false
+      shared: false
+    coturn:
+      enabled: false
+      shared: false
+    logout:
+      enabled: false
+      shared: false
+    ldap:
+      enabled: false
+      shared: false
+    dashboard:
+      enabled: false
+      shared: false
+    matomo:
+      enabled: false
+      shared: false
+    email:
+      enabled: false
+      shared: false
+    mariadb:
+      enabled: false
+      shared: false
     talk:
+      enabled: false
+      shared: false
+    onlyoffice:
+      enabled: false
+      shared: false
+    collabora:
+      enabled: false
+      shared: false
+    bigbluebutton:
+      enabled: false
+      shared: false
+    xwiki:
+      enabled: false
+      shared: false
+    seaweedfs:
+      enabled: false
+      shared: false
+    css:
+      enabled: false
+      shared: false
+    prometheus:
+      enabled: false
+      shared: false
+    openproject:
+      enabled: false
+      shared: false
+    gitlab:
+      enabled: true
+      shared: true
+    discourse:
+      enabled: false
+      shared: false
+    mattermost:
+      enabled: false
+      shared: false
+    matrix:
+      enabled: false
+      shared: false
+    zammad:
+      enabled: false
+      shared: false
+    openwebui:
+      enabled: false
+      shared: false
+    flowise:
+      enabled: false
+      shared: false
+    mastodon:
+      enabled: true
+      shared: true
+    peertube:
+      enabled: false
+      shared: false
+- services:
+    sso:
+      enabled: false
+      shared: false
+    coturn:
+      enabled: false
+      shared: false
+    logout:
+      enabled: false
+      shared: false
+    ldap:
+      enabled: false
+      shared: false
+    dashboard:
+      enabled: false
+      shared: false
+    matomo:
+      enabled: false
+      shared: false
+    email:
+      enabled: false
+      shared: false
+    mariadb:
+      enabled: false
+      shared: false
+    talk:
+      enabled: false
+      shared: false
+    onlyoffice:
+      enabled: false
+      shared: false
+    collabora:
+      enabled: false
+      shared: false
+    bigbluebutton:
+      enabled: false
+      shared: false
+    xwiki:
+      enabled: false
+      shared: false
+    seaweedfs:
+      enabled: false
+      shared: false
+    css:
+      enabled: false
+      shared: false
+    prometheus:
+      enabled: false
+      shared: false
+    openproject:
+      enabled: false
+      shared: false
+    gitlab:
+      enabled: false
+      shared: false
+    discourse:
+      enabled: true
+      shared: true
+    mattermost:
+      enabled: false
+      shared: false
+    matrix:
+      enabled: false
+      shared: false
+    zammad:
+      enabled: false
+      shared: false
+    openwebui:
+      enabled: true
+      shared: true
+    flowise:
+      enabled: false
+      shared: false
+    mastodon:
+      enabled: false
+      shared: false
+    peertube:
+      enabled: false
+      shared: false
+- services:
+    sso:
+      enabled: false
+      shared: false
+    coturn:
+      enabled: false
+      shared: false
+    logout:
+      enabled: false
+      shared: false
+    ldap:
+      enabled: false
+      shared: false
+    dashboard:
+      enabled: false
+      shared: false
+    matomo:
+      enabled: false
+      shared: false
+    email:
+      enabled: false
+      shared: false
+    mariadb:
+      enabled: false
+      shared: false
+    talk:
+      enabled: false
+      shared: false
+    onlyoffice:
+      enabled: false
+      shared: false
+    collabora:
+      enabled: false
+      shared: false
+    bigbluebutton:
+      enabled: false
+      shared: false
+    xwiki:
+      enabled: false
+      shared: false
+    seaweedfs:
+      enabled: false
+      shared: false
+    css:
+      enabled: false
+      shared: false
+    prometheus:
       enabled: false
       shared: false
     openproject:
@@ -246,11 +483,5 @@
       enabled: false
       shared: false
     peertube:
-      enabled: false
-      shared: false
-    moodle:
-      enabled: false
-      shared: false
-    suitecrm:
-      enabled: false
-      shared: false
+      enabled: true
+      shared: true

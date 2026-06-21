@@ -52,12 +52,32 @@ if TYPE_CHECKING:
 ROLES_DIR: Path = PROJECT_ROOT / "roles"
 
 
+def _bond_of(entry: Any) -> float:
+    """Service ``bond`` (coupling); absent/unparseable -> 1.0 (tightly coupled)."""
+    if not isinstance(entry, dict):
+        return 1.0
+    raw = entry.get("bond", 1.0)
+    if isinstance(raw, bool):
+        return 1.0
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return 1.0
+
+
 def _direct_deps(
     role: str,
     config: dict[str, Any],
     registry: dict[str, dict[str, Any]],
     roles_dir: Path,
 ) -> set[str]:
+    # Bond-aware closure: only bond>=1 (same-host) services count toward the
+    # host's closure. bond<1 partners deploy on their own host, so they are NOT
+    # part of this role's closure and a later variant may enable them without
+    # variant 0 having to list them (only the coupled bond=1 set must).
+    if isinstance(config, dict) and isinstance(config.get("services"), dict):
+        coupled = {k: v for k, v in config["services"].items() if _bond_of(v) >= 1.0}
+        config = {**config, "services": coupled}
     deps = set(resolve_service_dependency_roles_from_config(config, registry))
     # Shape errors in run_after are caught by their own lint; here we
     # treat the role as having no run_after so this lint stays focused
