@@ -10,12 +10,12 @@ This role provisions a dedicated machine as one or more GitHub Actions self-host
 
 Registration tokens are fetched from the GitHub API at container start time via `RUNNER_API_TOKEN` (a GitHub PAT with repo scope). The token is stored in a per-instance `.env` file on disk (mode `0600`, owned by `github-runner`).
 
-The `runner_distribution` variable selects distro-specific package installation tasks (Debian, Ubuntu, Arch Linux, or Fedora/EL). The role is designed to be driven by the `make runner-ci-deploy` target; see the end-to-end guide below.
+The `RUNNER_DISTRIBUTION` variable selects distro-specific package installation tasks (Debian, Ubuntu, Arch Linux, or Fedora/EL). The role is designed to be driven by the `make runner-ci-deploy` target; see the end-to-end guide below.
 
 ## Features
 
 - **Self-hosted:** Run CI jobs on your own server without consuming GitHub-hosted runner minutes.
-- **Multi-instance:** Provisions N runner instances per host via `runner_count`; each handles one CI job at a time.
+- **Multi-instance:** Provisions N runner instances per host via `RUNNER_COUNT`; each handles one CI job at a time.
 - **Ephemeral containers:** Each runner instance is a Docker container (`restart: unless-stopped`). After each job the container re-registers with GitHub as a fresh ephemeral runner (`--ephemeral`).
 - **DooD isolation:** Runner containers mount the host Docker socket. Each job gets its own Infinito DinD container with a unique subnet, container names, and Docker volume — parallel jobs never conflict.
 - **Automatic registration:** The runner container fetches a short-lived GitHub registration token from the API at startup using `RUNNER_API_TOKEN`.
@@ -125,17 +125,17 @@ python -m cli.deploy.runner <hostname> \
 | `RUNNER_GITHUB_OWNER` | `meta/services.yml` | GitHub user or organisation that owns the target repository. |
 | `RUNNER_GITHUB_REPO` | `meta/services.yml` | Repository name the runners register with. |
 | `RUNNER_API_TOKEN` | `GH_TOKEN` env var | GitHub PAT with repo scope for runner registration. Stored in per-instance `.env` (mode `0600`). |
-| `runner_name` | `{{ inventory_hostname }}` | Base name; each instance is named `<runner_name>-<N>`. |
-| `runner_labels` | `self-hosted,linux,{{ runner_distribution }}` | Comma-separated labels assigned to every runner instance. |
-| `runner_install_dir` | `/opt/github-runner` | Base installation directory; instances land in `<dir>/<N>/`. |
-| `runner_user` | `github-runner` | System user account that owns all runner files and processes. |
-| `runner_count` | auto (`ansible_processor_vcpus // runner_cpus`) | Number of runner instances; auto-scales to available CPU cores. |
-| `runner_cpus` | `2` | CPU limit per runner instance (matches GitHub-hosted 2-core quota). |
-| `runner_docker_base` | `/mnt/docker` | Base path for per-instance Docker volume directories. |
-| `runner_project_prefix` | `runner` | Prefix for per-instance Docker Compose project names and `INFINITO_RUNNER_PREFIX`. |
-| `runner_sysctl_conf` | `/etc/sysctl.d/99-github-runner.conf` | Path to the sysctl config file written for inotify tuning. |
+| `RUNNER_NAME` | `{{ inventory_hostname }}` | Base name; each instance is named `<RUNNER_NAME>-<N>`. |
+| `RUNNER_LABELS` | `self-hosted,linux,{{ RUNNER_DISTRIBUTION }}` | Comma-separated labels assigned to every runner instance. |
+| `RUNNER_INSTALL_DIR` | `/opt/github-runner` | Base installation directory; instances land in `<dir>/<N>/`. |
+| `RUNNER_USER` | `github-runner` | System user account that owns all runner files and processes. |
+| `RUNNER_COUNT` | auto (`ansible_processor_vcpus // RUNNER_CPUS`) | Number of runner instances; auto-scales to available CPU cores. |
+| `RUNNER_CPUS` | `2` | CPU limit per runner instance (matches GitHub-hosted 2-core quota). |
+| `RUNNER_DOCKER_BASE` | `/mnt/docker` | Base path for per-instance Docker volume directories. |
+| `RUNNER_PROJECT_PREFIX` | `runner` | Prefix for per-instance Docker Compose project names and `INFINITO_RUNNER_PREFIX`. |
+| `RUNNER_SYSCTL_CONF` | `/etc/sysctl.d/99-github-runner.conf` | Path to the sysctl config file written for inotify tuning. |
 
-`runner_distribution` is **required** and has no default; it is passed automatically by the CLI.
+`RUNNER_DISTRIBUTION` is **required** and has no default; it is passed automatically by the CLI.
 
 ## Further Resources
 

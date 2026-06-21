@@ -9,7 +9,7 @@
     value: "{{ item.value }}"
     state: present
     reload: true
-    sysctl_file: "{{ runner_sysctl_conf }}"
+    sysctl_file: "{{ RUNNER_SYSCTL_CONF }}"
   loop:
     - { key: fs.inotify.max_user_instances, value: "8192" }
     - { key: fs.inotify.max_user_watches, value: "524288" }
@@ -18,15 +18,15 @@
 
 - name: Create GitHub Actions runner system group
   group:
-    name: "{{ runner_user }}"
-    gid: "{{ runner_gid }}"
+    name: "{{ RUNNER_USER }}"
+    gid: "{{ RUNNER_GID }}"
     system: true
 
 - name: Create GitHub Actions runner system user
   user:
-    name: "{{ runner_user }}"
-    uid: "{{ runner_uid }}"
-    group: "{{ runner_user }}"
+    name: "{{ RUNNER_USER }}"
+    uid: "{{ RUNNER_UID }}"
+    group: "{{ RUNNER_USER }}"
     groups: docker
     append: true
     system: true
@@ -37,7 +37,7 @@
 - name: Grant passwordless sudo for CI cleanup operations
   template:
     src: sudoers.j2
-    dest: "/etc/sudoers.d/{{ runner_user }}"
+    dest: "/etc/sudoers.d/{{ RUNNER_USER }}"
     mode: '0440'
     validate: visudo -cf %s
   when: not (DOCKER_IN_CONTAINER | bool)
@@ -46,8 +46,8 @@
   file:
     path: "{{ RUNNER_INSTALL_DIR }}"
     state: directory
-    owner: "{{ runner_user }}"
-    group: "{{ runner_user }}"
+    owner: "{{ RUNNER_USER }}"
+    group: "{{ RUNNER_USER }}"
     mode: '0755'
 
 - name: Fetch latest GitHub Actions runner version tag
@@ -66,8 +66,8 @@
   get_url_retry:
     url: "https://github.com/actions/runner/releases/download/v{{ runner_resolved_version }}/actions-runner-linux-x64-{{ runner_resolved_version }}.tar.gz"
     dest: "{{ RUNNER_INSTALL_DIR }}/actions-runner.tar.gz"
-    owner: "{{ runner_user }}"
-    group: "{{ runner_user }}"
+    owner: "{{ RUNNER_USER }}"
+    group: "{{ RUNNER_USER }}"
     mode: '0644'
 
 - name: Find existing runner instance directories
@@ -85,10 +85,10 @@
          | map(attribute='path')
          | map('basename')
          | map('int')
-         | select('gt', runner_count | int)
+         | select('gt', RUNNER_COUNT | int)
          | list }}
 
-- name: Remove runner instances beyond runner_count
+- name: Remove runner instances beyond RUNNER_COUNT
   include_tasks: cleanup_instance.yml
   loop: "{{ _runners_to_remove }}"
   loop_control:
@@ -101,57 +101,57 @@
   register: _all_containers_info
   changed_when: false
 
-- name: Remove orphaned runner containers (instances beyond runner_count)
+- name: Remove orphaned runner containers (instances beyond RUNNER_COUNT)
   community.docker.docker_container:
     name: "{{ (item.Names | default([item.Name]))[0] | regex_replace('^/', '') }}"
     state: absent
     force_kill: true
   vars:
     _project: "{{ (item.Labels | default({}))['com.docker.compose.project'] | default('') }}"
-    _instance_num: "{{ _project | regex_replace('^' ~ runner_project_prefix ~ '-', '') }}"
+    _instance_num: "{{ _project | regex_replace('^' ~ RUNNER_PROJECT_PREFIX ~ '-', '') }}"
   loop: "{{ _all_containers_info.containers }}"
   loop_control:
     label: "{{ (item.Names | default([item.Name]))[0] }}"
   when:
-    - _project is match('^' ~ runner_project_prefix ~ '-[0-9]+$')
-    - _instance_num | int > runner_count | int
+    - _project is match('^' ~ RUNNER_PROJECT_PREFIX ~ '-[0-9]+$')
+    - _instance_num | int > RUNNER_COUNT | int
   changed_when: true
   failed_when: false
 
-- name: Unmount tmpfs from orphaned Docker volume directories (instances beyond runner_count)
+- name: Unmount tmpfs from orphaned Docker volume directories (instances beyond RUNNER_COUNT)
   ansible.builtin.mount:
-    path: "{{ runner_docker_base }}/{{ item }}"
+    path: "{{ RUNNER_DOCKER_BASE }}/{{ item }}"
     state: unmounted
-  loop: "{{ range(runner_count | int + 1, runner_count | int + 50) | list }}"
+  loop: "{{ range(RUNNER_COUNT | int + 1, RUNNER_COUNT | int + 50) | list }}"
   failed_when: false
   changed_when: false
 
-- name: Remove orphaned Docker volume directories (instances beyond runner_count)
+- name: Remove orphaned Docker volume directories (instances beyond RUNNER_COUNT)
   ansible.builtin.file:
-    path: "{{ runner_docker_base }}/{{ item }}"
+    path: "{{ RUNNER_DOCKER_BASE }}/{{ item }}"
     state: absent
-  loop: "{{ range(runner_count | int + 1, runner_count | int + 50) | list }}"
+  loop: "{{ range(RUNNER_COUNT | int + 1, RUNNER_COUNT | int + 50) | list }}"
 
 - name: Unmount any existing tmpfs from inner Docker volume directories
   ansible.builtin.mount:
-    path: "{{ runner_docker_base }}/{{ item }}"
+    path: "{{ RUNNER_DOCKER_BASE }}/{{ item }}"
     state: unmounted
-  loop: "{{ range(1, runner_count | int + 1) | list }}"
+  loop: "{{ range(1, RUNNER_COUNT | int + 1) | list }}"
   failed_when: false
   changed_when: false
 
 - name: Create inner Docker volume directories for runners
   file:
-    path: "{{ runner_docker_base }}/{{ item }}"
+    path: "{{ RUNNER_DOCKER_BASE }}/{{ item }}"
     state: directory
-    owner: "{{ runner_user }}"
-    group: "{{ runner_user }}"
+    owner: "{{ RUNNER_USER }}"
+    group: "{{ RUNNER_USER }}"
     mode: '0755'
-  loop: "{{ range(1, runner_count | int + 1) | list }}"
+  loop: "{{ range(1, RUNNER_COUNT | int + 1) | list }}"
 
 - name: Provision runner instances
   include_tasks: instance.yml
-  loop: "{{ range(1, runner_count | int + 1) | list }}"
+  loop: "{{ range(1, RUNNER_COUNT | int + 1) | list }}"
   loop_control:
     loop_var: runner_instance
 
@@ -174,16 +174,16 @@
   ansible.builtin.template:
     src: compose.yml.j2
     dest: "{{ RUNNER_INSTALL_DIR }}/compose.yml"
-    owner: "{{ runner_user }}"
-    group: "{{ runner_user }}"
+    owner: "{{ RUNNER_USER }}"
+    group: "{{ RUNNER_USER }}"
     mode: '0640'
 
 - name: Create runner image build context directory
   ansible.builtin.file:
     path: "{{ RUNNER_INSTALL_DIR }}/build"
     state: directory
-    owner: "{{ runner_user }}"
-    group: "{{ runner_user }}"
+    owner: "{{ RUNNER_USER }}"
+    group: "{{ RUNNER_USER }}"
     mode: '0755'
 
 - name: Copy Dockerfile to build context
@@ -200,15 +200,15 @@
 
 - name: Build runner container image
   community.docker.docker_image:
-    name: "{{ runner_image_name }}"
-    tag: "{{ runner_image_tag }}"
+    name: "{{ RUNNER_IMAGE_NAME }}"
+    tag: "{{ RUNNER_IMAGE_TAG }}"
     source: build
     build:
       path: "{{ RUNNER_INSTALL_DIR }}/build"
       args:
         RUNNER_BASE_IMAGE: "{{ RUNNER_BASE_IMAGE }}"
-        RUNNER_UID: "{{ runner_uid }}"
-        RUNNER_GID: "{{ runner_gid }}"
+        RUNNER_UID: "{{ RUNNER_UID }}"
+        RUNNER_GID: "{{ RUNNER_GID }}"
     force_source: true
 
 - name: Deploy runner compose stack

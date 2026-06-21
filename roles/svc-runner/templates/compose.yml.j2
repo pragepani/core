@@ -1,7 +1,7 @@
 {% include 'roles/sys-svc-compose/templates/base.yml.j2' %}
-{% for i in range(1, runner_count | int + 1) %}
+{% for i in range(1, RUNNER_COUNT | int + 1) %}
   runner-{{ i }}:
-    image: "{{ runner_image_name }}:{{ runner_image_tag }}"
+    image: "{{ RUNNER_IMAGE_NAME }}:{{ RUNNER_IMAGE_TAG }}"
     container_name: runner-{{ i }}
     restart: unless-stopped
     working_dir: "{{ RUNNER_INSTALL_DIR }}/{{ i }}"
@@ -9,7 +9,7 @@
     volumes:
       - "{{ RUNNER_INSTALL_DIR }}/{{ i }}:{{ RUNNER_INSTALL_DIR }}/{{ i }}"
       - /var/run/docker.sock:/var/run/docker.sock
-      - "{{ runner_docker_base }}/{{ i }}:{{ runner_docker_base }}/{{ i }}"
+      - "{{ RUNNER_DOCKER_BASE }}/{{ i }}:{{ RUNNER_DOCKER_BASE }}/{{ i }}"
 {% if DOCKER_IN_CONTAINER | bool %}
       - /opt/src/infinito:/opt/src/infinito
 {% endif %}
