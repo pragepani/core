@@ -1,5 +1,5 @@
 ---
-enabled: true
+enabled: "{{ not (lookup('config', 'web-app-nextcloud', 'addons.onlyoffice.enabled') | bool) }}"
 required: true
 mechanism: plugin
 source: upstream
