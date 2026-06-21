@@ -10,7 +10,9 @@ from utils.annotations.message import warning
 _BUFFER_SECONDS = 30 * 60
 
 
-def _parse_duration_seconds(raw: str) -> int | None:
+def _parse_duration_seconds(raw: str | None) -> int | None:
+    if not raw:
+        return None
     raw = raw.strip().lower()
     if not raw:
         return None
@@ -33,7 +35,7 @@ class RuntimeBudget:
 
     def __init__(self) -> None:
         self.max_seconds = _parse_duration_seconds(
-            os.environ.get("INFINITO_MAX_RUNTIME", "")
+            os.environ.get("INFINITO_MAX_RUNTIME")
         )
         self._start = time.monotonic()
         self._longest_round = 0.0
