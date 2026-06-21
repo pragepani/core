@@ -238,12 +238,16 @@ peertube:
   enabled: "{{ 'web-app-peertube' in group_names }}"
   shared: "{{ 'web-app-peertube' in group_names }}"
 # nocheck: playwright-service-flag: bridged moodle partner, covered by partner role spec
+# TODO(bridge): no nc-33-compatible integration_moodle on the app store (absent for nc 30/32/33).
+# Re-enable enabled/shared (back to the "web-app-moodle in group_names" form) once a plugin ships.
 moodle:
   bond: 0.5
-  enabled: "{{ 'web-app-moodle' in group_names }}"
-  shared: "{{ 'web-app-moodle' in group_names }}"
+  enabled: false # nocheck: dynamic-flag
+  shared: false # nocheck: dynamic-flag
 # nocheck: playwright-service-flag: bridged suitecrm partner, covered by partner role spec
+# TODO(bridge): integration_suitecrm requires nc <= 24 (see meta/addons/integration_suitecrm.yml).
+# Re-enable enabled/shared (back to the "web-app-suitecrm in group_names" form) once a plugin ships.
 suitecrm:
   bond: 0.5
-  enabled: "{{ 'web-app-suitecrm' in group_names }}"
-  shared: "{{ 'web-app-suitecrm' in group_names }}"
+  enabled: false # nocheck: dynamic-flag
+  shared: false # nocheck: dynamic-flag
