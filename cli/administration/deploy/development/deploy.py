@@ -17,7 +17,6 @@ from .common import (
     resolve_container,
 )
 from .inventory import plan_dev_inventory_matrix
-from .runtime_budget import RuntimeBudget
 from .variant_select import add_variant_args, apply_variant_filter
 
 if TYPE_CHECKING:
@@ -250,7 +249,6 @@ def handler(args: argparse.Namespace) -> int:
     container_name = resolve_container()
 
     rc = 0
-    budget = RuntimeBudget()
     for plan_index, (
         round_index,
         inv_dir,
@@ -258,9 +256,6 @@ def handler(args: argparse.Namespace) -> int:
         include_R,
         purge_set_R,
     ) in enumerate(plan):
-        if budget.exhausted(plan_index, len(plan)):
-            break
-        budget.start_round()
         round_include = [role for role in include_R if role not in disabled_app_ids]
         round_deploy_ids = round_include
 
@@ -313,7 +308,5 @@ def handler(args: argparse.Namespace) -> int:
             )
             if rc != 0:
                 return rc
-
-        budget.end_round()
 
     return rc
