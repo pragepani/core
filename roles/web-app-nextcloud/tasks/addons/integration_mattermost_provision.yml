@@ -28,7 +28,8 @@
     -e MM_ADMIN_LOGIN={{ lookup('users', 'administrator').email }}
     -e MM_ADMIN_PASS={{ lookup('users', 'administrator').password }}
     -e MM_APP_NAME=Nextcloud
-    -e MM_CALLBACK={{ nextcloud_mm_callback_url }}
+    -e NC_BASE_URL={{ NEXTCLOUD_URL }}
+    -e NC_REDIRECT_PATH={{ nextcloud_mm_redirect_path }}
     -e MM_HOMEPAGE={{ NEXTCLOUD_URL }}
     {{ nextcloud_mm_container }}
     bash -s

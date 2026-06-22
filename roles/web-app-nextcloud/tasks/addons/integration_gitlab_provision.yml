@@ -6,7 +6,9 @@
       - exec
       - -i
       - -e
-      - "NC_REDIRECT_URI={{ nextcloud_gl_redirect_uri }}"
+      - "NC_BASE_URL={{ nextcloud_gl_nc_base_url }}"
+      - -e
+      - "NC_REDIRECT_PATH=/apps/integration_gitlab/oauth-redirect"
       - -e
       - "NC_HAS_SECRET={{ nextcloud_gl_client_secret_current.stdout | trim }}"
       - "{{ nextcloud_gl_container }}"

@@ -12,7 +12,8 @@
 #   MM_ADMIN_LOGIN admin login id (email or username)
 #   MM_ADMIN_PASS  admin password
 #   MM_APP_NAME    OAuth app display name (stable identity key)
-#   MM_CALLBACK    Nextcloud oauth-redirect callback url
+#   NC_BASE_URL    Nextcloud base url
+#   NC_REDIRECT_PATH integration_mattermost oauth-redirect path (leading slash)
 #   MM_HOMEPAGE    Nextcloud base url
 set -euo pipefail
 
@@ -56,11 +57,13 @@ else
     curl -sS -X POST "${api}/oauth/apps" \
       -H "${auth}" -H 'Content-Type: application/json' \
       -d "$(python3 -c 'import json,os
+base=os.environ["NC_BASE_URL"].rstrip("/")
+path=os.environ["NC_REDIRECT_PATH"]
 print(json.dumps({
   "name": os.environ["MM_APP_NAME"],
   "description": "Nextcloud integration_mattermost connector",
   "homepage": os.environ["MM_HOMEPAGE"],
-  "callback_urls": [os.environ["MM_CALLBACK"]],
+  "callback_urls": [base+path, base+"/index.php"+path],
   "is_trusted": True,
 }))')"
   )"

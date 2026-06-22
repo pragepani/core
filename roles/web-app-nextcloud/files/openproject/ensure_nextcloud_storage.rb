@@ -38,12 +38,17 @@ if application && nc_client_id.empty? && nc_has_op_secret.empty?
   application = nil
 end
 
+redirect_uri = [
+  File.join(host, "apps/integration_openproject/oauth-redirect"),
+  File.join(host, "index.php/apps/integration_openproject/oauth-redirect")
+].join("\n")
+
 if application.nil?
   result = ::OAuth::Applications::CreateService
     .new(user: creator)
     .call(
       name: "#{name} (Nextcloud)",
-      redirect_uri: File.join(host, "index.php/apps/integration_openproject/oauth-redirect"),
+      redirect_uri: redirect_uri,
       scopes: "api_v3",
       confidential: true,
       owner: creator,
