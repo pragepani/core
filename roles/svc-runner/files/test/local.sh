@@ -55,21 +55,17 @@ if [[ -n "${GITHUB_TOKEN:-}" ]] && [[ "${INFINITO_IMAGE_TAG:-}" == ci-* ]]; then
     container exec "${RUNNER_PROJECT_PREFIX}-1" \
         bash -c "cd ${_iso_src} && make install"
 
-    # Start from clean nested state, like a fresh CI run. /etc/nginx is a
-    # named volume (svc-prx-openresty meta/volumes.yml); a prior run can
-    # leave nginx.conf there as a directory, breaking the openresty
-    # bootstrap. Remove the nested project's containers + volumes first.
-    container exec "${RUNNER_PROJECT_PREFIX}-1" \
-        bash -c "docker ps -aq --filter label=com.docker.compose.project=infinito | xargs -r docker rm -f" \
-        || true
-    container exec "${RUNNER_PROJECT_PREFIX}-1" \
-        bash -c "docker volume ls -q --filter name=^infinito_ | xargs -r docker volume rm" \
-        || true
-
-    # Deploy web-app-dashboard exactly as the smoke test does.
-    # DooD routes Docker commands to the DinD daemon, so the infinito
-    # container and web-app-dashboard containers are created inside DinD —
-    # the same topology as production, one Docker level down.
+    # Deploy web-app-dashboard exactly as the smoke test does, retrying up to
+    # ${deploy_attempts} times. DooD routes Docker commands to the DinD daemon,
+    # so the infinito container and web-app-dashboard containers are created
+    # inside DinD — the same topology as production, one Docker level down.
+    #
+    # Retry rationale: over the multi-hop DinD egress the nested apt index is
+    # occasionally pulled incomplete — apt-get update reports success but a
+    # component is missing, so the first package install fails with
+    # "no installation candidate". This path does not happen on single-hop
+    # GitHub-hosted runners. Each attempt wipes nested state and re-pulls the
+    # index from scratch, matching a fresh CI run.
     #
     # Override COMPOSE_PROJECT_NAME / INFINITO_RUNNER_PREFIX: runner-1's
     # own env_file sets both to "runner-1". Without overriding, the nested
@@ -85,26 +81,48 @@ if [[ -n "${GITHUB_TOKEN:-}" ]] && [[ "${INFINITO_IMAGE_TAG:-}" == ci-* ]]; then
     # execute. CI=true makes the deploy behave like GitHub-hosted CI:
     # the package-cache stays off (registry_cache_active = not is_ci), so
     # apt/pip/npm/image pulls go direct — avoiding the flaky nested cache.
-    container exec \
-        -e "COMPOSE_PROJECT_NAME=infinito" \
-        -e "INFINITO_RUNNER_PREFIX=infinito" \
-        -e "RUNTIME=github" \
-        -e "CI=true" \
-        -e "apps=web-app-dashboard" \
-        -e "disable=matomo" \
-        -e "INFINITO_DEPLOY_TYPE=server" \
-        -e "INFINITO_DISTROS=debian" \
-        -e "INFINITO_INVENTORY_DIR=/tmp/runner-dind-inventory" \
-        -e "INFINITO_DOCKER_VOLUME=/tmp/runner-dind-docker" \
-        -e "INFINITO_IMAGE_TAG=${INFINITO_IMAGE_TAG}" \
-        -e "INFINITO_GHCR_MIRROR_PREFIX=${INFINITO_GHCR_MIRROR_PREFIX:-}" \
-        -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
-        -e "GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-}" \
-        -e "GITHUB_REPOSITORY_OWNER=${GITHUB_REPOSITORY_OWNER:-}" \
-        -e "ANSIBLE_LOG_PATH=/tmp/ansible-runner-dind-test.log" \
-        "${RUNNER_PROJECT_PREFIX}-1" \
-        bash "${_iso_src}/scripts/tests/deploy/ci/all.sh"
+    deploy_attempts=3
+    deploy_ok=0
+    for attempt in $(seq 1 "${deploy_attempts}"); do
+        echo "DinD mode: nested deploy attempt ${attempt}/${deploy_attempts}..."
 
+        # Start from clean nested state, like a fresh CI run. /etc/nginx is a
+        # named volume (svc-prx-openresty meta/volumes.yml); a prior run can
+        # leave nginx.conf there as a directory, breaking the openresty
+        # bootstrap. Remove the nested project's containers + volumes first.
+        container exec "${RUNNER_PROJECT_PREFIX}-1" \
+            bash -c "docker ps -aq --filter label=com.docker.compose.project=infinito | xargs -r docker rm -f" \
+            || true
+        container exec "${RUNNER_PROJECT_PREFIX}-1" \
+            bash -c "docker volume ls -q --filter name=^infinito_ | xargs -r docker volume rm" \
+            || true
+
+        if container exec \
+            -e "COMPOSE_PROJECT_NAME=infinito" \
+            -e "INFINITO_RUNNER_PREFIX=infinito" \
+            -e "RUNTIME=github" \
+            -e "CI=true" \
+            -e "apps=web-app-dashboard" \
+            -e "disable=matomo" \
+            -e "INFINITO_DEPLOY_TYPE=server" \
+            -e "INFINITO_DISTROS=debian" \
+            -e "INFINITO_INVENTORY_DIR=/tmp/runner-dind-inventory" \
+            -e "INFINITO_DOCKER_VOLUME=/tmp/runner-dind-docker" \
+            -e "INFINITO_IMAGE_TAG=${INFINITO_IMAGE_TAG}" \
+            -e "INFINITO_GHCR_MIRROR_PREFIX=${INFINITO_GHCR_MIRROR_PREFIX:-}" \
+            -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
+            -e "GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-}" \
+            -e "GITHUB_REPOSITORY_OWNER=${GITHUB_REPOSITORY_OWNER:-}" \
+            -e "ANSIBLE_LOG_PATH=/tmp/ansible-runner-dind-test.log" \
+            "${RUNNER_PROJECT_PREFIX}-1" \
+            bash "${_iso_src}/scripts/tests/deploy/ci/all.sh"; then
+            deploy_ok=1
+            break
+        fi
+        echo "WARN: nested deploy attempt ${attempt}/${deploy_attempts} failed"
+    done
+
+    [[ "${deploy_ok}" -eq 1 ]] || { echo "FAIL: nested deploy failed after ${deploy_attempts} attempts"; exit 1; }
     echo "OK: full deploy inside ${RUNNER_PROJECT_PREFIX}-1 succeeded"
 else
     echo "DinD mode: skipping full deploy test (GITHUB_TOKEN absent or INFINITO_IMAGE_TAG is not ci-<sha>)"
