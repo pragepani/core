@@ -4,6 +4,9 @@ domains:
     - microblog.{{ DOMAIN_PRIMARY }}
   aliases: []
 csp:
+  flags:
+    script-src-elem:
+      unsafe-inline: true
   whitelist:
     frame-src:
       - "*"
