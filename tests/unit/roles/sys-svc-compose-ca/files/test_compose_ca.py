@@ -122,7 +122,7 @@ class TestComposeCaInject(unittest.TestCase):
         """
         calls = []
 
-        def fake_run(cmd, *, cwd, env):
+        def fake_run(cmd, *, cwd, env, timeout=None, capture=True):
             calls.append(cmd)
 
             # container image inspect <image>: first missing, second exists
@@ -175,7 +175,7 @@ class TestComposeCaInject(unittest.TestCase):
         base_cmd = ["docker", "compose", "-p", "p", "-f", "compose.yml"]
         service_to_cmd = {"app": base_cmd, "worker": base_cmd}
 
-        def fake_run(cmd, *, cwd, env):
+        def fake_run(cmd, *, cwd, env, timeout=None, capture=True):
             calls.append(cmd)
 
             # container image inspect: first missing, second exists
@@ -222,7 +222,7 @@ class TestComposeCaInject(unittest.TestCase):
         base_cmd = ["docker", "compose", "-p", "p", "-f", "compose.yml"]
         service_to_cmd = {"worker": base_cmd}
 
-        def fake_run(cmd, *, cwd, env):
+        def fake_run(cmd, *, cwd, env, timeout=None, capture=True):
             calls.append(cmd)
 
             # image inspect: first missing, second exists after pull
@@ -271,7 +271,7 @@ class TestComposeCaInject(unittest.TestCase):
         """
         _read_text.return_value = "services:\n  app:\n    image: myimage:latest\n"
 
-        def fake_run(cmd, *, cwd, env):
+        def fake_run(cmd, *, cwd, env, timeout=None, capture=True):
             # compose ... config
             if (
                 len(cmd) >= 3
@@ -347,7 +347,7 @@ class TestComposeCaInject(unittest.TestCase):
         docker_image_has_bin_sh(): returns True when container run succeeds.
         """
 
-        def fake_run(cmd, *, cwd, env):
+        def fake_run(cmd, *, cwd, env, timeout=None, capture=True):
             self.assertEqual(
                 cmd[:6],
                 ["docker", "run", "--rm", "--entrypoint", "/bin/sh", "img:1"],
@@ -364,7 +364,7 @@ class TestComposeCaInject(unittest.TestCase):
         docker_image_has_bin_sh(): returns False when container run fails (distroless-like).
         """
 
-        def fake_run(cmd, *, cwd, env):
+        def fake_run(cmd, *, cwd, env, timeout=None, capture=True):
             return 1, "", 'exec: "/bin/sh": stat /bin/sh: no such file or directory'
 
         with patch.object(self.m, "run", side_effect=fake_run):
@@ -379,15 +379,10 @@ class TestComposeCaInject(unittest.TestCase):
         services = {"svc": {"image": "img:1"}}
         service_to_cmd = {"svc": ["docker", "compose", "-p", "p", "-f", "compose.yml"]}
 
-        # For this test, we simulate:
-        # - image exists
-        # - image inspect returns entrypoint/cmd (needed for effective_cmd computation)
-        with (
-            patch.object(self.m, "ensure_image_available", return_value=None),
-            patch.object(
-                self.m, "docker_image_inspect", return_value=(["/entry"], ["run"])
-            ),
-            patch.object(self.m, "docker_image_has_bin_sh", return_value=False),
+        with patch.object(
+            self.m,
+            "gather_image_meta",
+            return_value={"img:1": (True, ["/entry"], ["run"], False)},
         ):
             doc = self.m.render_override(
                 services,
@@ -432,14 +427,10 @@ class TestComposeCaInject(unittest.TestCase):
         services = {"svc": {"image": "img:1"}}
         service_to_cmd = {"svc": ["docker", "compose", "-p", "p", "-f", "compose.yml"]}
 
-        with (
-            patch.object(self.m, "ensure_image_available", return_value=None),
-            patch.object(
-                self.m,
-                "docker_image_inspect",
-                return_value=(["/entry"], ["run", "--flag"]),
-            ),
-            patch.object(self.m, "docker_image_has_bin_sh", return_value=True),
+        with patch.object(
+            self.m,
+            "gather_image_meta",
+            return_value={"img:1": (True, ["/entry"], ["run", "--flag"], True)},
         ):
             doc = self.m.render_override(
                 services,
@@ -469,14 +460,10 @@ class TestComposeCaInject(unittest.TestCase):
         }
         service_to_cmd = {"svc": ["docker", "compose", "-p", "p", "-f", "compose.yml"]}
 
-        with (
-            patch.object(self.m, "ensure_image_available", return_value=None),
-            patch.object(
-                self.m,
-                "docker_image_inspect",
-                return_value=(["/img-entry"], ["img-run"]),
-            ),
-            patch.object(self.m, "docker_image_has_bin_sh", return_value=True),
+        with patch.object(
+            self.m,
+            "gather_image_meta",
+            return_value={"img:1": (True, ["/img-entry"], ["img-run"], True)},
         ):
             doc = self.m.render_override(
                 services,
@@ -524,14 +511,10 @@ class TestComposeCaInject(unittest.TestCase):
         }
         service_to_cmd = {"svc": ["docker", "compose", "-p", "p", "-f", "compose.yml"]}
 
-        with (
-            patch.object(self.m, "ensure_image_available", return_value=None),
-            patch.object(
-                self.m,
-                "docker_image_inspect",
-                return_value=(["/entry"], ["run"]),
-            ),
-            patch.object(self.m, "docker_image_has_bin_sh", return_value=True),
+        with patch.object(
+            self.m,
+            "gather_image_meta",
+            return_value={"img:1": (True, ["/entry"], ["run"], True)},
         ):
             doc = self.m.render_override(
                 services,
@@ -551,10 +534,8 @@ class TestComposeCaInject(unittest.TestCase):
             "if ! grep -qF INFINITO_TAIGA_AUTH_CONFIG /taiga-back/settings/config.py ; then cat /taiga-back/settings/config.append.py >> /taiga-back/settings/config.py ; fi ; exec /taiga-back/docker/entrypoint.sh",
         )
 
-    def test_render_override_caches_bin_sh_probe_per_image(self):
-        """
-        docker_image_has_bin_sh() should be called once per image and cached across services.
-        """
+    def test_render_override_gathers_each_unique_image_once(self):
+        """Image metadata is gathered once per unique image, not per service."""
         services = {
             "a": {"image": "img:1"},
             "b": {"image": "img:1"},
@@ -564,15 +545,11 @@ class TestComposeCaInject(unittest.TestCase):
             "b": ["docker", "compose", "-p", "p", "-f", "compose.yml"],
         }
 
-        with (
-            patch.object(self.m, "ensure_image_available", return_value=None),
-            patch.object(
-                self.m, "docker_image_inspect", return_value=(["/entry"], ["run"])
-            ),
-            patch.object(
-                self.m, "docker_image_has_bin_sh", return_value=True
-            ) as p_has_sh,
-        ):
+        with patch.object(
+            self.m,
+            "gather_image_meta",
+            return_value={"img:1": (True, ["/entry"], ["run"], True)},
+        ) as p_gather:
             self.m.render_override(
                 services,
                 service_to_cmd,
@@ -583,7 +560,8 @@ class TestComposeCaInject(unittest.TestCase):
                 trust_name="infinito.local",
             )
 
-        self.assertEqual(p_has_sh.call_count, 1)
+        p_gather.assert_called_once()
+        self.assertEqual(p_gather.call_args.args[0], ["img:1"])
 
     def test_main_generates_override_includes_entrypoint_when_sh_exists(self):
         """
@@ -603,7 +581,7 @@ class TestComposeCaInject(unittest.TestCase):
             patch.object(Path, "write_text", autospec=True) as p_write,
         ):
 
-            def fake_run(cmd, *, cwd, env):
+            def fake_run(cmd, *, cwd, env, timeout=None, capture=True):
                 # compose ... config
                 if (
                     len(cmd) >= 3
@@ -695,16 +673,12 @@ class TestComposeCaInject(unittest.TestCase):
         services = {"svc": {"image": "img:1"}}
         service_to_cmd = {"svc": ["docker", "compose", "-p", "p", "-f", "compose.yml"]}
 
-        # Simulate an image whose Cmd contains a shell expansion.
-        # This is exactly the problematic case: Compose would otherwise turn $FOO into "" if unset on host.
-        with (
-            patch.object(self.m, "ensure_image_available", return_value=None),
-            patch.object(
-                self.m,
-                "docker_image_inspect",
-                return_value=([], ["sh", "-lc", 'exec "$CHESS_ENTRYPOINT_INT"']),
-            ),
-            patch.object(self.m, "docker_image_has_bin_sh", return_value=True),
+        with patch.object(
+            self.m,
+            "gather_image_meta",
+            return_value={
+                "img:1": (True, [], ["sh", "-lc", 'exec "$CHESS_ENTRYPOINT_INT"'], True)
+            },
         ):
             doc = self.m.render_override(
                 services,
@@ -731,14 +705,12 @@ class TestComposeCaInject(unittest.TestCase):
         services = {"svc": {"image": "img:1"}}
         service_to_cmd = {"svc": ["docker", "compose", "-p", "p", "-f", "compose.yml"]}
 
-        with (
-            patch.object(self.m, "ensure_image_available", return_value=None),
-            patch.object(
-                self.m,
-                "docker_image_inspect",
-                return_value=([], ["sh", "-lc", 'exec "$CHESS_ENTRYPOINT_INT"']),
-            ),
-            patch.object(self.m, "docker_image_has_bin_sh", return_value=False),
+        with patch.object(
+            self.m,
+            "gather_image_meta",
+            return_value={
+                "img:1": (True, [], ["sh", "-lc", 'exec "$CHESS_ENTRYPOINT_INT"'], False)
+            },
         ):
             doc = self.m.render_override(
                 services,
@@ -774,7 +746,7 @@ class TestComposeCaInject(unittest.TestCase):
             patch.object(Path, "write_text", autospec=True) as p_write,
         ):
 
-            def fake_run(cmd, *, cwd, env):
+            def fake_run(cmd, *, cwd, env, timeout=None, capture=True):
                 # compose ... config
                 if (
                     len(cmd) >= 3

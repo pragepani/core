@@ -10,8 +10,10 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -29,16 +31,39 @@ def die(msg: str, code: int = 2) -> None:
     raise SystemExit(code)
 
 
-def run(cmd: list[str], *, cwd: Path, env: dict[str, str]) -> tuple[int, str, str]:
-    p = subprocess.run(
+def run(
+    cmd: list[str],
+    *,
+    cwd: Path,
+    env: dict[str, str],
+    timeout: int = 600,
+    capture: bool = True,
+) -> tuple[int, str, str]:
+    # killpg the whole group on timeout: a daemon-side docker/buildx grandchild
+    # can keep the captured pipe open and make subprocess's own timeout inert.
+    pipe = subprocess.PIPE if capture else subprocess.DEVNULL
+    proc = subprocess.Popen(
         cmd,
         cwd=str(cwd),
         env=env,
         text=True,
-        capture_output=True,
-        check=False,
+        stdout=pipe,
+        stderr=pipe,
+        start_new_session=True,
     )
-    return p.returncode, (p.stdout or ""), (p.stderr or "")
+    try:
+        out, err = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            proc.kill()
+        try:
+            out, err = proc.communicate(timeout=30)
+        except subprocess.TimeoutExpired:
+            out, err = "", ""
+        return 124, (out or ""), f"timed out after {timeout}s: {' '.join(cmd)}"
+    return proc.returncode, (out or ""), (err or "")
 
 
 def run_checked(cmd: list[str], *, cwd: Path, env: dict[str, str], label: str) -> None:
@@ -259,8 +284,52 @@ def docker_image_has_bin_sh(image: str, *, cwd: Path, env: dict[str, str]) -> bo
         ["docker", "run", "--rm", "--entrypoint", "/bin/sh", image, "-c", "exit 0"],
         cwd=cwd,
         env=env,
+        timeout=60,
+        capture=False,
     )
     return rc == 0
+
+
+ImageMeta = tuple[bool, list[str], list[str], bool]  # (exists, entrypoint, cmd, has_sh)
+
+
+def _gather_one_image(image: str, *, cwd: Path, env: dict[str, str]) -> ImageMeta:
+    rc, out, _err = run(
+        ["docker", "image", "inspect", image], cwd=cwd, env=env, timeout=90
+    )
+    if rc != 0:
+        return (False, [], [], False)
+    try:
+        data = json.loads(out)
+    except json.JSONDecodeError:
+        return (False, [], [], False)
+    cfg = data[0].get("Config") if isinstance(data, list) and data else None
+    cfg = cfg if isinstance(cfg, dict) else {}
+    ep = cfg.get("Entrypoint")
+    cmd = cfg.get("Cmd")
+    ep_list = ep if isinstance(ep, list) and all(isinstance(x, str) for x in ep) else []
+    cmd_list = (
+        cmd if isinstance(cmd, list) and all(isinstance(x, str) for x in cmd) else []
+    )
+    has_sh = docker_image_has_bin_sh(image, cwd=cwd, env=env)
+    return (True, ep_list, cmd_list, has_sh)
+
+
+def gather_image_meta(
+    images: list[str], *, cwd: Path, env: dict[str, str]
+) -> dict[str, ImageMeta]:
+    """Gather (exists, entrypoint, cmd, has_sh) per unique image, concurrently
+    — the per-image docker reads dominate the inject and must not run serially
+    under DiD latency or they blow the handler timeout for many-service apps."""
+    if not images:
+        return {}
+    workers = min(8, len(images))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {
+            pool.submit(_gather_one_image, image, cwd=cwd, env=env): image
+            for image in images
+        }
+        return {futures[f]: f.result() for f in as_completed(futures)}
 
 
 def _has_build(svc: dict[str, Any]) -> bool:
@@ -469,7 +538,20 @@ def render_override(
     wrapper_container = "/tmp/infinito/bin/with-ca-trust.sh"  # noqa: S108
 
     out_services: dict[str, Any] = {}
-    sh_cache: dict[str, bool] = {}
+
+    image_meta = gather_image_meta(
+        sorted(
+            {
+                svc["image"].strip()
+                for svc in services.values()
+                if isinstance(svc, dict)
+                and isinstance(svc.get("image"), str)
+                and svc["image"].strip()
+            }
+        ),
+        cwd=cwd,
+        env=env,
+    )
 
     for name, svc in services.items():
         if not isinstance(svc, dict):
@@ -487,25 +569,17 @@ def render_override(
                 )
             img_ep, img_cmd = [], []
             img_name = ""
+            has_sh = False
         else:
             img_name = image.strip()
-            compose_cmd = service_to_compose_cmd.get(name)
-            if not compose_cmd:
-                die(f"Internal error: missing compose cmd mapping for service '{name}'")
-
-            ensure_image_available(
-                service_name=name,
-                svc=svc,
-                image=img_name,
-                services=services,
-                service_to_compose_cmd=service_to_compose_cmd,
-                compose_base_cmd=compose_cmd,
-                cwd=cwd,
-                env=env,
+            exists, raw_ep, raw_cmd, has_sh = image_meta.get(
+                img_name, (False, [], [], False)
             )
-            img_ep, img_cmd = docker_image_inspect(img_name, cwd=cwd, env=env)
-            img_ep = normalize_entrypoint(img_ep)
-            img_cmd = normalize_cmd(img_cmd)
+            # Unreadable image (missing, or inspect stalled under load) -> env-only.
+            if not exists:
+                has_sh = False
+            img_ep = normalize_entrypoint(raw_ep)
+            img_cmd = normalize_cmd(raw_cmd)
 
         final_ep = svc_ep or img_ep
         final_cmd = svc_cmd or img_cmd
@@ -514,11 +588,6 @@ def render_override(
             final_cmd = [_shell_payload(final_cmd)]
 
         effective_cmd = final_ep + final_cmd
-
-        if not effective_cmd:
-            die(
-                f"Service '{name}' resolved to empty effective command (image='{img_name or image}')"
-            )
 
         # Always inject env vars + mounts.
         override_svc: dict[str, Any] = {
@@ -536,18 +605,8 @@ def render_override(
             },
         }
 
-        # Only override entrypoint/command when /bin/sh exists (otherwise distroless breaks).
-        has_sh = False
-        if img_name:
-            if img_name in sh_cache:
-                has_sh = sh_cache[img_name]
-            else:
-                has_sh = docker_image_has_bin_sh(img_name, cwd=cwd, env=env)
-                sh_cache[img_name] = has_sh
-
-        if has_sh:
+        if has_sh and effective_cmd:
             override_svc["entrypoint"] = [wrapper_container]
-            # Escape $ -> $$ to prevent host-side Compose interpolation.
             override_svc["command"] = escape_compose_vars(effective_cmd)
 
         out_services[name] = override_svc
