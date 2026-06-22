@@ -6,13 +6,17 @@
 #   INFINITO_WHITELIST — optional space-separated allowlist
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+cd "${REPO_ROOT}"
+
+# shellcheck source=scripts/meta/env/python.sh
+source "${REPO_ROOT}/scripts/meta/env/python.sh"
+
 apps="$(./scripts/meta/resolve/apps.sh)"
 [[ -n "$apps" ]] || apps='[]'
 
-# Expand the flat app-id list into deploy-matrix entries, splitting any role
-# with more variants than INFINITO_VARIANT_BUNDLE_SIZE (default 3) into bundles
-# of consecutive variant indices — one runner per bundle.
-matrix="$(printf '%s' "$apps" | "${PYTHON:-python3}" -m utils.github.variant_bundles)"
+matrix="$(printf '%s' "$apps" | "${PYTHON}" -m utils.github.variant_bundles)"
 [[ -n "$matrix" ]] || matrix='[]'
 
 echo "apps=$matrix" >>"$GITHUB_OUTPUT"
