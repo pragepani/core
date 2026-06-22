@@ -10,6 +10,9 @@
     - mailu_user_existing_token is not none
     - mailu_user_existing_token.id is defined
   register: mailu_token_delete
+  until: mailu_token_delete.rc == 0
+  retries: 30
+  delay: 2
   changed_when: mailu_token_delete.rc == 0
   no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
 
@@ -44,6 +47,9 @@
   args:
     chdir: "{{ MAILU_INSTANCE_DIR }}"
   register: mailu_token_creation_request
+  until: mailu_token_creation_request.rc == 0
+  retries: 30
+  delay: 2
   failed_when: mailu_token_creation_request.rc != 0
   changed_when: mailu_token_creation_request.rc == 0
   no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
