@@ -1,4 +1,43 @@
 ---
-# No exception logic required: the admin key the app actually reads (oauth_instance_url) is
-# set generically by the config SPOT (meta/addons/integration_zammad.yml plugin_configuration
-# + tasks/plugin); per-user OAuth is authorised at runtime. Coupling is verified by the Playwright spec.
+# The generic config SPOT sets only oauth_instance_url; the per-user OAuth connect flow
+# additionally needs client_id/client_secret, which only exist once an OAuth (Doorkeeper)
+# application is registered on the partner Zammad. This hook provisions that application on
+# the partner and writes the returned credentials into Nextcloud, encrypted the same way the
+# integration_gitlab coupling does.
+- name: Resolve Zammad integration provisioning facts
+  set_fact:
+    nextcloud_zammad_container: "zammad-railsserver"
+    nextcloud_zammad_base_url: "{{ lookup('tls', 'web-app-zammad', 'url.base') | regex_replace('/$', '') }}"
+    nextcloud_zammad_nc_base_url: "{{ lookup('tls', 'web-app-nextcloud', 'url.base') | regex_replace('/$', '') }}"
+  changed_when: false
+
+- name: Probe whether the Zammad partner container is running
+  command: >
+    container exec {{ nextcloud_zammad_container }} true
+  register: nextcloud_zammad_partner_running
+  changed_when: false
+  failed_when: false
+
+- name: Read persisted integration_zammad OAuth client id
+  command: >
+    {{ NEXTCLOUD_DOCKER_EXEC_OCC }} config:app:get integration_zammad client_id
+  register: nextcloud_zammad_client_id_current
+  changed_when: false
+  failed_when: false
+
+- name: Read persisted integration_zammad OAuth client secret
+  command: >
+    {{ NEXTCLOUD_DOCKER_EXEC_OCC }} config:app:get integration_zammad client_secret
+  register: nextcloud_zammad_client_secret_current
+  changed_when: false
+  failed_when: false
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Provision the Zammad <-> Nextcloud OAuth coupling
+  include_tasks: "{{ [role_path, 'tasks/addons/integration_zammad_provision.yml'] | path_join }}"
+  when: >-
+    nextcloud_zammad_partner_running.rc == 0
+    and (
+      (nextcloud_zammad_client_id_current.stdout | trim) | length == 0
+      or (nextcloud_zammad_client_secret_current.stdout | trim) | length == 0
+    )

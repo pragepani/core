@@ -10,6 +10,7 @@ const nextcloudDirectLoginPassword = decodeDotenvQuotedValue(process.env.NEXTCLO
 const oidcIssuerUrl = decodeDotenvQuotedValue(process.env.OIDC_ISSUER_URL);
 const nextcloudBaseUrl = decodeDotenvQuotedValue(process.env.NEXTCLOUD_BASE_URL);
 const moodleBaseUrl = decodeDotenvQuotedValue(process.env.MOODLE_BASE_URL);
+const peertubeBaseUrl = decodeDotenvQuotedValue(process.env.PEERTUBE_BASE_URL);
 const nextcloudUsernameFieldPattern = /account name(?: or email)?|username(?: or email)?/i;
 const nextcloudCredentialSubmitPattern = /^(sign in|log in)$/i;
 
@@ -307,6 +308,7 @@ module.exports = {
     biberPassword,
     nextcloudBaseUrl,
     moodleBaseUrl,
+    peertubeBaseUrl,
     nextcloudUsernameFieldPattern,
     nextcloudCredentialSubmitPattern,
     nextcloudOidcEnabled,
