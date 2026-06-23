@@ -20,7 +20,8 @@
         application_id: "{{ _provider_role }}"
         domain: "{{ lookup('domain', _provider_role) }}"
         database_consumer_id: "{{ _provider_role }}"
-        compose_repository_url: ""
+        compose_repository_url: "{{ '' }}"
+        compose_repository_ref: "{{ '' }}"
         compose_repository_pull: false
       when: >-
         lookup(
