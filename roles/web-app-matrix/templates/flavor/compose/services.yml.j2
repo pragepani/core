@@ -18,14 +18,11 @@
     ports:
       - "{{ DOCKER_BIND_HOST }}:{{lookup('config', 'web-app-matrix', 'services.synapse.ports.local.http')}}:{{ container_port }}"
 {% include 'roles/sys-svc-container/templates/healthcheck/curl.yml.j2' %}
-{% if MATRIX_BRIDGES | length > 0 %}
+{% set _bridge_deps = {} %}
 {% for item in MATRIX_BRIDGES %}
-      mautrix-{{ item.bridge_name }}:
-        condition: service_healthy
+{% set _ = _bridge_deps.update({'mautrix-' ~ item.bridge_name: {'condition': 'service_healthy'}}) %}
 {% endfor %}
-{% else %}
-{% endif %}
-{{ lookup('container_depends_on', application_id) }}
+{{ lookup('container_depends_on', application_id, extra=_bridge_deps) }}
 {% include 'roles/sys-svc-container/templates/networks.yml.j2' %}
   element:
 {% set container_port = 80 %}
