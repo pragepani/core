@@ -11,4 +11,3 @@
     ollama:
       preload_models:
         - smollm2:135m
-      image: alpine/ollama
