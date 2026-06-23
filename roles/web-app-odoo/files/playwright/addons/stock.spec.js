@@ -15,13 +15,11 @@ test("addon stock: Inventory module is installed and serves its warehouse operat
 
     const breadcrumb = page
       .locator(".o_breadcrumb, .o_control_panel .o_breadcrumb, .breadcrumb-item.active, .o_last_breadcrumb_item")
-      .filter({ hasText: /inventory|operation|transfer|receipt|delivery|warehouse/i })
-      .first();
+      .filter({ hasText: /inventory|operation|transfer|receipt|delivery|warehouse/i });
     const appTitle = page
       .locator(".o_menu_brand, .o_navbar .o_menu_sections, .o_control_panel")
-      .getByText(/inventory|operations|transfers|warehouse/i)
-      .first();
-    const inventoryIdentity = breadcrumb.or(appTitle);
+      .getByText(/inventory|operations|transfers|warehouse/i);
+    const inventoryIdentity = breadcrumb.or(appTitle).first();
     await expect(
       inventoryIdentity,
       "the Inventory app identity (breadcrumb/title naming Inventory/Operations/Transfers/Warehouse) must render — when stock is enabled but the module failed to install, /odoo/inventory falls back to the generic home shell and this is absent, so the test MUST fail here, not pass on the bare web client"
