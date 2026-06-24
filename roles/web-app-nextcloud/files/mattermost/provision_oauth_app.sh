@@ -9,8 +9,11 @@
 #
 # Required env:
 #   MM_LOCAL_URL   internal base url, e.g. http://localhost:8065
-#   MM_ADMIN_LOGIN admin login id (email or username)
-#   MM_ADMIN_PASS  admin password
+#   MM_TOKEN       admin API token (preferred; e.g. a mmctl-generated PAT). When
+#                  set, MM_ADMIN_LOGIN/MM_ADMIN_PASS are ignored. Required when the
+#                  admin is an SSO user (password login is disabled).
+#   MM_ADMIN_LOGIN admin login id (email or username) — password-login fallback
+#   MM_ADMIN_PASS  admin password — password-login fallback
 #   MM_APP_NAME    OAuth app display name (stable identity key)
 #   NC_BASE_URL    Nextcloud base url
 #   NC_REDIRECT_PATH integration_mattermost oauth-redirect path (leading slash)
@@ -19,16 +22,20 @@ set -euo pipefail
 
 api="${MM_LOCAL_URL%/}/api/v4"
 
-token="$(
-  curl -sS -i -X POST "${api}/users/login" \
-    -H 'Content-Type: application/json' \
-    -d "$(printf '{"login_id":"%s","password":"%s"}' "${MM_ADMIN_LOGIN}" "${MM_ADMIN_PASS}")" \
-  | tr -d '\r' \
-  | awk 'tolower($1)=="token:"{print $2; exit}'
-)"
+if [ -n "${MM_TOKEN:-}" ]; then
+  token="${MM_TOKEN}"
+else
+  token="$(
+    curl -sS -i -X POST "${api}/users/login" \
+      -H 'Content-Type: application/json' \
+      -d "$(printf '{"login_id":"%s","password":"%s"}' "${MM_ADMIN_LOGIN}" "${MM_ADMIN_PASS}")" \
+    | tr -d '\r' \
+    | awk 'tolower($1)=="token:"{print $2; exit}'
+  )"
+fi
 
 if [ -z "${token}" ]; then
-  echo "mattermost login failed: no session token returned" >&2
+  echo "mattermost authentication failed: no token available" >&2
   exit 1
 fi
 

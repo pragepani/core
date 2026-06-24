@@ -14,11 +14,11 @@
 
 - name: Probe whether the Mattermost partner container is running
   command: >
-    container exec {{ nextcloud_mm_container }} true
+    container inspect -f '{% raw %}{{.State.Running}}{% endraw %}' {{ nextcloud_mm_container }}
   register: nextcloud_mm_partner_running
   changed_when: false
   failed_when: false
 
 - name: Provision the bidirectional Mattermost <-> Nextcloud OAuth coupling
   include_tasks: "{{ [role_path, 'tasks/addons/integration_mattermost_provision.yml'] | path_join }}"
-  when: nextcloud_mm_partner_running.rc == 0
+  when: (nextcloud_mm_partner_running.stdout | trim) == 'true'

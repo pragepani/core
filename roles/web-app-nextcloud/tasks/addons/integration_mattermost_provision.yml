@@ -21,21 +21,35 @@
   register: nextcloud_mm_oauth_provider
   changed_when: "'true' in nextcloud_mm_oauth_provider.stdout"
 
-- name: Provision (idempotently) the Mattermost OAuth app for Nextcloud and capture credentials
+- name: Generate a short-lived admin personal access token for OAuth provisioning
   command: >
-    container exec -i
-    -e MM_LOCAL_URL={{ nextcloud_mm_local_url }}
-    -e MM_ADMIN_LOGIN={{ lookup('users', 'administrator').email }}
-    -e MM_ADMIN_PASS={{ lookup('users', 'administrator').password }}
-    -e MM_APP_NAME=Nextcloud
-    -e NC_BASE_URL={{ NEXTCLOUD_URL }}
-    -e NC_REDIRECT_PATH={{ nextcloud_mm_redirect_path }}
-    -e MM_HOMEPAGE={{ NEXTCLOUD_URL }}
-    {{ nextcloud_mm_container }}
-    bash -s
+    container exec -i {{ nextcloud_mm_container }}
+    /mattermost/bin/mmctl --local token generate {{ lookup('users', 'administrator').username }} infinito-nc-oauth-provision --json
   args:
     chdir: "{{ nextcloud_mm_instance_dir }}"
+  register: nextcloud_mm_pat
+  changed_when: true
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Parse the admin personal access token
+  set_fact:
+    nextcloud_mm_token: "{{ (nextcloud_mm_pat.stdout | from_json | first).token }}"
+    nextcloud_mm_token_id: "{{ (nextcloud_mm_pat.stdout | from_json | first).id }}"
+  no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Provision (idempotently) the Mattermost OAuth app for Nextcloud and capture credentials
+  ansible.builtin.command:
+    argv:
+      - bash
+      - -s
     stdin: "{{ lookup('file', 'mattermost/provision_oauth_app.sh') }}"
+  environment:
+    MM_LOCAL_URL: "{{ nextcloud_mm_local_url }}"
+    MM_TOKEN: "{{ nextcloud_mm_token }}"
+    MM_APP_NAME: Nextcloud
+    NC_BASE_URL: "{{ NEXTCLOUD_URL }}"
+    NC_REDIRECT_PATH: "{{ nextcloud_mm_redirect_path }}"
+    MM_HOMEPAGE: "{{ NEXTCLOUD_URL }}"
   register: nextcloud_mm_provision
   changed_when: false
   no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
@@ -72,3 +86,12 @@
   register: nextcloud_mm_enc_set
   changed_when: "'OK' in nextcloud_mm_enc_set.stdout"
   no_log: "{{ MASK_CREDENTIALS_IN_LOGS | bool }}"
+
+- name: Revoke the short-lived admin personal access token
+  command: >
+    container exec -i {{ nextcloud_mm_container }}
+    /mattermost/bin/mmctl --local token revoke {{ nextcloud_mm_token_id }}
+  args:
+    chdir: "{{ nextcloud_mm_instance_dir }}"
+  changed_when: true
+  failed_when: false
