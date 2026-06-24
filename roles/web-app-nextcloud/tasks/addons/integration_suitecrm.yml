@@ -16,11 +16,11 @@
 
 - name: Probe whether the SuiteCRM partner container is running
   command: >
-    container exec {{ nextcloud_crm_container }} true
+    container inspect -f '{% raw %}{{.State.Running}}{% endraw %}' {{ nextcloud_crm_container }}
   register: integration_suitecrm_partner_running
   changed_when: false
   failed_when: false
 
 - name: Provision the bidirectional SuiteCRM <-> Nextcloud OAuth coupling
   include_tasks: "{{ [role_path, 'tasks/addons/integration_suitecrm_provision.yml'] | path_join }}"
-  when: integration_suitecrm_partner_running.rc == 0
+  when: (integration_suitecrm_partner_running.stdout | trim) == 'true'

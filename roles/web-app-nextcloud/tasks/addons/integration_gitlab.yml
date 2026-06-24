@@ -7,7 +7,7 @@
 
 - name: Probe whether the GitLab partner container is running
   command: >
-    container exec {{ nextcloud_gl_container }} true
+    container inspect -f '{% raw %}{{.State.Running}}{% endraw %}' {{ nextcloud_gl_container }}
   register: integration_gitlab_partner_running
   changed_when: false
   failed_when: false
@@ -30,7 +30,7 @@
 - name: Provision the GitLab <-> Nextcloud OAuth coupling
   include_tasks: "{{ [role_path, 'tasks/addons/integration_gitlab_provision.yml'] | path_join }}"
   when: >-
-    integration_gitlab_partner_running.rc == 0
+    (integration_gitlab_partner_running.stdout | trim) == 'true'
     and (
       (nextcloud_gl_client_id_current.stdout | trim) | length == 0
       or (nextcloud_gl_client_secret_current.stdout | trim) | length == 0

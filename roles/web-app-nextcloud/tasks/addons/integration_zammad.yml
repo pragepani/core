@@ -13,7 +13,7 @@
 
 - name: Probe whether the Zammad partner container is running
   command: >
-    container exec {{ nextcloud_zammad_container }} true
+    container inspect -f '{% raw %}{{.State.Running}}{% endraw %}' {{ nextcloud_zammad_container }}
   register: nextcloud_zammad_partner_running
   changed_when: false
   failed_when: false
@@ -36,7 +36,7 @@
 - name: Provision the Zammad <-> Nextcloud OAuth coupling
   include_tasks: "{{ [role_path, 'tasks/addons/integration_zammad_provision.yml'] | path_join }}"
   when: >-
-    nextcloud_zammad_partner_running.rc == 0
+    (nextcloud_zammad_partner_running.stdout | trim) == 'true'
     and (
       (nextcloud_zammad_client_id_current.stdout | trim) | length == 0
       or (nextcloud_zammad_client_secret_current.stdout | trim) | length == 0
