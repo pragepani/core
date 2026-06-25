@@ -82,6 +82,15 @@ class TestApplyOrder(unittest.TestCase):
         with self.assertRaises(ValueError):
             cli.apply_order(_filter_rows(), "asc", "nope")
 
+    def test_order_by_variant(self) -> None:
+        rows = [
+            {"variant": 2, "cpus_float": 1.0},
+            {"variant": 0, "cpus_float": 1.0},
+            {"variant": 1, "cpus_float": 1.0},
+        ]
+        out = cli.apply_order(rows, "asc", "variant")
+        self.assertEqual([r["variant"] for r in out], [0, 1, 2])
+
 
 if __name__ == "__main__":
     unittest.main()

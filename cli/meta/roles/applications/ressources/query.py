@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 _FIELD_ACCESSORS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "service": lambda r: r.get("service"),
     "role": lambda r: r.get("role"),
+    "variant": lambda r: r.get("variant"),
     "depth": lambda r: r.get("depth"),
     "bond": lambda r: r.get("bond_float"),
     "mem_reservation": lambda r: r.get("mem_reservation_bytes"),

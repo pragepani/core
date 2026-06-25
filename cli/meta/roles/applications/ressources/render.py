@@ -163,3 +163,77 @@ def render_json(
         "warnings": warnings,
     }
     return json.dumps(payload, indent=2)
+
+
+def render_summary_text(
+    rows: list[dict[str, Any]],
+    key_field: str,
+    title: str,
+    warnings: list[str],
+    presorted: bool = False,
+) -> str:
+    headers = [key_field, "mem_reservation", "mem_limit", "pids_limit", "cpus"]
+    ordered = rows if presorted else sorted(rows, key=lambda r: str(r[key_field]))
+    table_rows: list[tuple[str, ...]] = [
+        (
+            str(row[key_field]),
+            _fmt_mem(row["mem_reservation_bytes"]),
+            _fmt_mem(row["mem_limit_bytes"]),
+            _fmt_int(row["pids_limit_int"]),
+            _fmt_float(row["cpus_float"]),
+        )
+        for row in ordered
+    ]
+
+    widths = [len(h) for h in headers]
+    for r in table_rows:
+        for i, cell in enumerate(r):
+            widths[i] = max(widths[i], len(cell))
+
+    def fmt_row(cells: tuple[str, ...]) -> str:
+        return "  ".join(cell.ljust(widths[i]) for i, cell in enumerate(cells))
+
+    sep = "  ".join("-" * w for w in widths)
+    lines = [
+        f"# {title}",
+        "",
+        fmt_row(tuple(headers)),
+        sep,
+    ]
+    lines.extend(fmt_row(r) for r in table_rows)
+
+    if warnings:
+        lines.append("")
+        lines.append("# Warnings")
+        lines.extend(f"! {w}" for w in warnings)
+
+    return "\n".join(lines)
+
+
+def render_summary_json(
+    rows: list[dict[str, Any]],
+    key_field: str,
+    label: str,
+    warnings: list[str],
+) -> str:
+    payload = {
+        "aggregation": label,
+        "rows": [
+            {
+                key_field: row[key_field],
+                "mem_reservation": {
+                    "bytes": row["mem_reservation_bytes"],
+                    "human": _fmt_mem(row["mem_reservation_bytes"]),
+                },
+                "mem_limit": {
+                    "bytes": row["mem_limit_bytes"],
+                    "human": _fmt_mem(row["mem_limit_bytes"]),
+                },
+                "pids_limit": {"value": row["pids_limit_int"]},
+                "cpus": {"value": row["cpus_float"]},
+            }
+            for row in rows
+        ],
+        "warnings": warnings,
+    }
+    return json.dumps(payload, indent=2)

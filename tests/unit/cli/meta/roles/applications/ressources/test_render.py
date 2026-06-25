@@ -107,5 +107,51 @@ class TestRenderJson(unittest.TestCase):
         self.assertEqual(payload["warnings"], ["w"])
 
 
+class TestRenderSummary(unittest.TestCase):
+    def test_summary_text_uses_key_field_and_title(self) -> None:
+        rows = [
+            {
+                "role": "web-app-a",
+                "mem_reservation_bytes": 1_000_000_000,
+                "mem_limit_bytes": 2_000_000_000,
+                "pids_limit_int": 128,
+                "cpus_float": 2.0,
+            },
+            {
+                "role": "web-app-b",
+                "mem_reservation_bytes": None,
+                "mem_limit_bytes": None,
+                "pids_limit_int": None,
+                "cpus_float": None,
+            },
+        ]
+        text = render.render_summary_text(
+            rows, "role", "Footprint per role", warnings=[]
+        )
+        lines = text.splitlines()
+        self.assertIn("# Footprint per role", lines[0])
+        self.assertTrue(lines[2].startswith("role"))
+        self.assertIn("web-app-a", text)
+        self.assertIn("web-app-b", text)
+
+    def test_summary_json_keys_rows_by_field(self) -> None:
+        rows = [
+            {
+                "variant": 0,
+                "mem_reservation_bytes": 1_000_000_000,
+                "mem_limit_bytes": 2_000_000_000,
+                "pids_limit_int": 128,
+                "cpus_float": 2.0,
+            }
+        ]
+        payload = json.loads(
+            render.render_summary_json(rows, "variant", "per variant", warnings=["w"])
+        )
+        self.assertEqual(payload["aggregation"], "per variant")
+        self.assertEqual(payload["rows"][0]["variant"], 0)
+        self.assertEqual(payload["rows"][0]["mem_limit"]["bytes"], 2_000_000_000)
+        self.assertEqual(payload["warnings"], ["w"])
+
+
 if __name__ == "__main__":
     unittest.main()
