@@ -28,6 +28,11 @@ test("files_linkeditor addon: Files New menu exposes the link-editor create entr
       newMenuButton,
       "the Files app must expose its New file-creation menu button",
     ).toBeVisible({ timeout: 60_000 });
+
+    // The firstrunwizard "what's new" modal mounts with the Files app, after the
+    // post-goto dismissal ran, and overlays the New button so the click is
+    // swallowed. Re-dismiss once the app has rendered, before driving the menu.
+    await shared.dismissBlockingNextcloudModals(page, page);
     await newMenuButton.click();
 
     await expect(
