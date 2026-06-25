@@ -68,7 +68,7 @@
   register: nextcloud_mm_oauth_url_set
   changed_when: "' set to ' in nextcloud_mm_oauth_url_set.stdout"
 
-- name: Store integration_mattermost OAuth credentials Nextcloud-encrypted (ICrypto, lazy)
+- name: Store integration_mattermost OAuth credentials Nextcloud-encrypted (sensitive, lazy)
   ansible.builtin.command:
     argv:
       - container
@@ -78,6 +78,8 @@
       - "{{ NEXTCLOUD_DOCKER_USER }}"
       - -e
       - "NC_APP_ID=integration_mattermost"
+      - -e
+      - "NC_ENC_MODE=sensitive"
       - -e
       - "NC_ENC_B64={{ {'client_id': nextcloud_mm_client_id, 'client_secret': nextcloud_mm_client_secret} | to_json | b64encode }}"
       - "{{ NEXTCLOUD_CONTAINER }}"
