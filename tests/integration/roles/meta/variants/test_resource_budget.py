@@ -7,7 +7,7 @@ each service counted once via the shared-service logic) is summed and checked
 against:
 
 - ``mem_reservation`` total ≤ 32 GB
-- ``mem_limit`` total ≤ 72 GB
+- ``mem_limit`` total ≤ 64 GB
 
 Exceeding either would over-commit the host and risk an OOM kill at deploy time.
 On failure, disable services in the offending variant or move them to other
@@ -41,8 +41,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 ROLES_DIR = PROJECT_ROOT / "roles"
-MAX_MEM_RESERVATION = parse_size("37GB")
-MAX_MEM_LIMIT = parse_size("73GB")
+MAX_MEM_RESERVATION = parse_size("32GB")
+MAX_MEM_LIMIT = parse_size("64GB")
 
 
 @dataclass(frozen=True)
