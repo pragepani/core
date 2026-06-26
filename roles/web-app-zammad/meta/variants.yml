@@ -89,14 +89,14 @@
       enabled: false
       shared: false
     memcached:
-      shared: false
+      shared: true
     sso:
       enabled: false
       shared: false
     postgres:
-      shared: false
+      shared: true
     prometheus:
       enabled: false
       shared: false
     redis:
-      shared: false
+      shared: true

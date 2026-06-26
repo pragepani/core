@@ -87,7 +87,7 @@
       enabled: false
       shared: false
     mariadb:
-      shared: false
+      shared: true
     matomo:
       enabled: false
       shared: false
