@@ -46,6 +46,7 @@ Trigger column legend: **auto** = fires automatically (push, pull_request, sched
 | [lint-docker.yml](../../../../../.github/workflows/lint-docker.yml): `🔍 Lint: Dockerfiles` | hadolint on `Dockerfile` with SARIF upload. | reusable | none |
 | [lint-python.yml](../../../../../.github/workflows/lint-python.yml): `🔍 Lint: Python` | `ruff` over the Python sources. | reusable | none |
 | [lint-shell.yml](../../../../../.github/workflows/lint-shell.yml): `🔍 Lint: Shell Scripts` | `shellcheck` over every `*.sh` file. | reusable | none |
+| [lint-packages.yml](../../../../../.github/workflows/lint-packages.yml): `🔍 Lint: Packages` | Validates the generated distro packaging metadata (`debian/changelog` via `dpkg-parsechangelog`, the Fedora spec via `rpmspec`, the Arch `PKGBUILD` via `bash -n`) so a malformed changelog is caught before the package build. | reusable | none |
 
 ### CI images 🐳
 

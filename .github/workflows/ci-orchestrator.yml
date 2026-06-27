@@ -115,6 +115,8 @@ jobs:
     uses: ./.github/workflows/lint-markdown.yml
   lint-makefile:
     uses: ./.github/workflows/lint-makefile.yml
+  lint-packages:
+    uses: ./.github/workflows/lint-packages.yml
   lint-javascript:
     uses: ./.github/workflows/lint-javascript.yml
   lint-playwright:
@@ -128,6 +130,7 @@ jobs:
       - lint-shell
       - lint-markdown
       - lint-makefile
+      - lint-packages
       - lint-javascript
       - lint-playwright
     runs-on: ubuntu-latest
