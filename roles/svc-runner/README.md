@@ -137,6 +137,15 @@ python -m cli.deploy.runner <hostname> \
 
 `RUNNER_DISTRIBUTION` is **required** and has no default; it is passed automatically by the CLI.
 
+## Testing
+
+The role self-validates via the scripts in `files/test/`, discovered and run by `test-e2e-cli` during deploy. `test.sh` orchestrates two complementary checks:
+
+- **`local.sh` — fully local, no external GitHub.** Checks the runner containers are healthy and the DooD socket works, then `container cp`s the repo into a runner, **builds the Infinito image locally**, and deploys `web-app-dashboard` (all other services disabled) inside a **sealed, throwaway Docker daemon** that shares the runner's network namespace. The sandbox is torn down on exit, so the host stack is never touched and **no GitHub/GHCR access is required**. On the async test pass the heavy deploy is skipped (it is validated once on the sync pass).
+- **`external.sh` — real job-pickup smoke test (optional).** Uses `RUNNER_API_TOKEN` to confirm the runners registered and are online via the GitHub API, dispatches a smoke workflow, and polls it to completion. Skipped automatically when no token is present.
+
+In short: `local.sh` proves the runner can build and deploy entirely on its own hardware; `external.sh` proves it can receive real jobs from GitHub.
+
 ## Further Resources
 
 - [GitHub Actions self-hosted runner documentation](https://docs.github.com/en/actions/hosting-your-own-runners)

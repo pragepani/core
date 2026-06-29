@@ -18,6 +18,10 @@ if [[ "${DOCKER_IN_CONTAINER:-false}" == "true" ]]; then
     exec sleep infinity
 fi
 
+# Clean leftover state between ephemeral jobs (container is restarted, not recreated).
+rm -rf ./_work 2>/dev/null || true
+find /tmp -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+
 : "${RUNNER_API_TOKEN:?RUNNER_API_TOKEN must be set}"
 : "${RUNNER_GITHUB_OWNER:?RUNNER_GITHUB_OWNER must be set}"
 : "${RUNNER_GITHUB_REPO:?RUNNER_GITHUB_REPO must be set}"

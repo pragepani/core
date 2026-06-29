@@ -167,12 +167,12 @@ def _run_deploy(
             inv_path,
             pb_path,
             "-e",
-            f"runner_distribution={distribution}",
+            f"RUNNER_DISTRIBUTION={distribution}",
             "-e",
             "MASK_CREDENTIALS_IN_LOGS=true",
         ]
         if runner_count is not None:
-            cmd += ["-e", f"runner_count={runner_count}"]
+            cmd += ["-e", f"RUNNER_COUNT={runner_count}"]
 
         # Pass GitHub identity as extra-vars (direct override, not env-lookup).
         # vars/main.yml resolves RUNNER_GITHUB_OWNER/REPO via lookup('env', ...) which
