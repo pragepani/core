@@ -55,7 +55,7 @@ async function signInViaN8nLdap(page, username, password) {
 
   await emailInput.fill(username);
   await passwordInput.fill(password);
-  await page.locator('button[type="submit"]').first().click();
+  await page.getByRole('button', { name: /sign in/i }).click();
 
   await expect(emailInput).toBeHidden({ timeout: 60_000 });
   await expect
