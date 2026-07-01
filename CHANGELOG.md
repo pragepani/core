@@ -1,5 +1,25 @@
 # Changelog
 
+## [11.4.0] - 2026-07-01
+
+* Self-hosted CI runners: new *svc-runner* role plus *cli/deploy/runner* command spin up N containerised GitHub Actions runners on any server, adding to the 20 GitHub-hosted ones. Each runner is isolated (own subnet, ports, inventory, Docker volume, DNS) and auto-re-registers. Runs on Debian, Ubuntu and Arch, supports Docker-in-Docker, and ships a full in-runner E2E deploy test. See the *svc-runner* README.
+
+* Fork PRs can now scope the CI matrix: a 🧩 *Subset* label reads a *roles:* block from the PR body and narrows the deploy whitelist. Gives forks the maintainer-only manual dispatch they could not trigger before. Without the label nothing changes. See [the fork-PR pipeline](docs/contributing/artefact/git/pipeline.md).
+
+* GitHub-hosted runner fixes: free disk before deploys and drop a dead 404 URL from the external tests.
+
+* *make local* reinstall now works correctly when all services are disabled.
+
+* Image and dependency version jumps (net since 11.3.0):
+  * *web-app-funkwhale*: 2.0.4 to 2.0.6
+  * *web-app-mobilizon*: 5.2.3 to 5.2.4
+  * *web-app-bluesky* (git ref): 1.125.0 to 1.126.0
+
+**Contributors**
+
+* [Alejandro Roman Ibanez](https://github.com/AlejandroRomanIbanez): self-hosted containerised CI runners
+* [Kevin Veen-Birkenbach](https://veen.world): Subset-label CI scoping, runner disk fixes, version maintenance
+
 ## [11.3.0] - 2026-06-29
 
 * Security: resolved all 80 open CodeQL/code-scanning alerts and added recurrence guards. Broke an unsafe import cycle in *cli/administration/deploy/development* via a leaf *env.py*; hardened *web-app-bluesky* *server.js* (cookie prototype-pollution guard, log sanitisation, HTML-escaped exceptions, ReDoS-bounded handle regex) and *web-app-baserow* SSO open-redirect handling; required TLS ≥ 1.2 in network diagnose probes; validated *actionlint* tar members against path traversal; rewrote *decidim*/*apt-purge* regexes to avoid catastrophic backtracking; anchored six Playwright URL regexes and pinned *crs-k/stale-branches* to a SHA. Guards: an *import-linter* contract, a lint requiring justified bandit *noqa*, and ruff *BLE001* as a ratchet.
